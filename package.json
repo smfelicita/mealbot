@@ -1,0 +1,16 @@
+{
+  "name": "mealbot",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["backend", "frontend", "telegram-bot"],
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:bot": "cd telegram-bot && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:bot\"",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ../telegram-bot && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

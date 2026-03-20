@@ -1,0 +1,31 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useStore } from './store'
+import Layout from './components/Layout'
+import AuthPage from './pages/AuthPage'
+import HomePage from './pages/HomePage'
+import DishesPage from './pages/DishesPage'
+import DishDetailPage from './pages/DishDetailPage'
+import FridgePage from './pages/FridgePage'
+import ChatPage from './pages/ChatPage'
+
+function RequireAuth({ children }) {
+  const token = useStore(s => s.token)
+  return token ? children : <Navigate to="/auth" replace />
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
+          <Route index element={<HomePage />} />
+          <Route path="dishes" element={<DishesPage />} />
+          <Route path="dishes/:id" element={<DishDetailPage />} />
+          <Route path="fridge" element={<FridgePage />} />
+          <Route path="chat" element={<ChatPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  )
+}
