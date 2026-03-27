@@ -1,8 +1,7 @@
 const router = require('express').Router()
 const Anthropic = require('@anthropic-ai/sdk')
-const { PrismaClient } = require('@prisma/client')
+const prisma = require('../lib/prisma')
 const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
-const prisma = new PrismaClient()
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 

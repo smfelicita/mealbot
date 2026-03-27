@@ -1,6 +1,4 @@
 const jwt = require('jsonwebtoken')
-const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient()
 
 // Базовая авторизация — проверяет токен, кладёт userId и role в req
 function authMiddleware(req, res, next) {

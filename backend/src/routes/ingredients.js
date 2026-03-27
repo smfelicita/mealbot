@@ -1,7 +1,6 @@
 const router = require('express').Router()
-const { PrismaClient } = require('@prisma/client')
+const prisma = require('../lib/prisma')
 const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
-const prisma = new PrismaClient()
 
 // GET /api/ingredients — публичные + свои кастомные (если авторизован)
 router.get('/', optionalAuth, async (req, res, next) => {
