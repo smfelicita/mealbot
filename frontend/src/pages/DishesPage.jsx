@@ -131,7 +131,7 @@ export default function DishesPage() {
           <div className="dishes-grid">
             {dishes.map((d, i) => (
               <div key={d.id} className="fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
-                <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+                <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} searchQuery={q || undefined} />
               </div>
             ))}
           </div>

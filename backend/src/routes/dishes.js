@@ -289,6 +289,8 @@ function buildBaseFilter({ q, mealTime, category, tags, cuisine }) {
     where.OR = [
       { nameRu: { contains: q, mode: 'insensitive' } },
       { description: { contains: q, mode: 'insensitive' } },
+      { tags: { has: q.toLowerCase() } },
+      { ingredients: { some: { ingredient: { nameRu: { contains: q, mode: 'insensitive' } } } } },
     ]
   }
   if (mealTime) where.mealTime = { has: mealTime }
