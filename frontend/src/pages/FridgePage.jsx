@@ -1,9 +1,40 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { useToast } from '../hooks/useToast.jsx'
 
+function GuestFridgeBlock() {
+  const navigate = useNavigate()
+  return (
+    <div>
+      <div className="top-bar">
+        <span className="top-bar-logo">🧊 Холодильник</span>
+      </div>
+      <div className="page" style={{ paddingTop: 40 }}>
+        <div className="empty-state">
+          <div className="empty-icon">🧊</div>
+          <h3>Холодильник для участников</h3>
+          <p style={{ lineHeight: 1.6 }}>
+            Сохраняйте продукты в холодильнике — ИИ-помощник будет предлагать блюда именно из того, что у вас есть дома.
+          </p>
+          <button className="btn btn-primary" style={{ marginTop: 20, width: '100%' }}
+            onClick={() => navigate('/auth?mode=register')}>
+            Зарегистрироваться бесплатно
+          </button>
+          <button className="btn btn-ghost btn-sm" style={{ marginTop: 10, color: 'var(--text2)' }}
+            onClick={() => navigate('/auth')}>
+            Уже есть аккаунт? Войти
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function FridgePage() {
+  const { token } = useStore()
+  if (!token) return <GuestFridgeBlock />
   const [allIngredients, setAllIngredients] = useState([])
   const [search, setSearch] = useState('')
   const [showPicker, setShowPicker] = useState(false)
