@@ -9,6 +9,8 @@ const dishRoutes = require('./routes/dishes')
 const fridgeRoutes = require('./routes/fridge')
 const chatRoutes = require('./routes/chat')
 const ingredientRoutes = require('./routes/ingredients')
+const uploadRoutes = require('./routes/upload')
+const groupRoutes = require('./routes/groups')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -31,6 +33,8 @@ app.use('/api/dishes', dishRoutes)
 app.use('/api/fridge', fridgeRoutes)
 app.use('/api/chat', chatRoutes)
 app.use('/api/ingredients', ingredientRoutes)
+app.use('/api/upload', uploadRoutes)
+app.use('/api/groups', groupRoutes)
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }))

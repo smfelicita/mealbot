@@ -1,0 +1,25 @@
+# Env
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build
+frontend/dist/
+frontend/.vite/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Claude
+.claude/

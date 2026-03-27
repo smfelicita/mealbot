@@ -39,6 +39,7 @@ export const api = {
   // Ingredients
   getIngredients: (q = '') =>
     request(`/ingredients${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  createIngredient: (data) => request('/ingredients', { method: 'POST', body: data }),
 
   // Fridge
   getFridge: () => request('/fridge'),
@@ -49,6 +50,38 @@ export const api = {
   removeFromFridge: (ingredientId) =>
     request(`/fridge/${ingredientId}`, { method: 'DELETE' }),
   clearFridge: () => request('/fridge', { method: 'DELETE' }),
+
+  // My Dishes
+  getMyDishes: () => request('/dishes/my'),
+  createDish: (data) => request('/dishes', { method: 'POST', body: data }),
+  updateDish: (id, data) => request(`/dishes/${id}`, { method: 'PUT', body: data }),
+  deleteDish: (id) => request(`/dishes/${id}`, { method: 'DELETE' }),
+
+  // Upload
+  uploadFile: (type, file) => {
+    const token = getToken()
+    const form = new FormData()
+    form.append('file', file)
+    return fetch(`${BASE}/upload/${type}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    }).then(async r => {
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || 'Ошибка загрузки')
+      return d
+    })
+  },
+
+  // Groups
+  getGroups: () => request('/groups'),
+  getGroup: (id) => request(`/groups/${id}`),
+  createGroup: (data) => request('/groups', { method: 'POST', body: data }),
+  updateGroup: (id, data) => request(`/groups/${id}`, { method: 'PUT', body: data }),
+  deleteGroup: (id) => request(`/groups/${id}`, { method: 'DELETE' }),
+  joinGroup: (code) => request('/groups/join', { method: 'POST', body: { code } }),
+  leaveGroup: (id) => request(`/groups/${id}/leave`, { method: 'DELETE' }),
+  kickMember: (groupId, userId) => request(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' }),
 
   // Chat
   sendMessage: (message, platform = 'web') =>

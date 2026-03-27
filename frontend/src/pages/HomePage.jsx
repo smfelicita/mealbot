@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
+import DishCard from '../components/DishCard'
 
 const MEAL_TIMES = [
   { id: 'breakfast', label: 'Завтрак', icon: '🌅' },
@@ -9,9 +10,6 @@ const MEAL_TIMES = [
   { id: 'dinner',    label: 'Ужин',    icon: '🌙' },
   { id: 'snack',     label: 'Перекус', icon: '🍎' },
 ]
-
-const DIFFICULTY = { easy: 'Просто', medium: 'Средне', hard: 'Сложно' }
-const DIFF_CLASS  = { easy: 'diff-easy', medium: 'diff-medium', hard: 'diff-hard' }
 
 export default function HomePage() {
   const [dishes, setDishes] = useState([])
@@ -25,7 +23,10 @@ export default function HomePage() {
   async function load() {
     setLoading(true)
     try {
-      const data = await api.getDishes({ mealTime, fridgeMode: fridgeMode ? 'true' : undefined })
+      let data = await api.getDishes({ mealTime, fridgeMode: fridgeMode ? 'true' : undefined })
+      if (data.length === 0 && !fridgeMode) {
+        data = await api.getDishes({})
+      }
       setDishes(data.slice(0, 6))
     } catch { setDishes([]) }
     finally { setLoading(false) }
@@ -86,29 +87,9 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="dishes-grid">
-            {dishes.map((d,i) => (
-              <div key={d.id} className="card card-hover fade-up"
-                style={{animationDelay:`${i*0.05}s`}}
-                onClick={() => navigate(`/dishes/${d.id}`)}>
-                <div className="dish-card">
-                  <div className="dish-card-header">
-                    <div className="dish-emoji">🍳</div>
-                    <div>
-                      <div className="dish-name">{d.name}</div>
-                      <div className="dish-desc">{d.description}</div>
-                    </div>
-                  </div>
-                  <div className="dish-meta">
-                    {d.cookTime && <span>⏱ {d.cookTime} мин</span>}
-                    {d.calories && <span>🔥 {d.calories} ккал</span>}
-                    {d.difficulty && <span className={DIFF_CLASS[d.difficulty]}>{DIFFICULTY[d.difficulty]}</span>}
-                  </div>
-                  <div className="dish-tags">
-                    {d.tags.slice(0,3).map(t => (
-                      <span key={t} className="tag" style={{cursor:'default'}}>{t}</span>
-                    ))}
-                  </div>
-                </div>
+            {dishes.map((d, i) => (
+              <div key={d.id} className="fade-up" style={{animationDelay:`${i*0.05}s`}}>
+                <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
               </div>
             ))}
           </div>

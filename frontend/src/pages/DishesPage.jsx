@@ -2,14 +2,13 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
+import DishCard from '../components/DishCard'
 
-const CATEGORIES = ['BREAKFAST','LUNCH','DINNER','SOUP','SALAD','SNACK','DESSERT']
-const CAT_RU = { BREAKFAST:'Завтрак',LUNCH:'Обед',DINNER:'Ужин',SOUP:'Суп',SALAD:'Салат',SNACK:'Перекус',DESSERT:'Десерт' }
+const CATEGORIES = ['BREAKFAST','LUNCH','DINNER','SOUP','SALAD','SNACK','DESSERT','DRINK']
+const CAT_RU = { BREAKFAST:'Завтрак',LUNCH:'Обед',DINNER:'Ужин',SOUP:'Суп',SALAD:'Салат',SNACK:'Перекус',DESSERT:'Десерт',DRINK:'Напиток' }
 const MEAL_TIMES = ['breakfast','lunch','dinner','snack']
 const MT_RU = { breakfast:'Завтрак',lunch:'Обед',dinner:'Ужин',snack:'Перекус' }
 const TAGS = ['быстро','вегетарианское','здоровое','сытное','без глютена','традиционное']
-const DIFF = { easy:'Просто',medium:'Средне',hard:'Сложно' }
-const DIFF_CLS = { easy:'diff-easy',medium:'diff-medium',hard:'diff-hard' }
 
 export default function DishesPage() {
   const [dishes, setDishes]   = useState([])
@@ -130,31 +129,9 @@ export default function DishesPage() {
           </div>
         ) : (
           <div className="dishes-grid">
-            {dishes.map((d,i) => (
-              <div key={d.id} className="card card-hover fade-up"
-                style={{animationDelay:`${i*0.04}s`}}
-                onClick={() => navigate(`/dishes/${d.id}`)}>
-                <div className="dish-card">
-                  <div className="dish-card-header">
-                    <div className="dish-emoji">🍳</div>
-                    <div>
-                      <div className="dish-name">{d.name}</div>
-                      <div className="dish-desc" style={{WebkitLineClamp:2,display:'-webkit-box',WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                        {d.description}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="dish-meta">
-                    {d.cookTime && <span>⏱ {d.cookTime} мин</span>}
-                    {d.calories && <span>🔥 {d.calories} ккал</span>}
-                    {d.difficulty && <span className={DIFF_CLS[d.difficulty]}>{DIFF[d.difficulty]}</span>}
-                  </div>
-                  <div className="dish-tags">
-                    {d.tags.slice(0,3).map(t => (
-                      <span key={t} className="tag" style={{cursor:'default'}}>{t}</span>
-                    ))}
-                  </div>
-                </div>
+            {dishes.map((d, i) => (
+              <div key={d.id} className="fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
+                <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
               </div>
             ))}
           </div>

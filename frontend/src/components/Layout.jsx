@@ -1,10 +1,12 @@
 import { Outlet, NavLink } from 'react-router-dom'
 
 const TABS = [
-  { to: '/',       icon: '🏠', label: 'Главная' },
-  { to: '/dishes', icon: '🍽️', label: 'Блюда'   },
-  { to: '/fridge', icon: '🧊', label: 'Холодильник' },
-  { to: '/chat',   icon: '✨', label: 'ИИ-чат'  },
+  { to: '/',           icon: '🏠', label: 'Главная' },
+  { to: '/dishes',     icon: '🍽️', label: 'Блюда'   },
+  { to: '/fridge',     icon: '🧊', label: 'Холодильник' },
+  { to: '/my-recipes', icon: '📖', label: 'Рецепты' },
+  { to: '/groups',     icon: '👥', label: 'Группы'  },
+  { to: '/chat',       icon: '✨', label: 'ИИ-чат'  },
 ]
 
 export default function Layout() {

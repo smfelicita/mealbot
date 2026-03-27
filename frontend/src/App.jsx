@@ -7,6 +7,11 @@ import DishesPage from './pages/DishesPage'
 import DishDetailPage from './pages/DishDetailPage'
 import FridgePage from './pages/FridgePage'
 import ChatPage from './pages/ChatPage'
+import MyRecipesPage from './pages/MyRecipesPage'
+import RecipeFormPage from './pages/RecipeFormPage'
+import GroupsPage from './pages/GroupsPage'
+import GroupDetailPage from './pages/GroupDetailPage'
+import GroupFormPage from './pages/GroupFormPage'
 
 function RequireAuth({ children }) {
   const token = useStore(s => s.token)
@@ -24,6 +29,13 @@ export default function App() {
           <Route path="dishes/:id" element={<DishDetailPage />} />
           <Route path="fridge" element={<FridgePage />} />
           <Route path="chat" element={<ChatPage />} />
+          <Route path="my-recipes" element={<MyRecipesPage />} />
+          <Route path="my-recipes/new" element={<RecipeFormPage />} />
+          <Route path="my-recipes/:id/edit" element={<RecipeFormPage />} />
+          <Route path="groups" element={<GroupsPage />} />
+          <Route path="groups/new" element={<GroupFormPage />} />
+          <Route path="groups/:id" element={<GroupDetailPage />} />
+          <Route path="groups/:id/edit" element={<GroupFormPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -5,111 +5,34 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id           String   @id @default(cuid())
-  email        String?  @unique
-  passwordHash String?
-  name         String?
-  telegramId   String?  @unique
-  telegramUsername String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+// ─── Перечисления ────────────────────────────────────────────────────────────
 
-  fridge       FridgeItem[]
-  chatHistory  ChatMessage[]
-  preferences  UserPreferences?
-
-  @@map("users")
+enum Role {
+  USER
+  PRO
+  ADMIN
 }
 
-model UserPreferences {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dietaryTags  String[] // вегетарианское, без глютена и т.д.
-  dislikedIngredients String[]
-  preferredMealTimes  String[] // breakfast, lunch, dinner
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("user_preferences")
+enum GroupRole {
+  OWNER
+  MEMBER
 }
 
-model Ingredient {
-  id       String   @id @default(cuid())
-  name     String   @unique
-  nameRu   String   @unique
-  category String   // dairy, meat, vegetable, grain, spice, etc.
-  emoji    String?
-
-  dishes   DishIngredient[]
-  fridge   FridgeItem[]
-
-  @@map("ingredients")
+enum GroupType {
+  FAMILY
+  REGULAR
 }
 
-model FridgeItem {
-  id           String     @id @default(cuid())
-  userId       String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ingredientId String
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
-  addedAt      DateTime   @default(now())
-  expiresAt    DateTime?
-
-  @@unique([userId, ingredientId])
-  @@map("fridge_items")
-}
-
-model Dish {
-  id          String   @id @default(cuid())
-  name        String
-  nameRu      String
-  description String?
-  category    MealCategory
-  mealTime    String[] // breakfast, lunch, dinner, snack
-  tags        String[] // вегетарианское, быстро, суп и т.д.
-  cookTime    Int?     // минуты
-  difficulty  String?  // easy, medium, hard
-  calories    Int?
-  imageUrl    String?
-  recipe      String?  // markdown текст рецепта
-
-  ingredients DishIngredient[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("dishes")
-}
-
-model DishIngredient {
-  id           String     @id @default(cuid())
-  dishId       String
-  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
-  ingredientId String
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
-  amount       String?    // "2 шт", "200г" и т.д.
-  optional     Boolean    @default(false)
-
-  @@unique([dishId, ingredientId])
-  @@map("dish_ingredients")
-}
-
-model ChatMessage {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      String   // user | assistant
-  content   String
-  platform  String   // web | telegram
-  createdAt DateTime @default(now())
-
-  @@map("chat_messages")
+enum DishVisibility {
+  PRIVATE
+  PUBLIC
+  FAMILY
+  ALL_GROUPS
 }
 
 enum MealCategory {
@@ -121,4 +44,173 @@ enum MealCategory {
   SALAD
   DESSERT
   DRINK
+}
+
+// ─── Пользователи ────────────────────────────────────────────────────────────
+
+model User {
+  id               String    @id @default(cuid())
+  email            String?   @unique
+  passwordHash     String?
+  name             String?
+  telegramId       String?   @unique
+  telegramUsername String?
+  role             Role      @default(USER)
+  subscriptionUntil DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  fridge              FridgeItem[]
+  chatHistory         ChatMessage[]
+  preferences         UserPreferences?
+  dishes              Dish[]
+  customIngredients   Ingredient[]
+  ownedGroups         Group[]
+  groupMembers        GroupMember[]
+
+  @@map("users")
+}
+
+model UserPreferences {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dietaryTags         String[]
+  dislikedIngredients String[]
+  preferredMealTimes  String[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+// ─── Ингредиенты и холодильник ───────────────────────────────────────────────
+
+model Ingredient {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  nameRu   String
+  category String
+  emoji    String?
+
+  // Кастомные ингредиенты пользователей
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  isPublic Boolean @default(true)
+
+  dishes DishIngredient[]
+  fridge FridgeItem[]
+
+  @@map("ingredients")
+}
+
+model FridgeItem {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  groupId      String?
+  group        Group?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  addedAt      DateTime   @default(now())
+  expiresAt    DateTime?
+
+  @@map("fridge_items")
+}
+
+// ─── Блюда ───────────────────────────────────────────────────────────────────
+
+model Dish {
+  id          String         @id @default(cuid())
+  name        String
+  nameRu      String
+  description String?
+  categories  MealCategory[]
+  cuisine     String?
+  mealTime    String[]
+  tags        String[]
+  cookTime    Int?
+  difficulty  String?
+  calories    Int?
+  imageUrl    String?
+  videoUrl    String?
+  recipe      String?
+
+  // Владение: null = системное блюдо от MealBot
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  // Видимость
+  visibility DishVisibility @default(PRIVATE)
+
+  // Группа: к какой группе принадлежит рецепт
+  groupId String?
+  group   Group?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  ingredients DishIngredient[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("dishes")
+}
+
+model DishIngredient {
+  id           String     @id @default(cuid())
+  dishId       String
+  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  amount       String?
+  optional     Boolean    @default(false)
+
+  @@unique([dishId, ingredientId])
+  @@map("dish_ingredients")
+}
+
+// ─── Группы ──────────────────────────────────────────────────────────────────
+
+model Group {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  avatarUrl   String?
+  type        GroupType @default(REGULAR)
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members     GroupMember[]
+  dishes      Dish[]
+  fridgeItems FridgeItem[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String    @id @default(cuid())
+  groupId  String
+  group    Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+// ─── Чат ─────────────────────────────────────────────────────────────────────
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   // user | assistant
+  content   String
+  platform  String   // web | telegram
+  createdAt DateTime @default(now())
+
+  @@map("chat_messages")
 }

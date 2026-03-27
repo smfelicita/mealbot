@@ -8,11 +8,15 @@ export default function FridgePage() {
   const [search, setSearch] = useState('')
   const [showPicker, setShowPicker] = useState(false)
   const [loadingAdd, setLoadingAdd] = useState(null)
+  const [familyGroupId, setFamilyGroupId] = useState(null)
   const { fridge, setFridge, addToFridge, removeFromFridge } = useStore()
   const { show, Toast } = useToast()
 
   useEffect(() => {
-    api.getFridge().then(setFridge).catch(()=>{})
+    api.getFridge().then(data => {
+      setFridge(data.items)
+      setFamilyGroupId(data.familyGroupId || null)
+    }).catch(()=>{})
     api.getIngredients().then(setAllIngredients).catch(()=>{})
   }, [])
 
@@ -58,7 +62,7 @@ export default function FridgePage() {
   return (
     <div>
       <div className="top-bar">
-        <span className="top-bar-logo">🧊 Холодильник</span>
+        <span className="top-bar-logo">🧊 {familyGroupId ? 'Семейный холодильник' : 'Холодильник'}</span>
         <div style={{flex:1}}/>
         {fridge.length > 0 && (
           <button className="btn btn-ghost btn-sm" onClick={clearAll} style={{color:'var(--text3)'}}>Очистить</button>
@@ -80,6 +84,7 @@ export default function FridgePage() {
           <>
             <p style={{fontSize:13,color:'var(--text2)',marginBottom:16}}>
               {fridge.length} {fridge.length===1?'продукт':fridge.length<5?'продукта':'продуктов'} в холодильнике
+              {familyGroupId && <span style={{marginLeft:8,color:'var(--accent)',fontWeight:600}}>· Общий с семьёй</span>}
             </p>
             {Object.entries(grouped).map(([cat, items]) => (
               <div key={cat} style={{marginBottom:20}}>
