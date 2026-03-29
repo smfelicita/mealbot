@@ -58,6 +58,12 @@ export default function AuthPage() {
           </button>
         </p>
       </div>
+      <p style={{marginTop:20,fontSize:13,color:'var(--text3)',textAlign:'center'}}>
+        <button className="btn-ghost" style={{padding:0,fontSize:13,color:'var(--text3)'}}
+          onClick={() => navigate('/')}>
+          Продолжить без регистрации →
+        </button>
+      </p>
     </div>
   )
 }

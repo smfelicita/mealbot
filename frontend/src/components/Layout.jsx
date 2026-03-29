@@ -1,4 +1,5 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useStore } from '../store'
 
 const TABS = [
   { to: '/',           icon: '🏠', label: 'Главная' },
@@ -10,8 +11,17 @@ const TABS = [
 ]
 
 export default function Layout() {
+  const token = useStore(s => s.token)
+  const navigate = useNavigate()
+
   return (
     <div className="app-layout">
+      {!token && (
+        <div className="guest-banner">
+          <span>Войдите, чтобы открыть холодильник, рецепты и группы</span>
+          <button className="btn btn-primary btn-sm" onClick={() => navigate('/auth')}>Войти</button>
+        </div>
+      )}
       <div className="main-content">
         <Outlet />
       </div>

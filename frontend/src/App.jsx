@@ -23,19 +23,19 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
+        <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="dishes" element={<DishesPage />} />
           <Route path="dishes/:id" element={<DishDetailPage />} />
-          <Route path="fridge" element={<FridgePage />} />
+          <Route path="fridge" element={<RequireAuth><FridgePage /></RequireAuth>} />
           <Route path="chat" element={<ChatPage />} />
-          <Route path="my-recipes" element={<MyRecipesPage />} />
-          <Route path="my-recipes/new" element={<RecipeFormPage />} />
-          <Route path="my-recipes/:id/edit" element={<RecipeFormPage />} />
-          <Route path="groups" element={<GroupsPage />} />
-          <Route path="groups/new" element={<GroupFormPage />} />
-          <Route path="groups/:id" element={<GroupDetailPage />} />
-          <Route path="groups/:id/edit" element={<GroupFormPage />} />
+          <Route path="my-recipes" element={<RequireAuth><MyRecipesPage /></RequireAuth>} />
+          <Route path="my-recipes/new" element={<RequireAuth><RecipeFormPage /></RequireAuth>} />
+          <Route path="my-recipes/:id/edit" element={<RequireAuth><RecipeFormPage /></RequireAuth>} />
+          <Route path="groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
+          <Route path="groups/new" element={<RequireAuth><GroupFormPage /></RequireAuth>} />
+          <Route path="groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
+          <Route path="groups/:id/edit" element={<RequireAuth><GroupFormPage /></RequireAuth>} />
         </Route>
       </Routes>
     </BrowserRouter>
