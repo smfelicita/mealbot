@@ -54,14 +54,14 @@ async function getSearchIds(q) {
   const rows = await prisma.$queryRaw`
     SELECT DISTINCT d.id
     FROM dishes d
-    LEFT JOIN dish_ingredients di ON di.dish_id = d.id
-    LEFT JOIN ingredients i ON i.id = di.ingredient_id
+    LEFT JOIN dish_ingredients di ON di."dishId" = d.id
+    LEFT JOIN ingredients i ON i.id = di."ingredientId"
     WHERE
-      d.name_ru ILIKE ${likeQ}
+      d."nameRu" ILIKE ${likeQ}
       OR d.description ILIKE ${likeQ}
-      OR similarity(d.name_ru, ${q}) > 0.25
+      OR similarity(d."nameRu", ${q}) > 0.25
       OR EXISTS (SELECT 1 FROM unnest(d.tags) t WHERE t ILIKE ${likeQ})
-      OR i.name_ru ILIKE ${likeQ}
+      OR i."nameRu" ILIKE ${likeQ}
   `
   return rows.map(r => r.id)
 }
