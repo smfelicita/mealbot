@@ -48,6 +48,24 @@ async function buildVisibilityFilter(userId) {
   }
 }
 
+// Полнотекстовый + нечёткий поиск через pg_trgm (raw SQL)
+async function getSearchIds(q) {
+  const likeQ = `%${q}%`
+  const rows = await prisma.$queryRaw`
+    SELECT DISTINCT d.id
+    FROM dishes d
+    LEFT JOIN dish_ingredients di ON di.dish_id = d.id
+    LEFT JOIN ingredients i ON i.id = di.ingredient_id
+    WHERE
+      d.name_ru ILIKE ${likeQ}
+      OR d.description ILIKE ${likeQ}
+      OR similarity(d.name_ru, ${q}) > 0.25
+      OR EXISTS (SELECT 1 FROM unnest(d.tags) t WHERE t ILIKE ${likeQ})
+      OR i.name_ru ILIKE ${likeQ}
+  `
+  return rows.map(r => r.id)
+}
+
 // GET /api/dishes — поиск и фильтрация
 // Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode
 router.get('/', optionalAuth, async (req, res, next) => {
@@ -56,11 +74,16 @@ router.get('/', optionalAuth, async (req, res, next) => {
 
     const visibilityFilter = await buildVisibilityFilter(req.userId)
 
+    const baseWhere = { ...visibilityFilter, ...buildBaseFilter({ mealTime, category, tags, cuisine }) }
+    if (q) {
+      const ids = await getSearchIds(q)
+      baseWhere.id = { in: ids }
+    }
+
     if (fridgeMode === 'true') {
       if (!req.userId) {
         return res.status(401).json({ error: 'Войдите для режима холодильника' })
       }
-      // Для fridgeMode учитываем семейный холодильник
       const familyMembership = await prisma.groupMember.findFirst({
         where: { userId: req.userId, group: { type: 'FAMILY' } },
         select: { groupId: true },
@@ -76,7 +99,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
 
       const allDishes = await prisma.dish.findMany({
         include: { ingredients: { include: { ingredient: true } } },
-        where: { ...visibilityFilter, ...buildBaseFilter({ q, mealTime, category, tags, cuisine }) },
+        where: baseWhere,
         orderBy: { nameRu: 'asc' },
       })
 
@@ -91,8 +114,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
     const ingredientIds = ingredients ? ingredients.split(',').filter(Boolean) : null
 
     const where = {
-      ...visibilityFilter,
-      ...buildBaseFilter({ q, mealTime, category, tags, cuisine }),
+      ...baseWhere,
       ...(ingredientIds?.length
         ? { ingredients: { some: { ingredientId: { in: ingredientIds } } } }
         : {}),
@@ -282,16 +304,8 @@ router.delete('/:id', auth, async (req, res, next) => {
   }
 })
 
-function buildBaseFilter({ q, mealTime, category, tags, cuisine }) {
+function buildBaseFilter({ mealTime, category, tags, cuisine }) {
   const where = {}
-  if (q) {
-    where.OR = [
-      { nameRu: { contains: q, mode: 'insensitive' } },
-      { description: { contains: q, mode: 'insensitive' } },
-      { tags: { has: q.toLowerCase() } },
-      { ingredients: { some: { ingredient: { nameRu: { contains: q, mode: 'insensitive' } } } } },
-    ]
-  }
   if (mealTime) where.mealTime = { has: mealTime }
   if (category) where.categories = { has: category }
   if (cuisine) where.cuisine = { contains: cuisine, mode: 'insensitive' }
