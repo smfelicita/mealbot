@@ -2,17 +2,18 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 
 const TABS = [
-  { to: '/',           icon: '🏠', label: 'Главная' },
-  { to: '/dishes',     icon: '🍽️', label: 'Блюда'   },
-  { to: '/fridge',     icon: '🧊', label: 'Холодильник' },
-  { to: '/my-recipes', icon: '📖', label: 'Рецепты' },
-  { to: '/groups',     icon: '👥', label: 'Группы'  },
-  { to: '/chat',       icon: '✨', label: 'ИИ-чат'  },
+  { to: '/',           icon: '🏠', label: 'Главная',      auth: false },
+  { to: '/dishes',     icon: '🍽️', label: 'Рецепты',      auth: false },
+  { to: '/fridge',     icon: '🧊', label: 'Холодильник',  auth: false },
+  { to: '/my-recipes', icon: '📖', label: 'Мои рецепты',  auth: true  },
+  { to: '/groups',     icon: '👥', label: 'Группы',       auth: true  },
+  { to: '/chat',       icon: '✨', label: 'ИИ-чат',       auth: false },
 ]
 
 export default function Layout() {
   const token = useStore(s => s.token)
   const navigate = useNavigate()
+  const tabs = TABS.filter(t => !t.auth || token)
 
   return (
     <div className="app-layout">
@@ -26,7 +27,7 @@ export default function Layout() {
         <Outlet />
       </div>
       <nav className="bottom-nav">
-        {TABS.map(t => (
+        {tabs.map(t => (
           <NavLink key={t.to} to={t.to} end={t.to === '/'}>
             <span className="nav-icon">{t.icon}</span>
             {t.label}
