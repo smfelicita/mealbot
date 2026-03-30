@@ -36,6 +36,7 @@ export default function DishDetailPage() {
   const { show, Toast } = useToast()
   const [dish, setDish] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showNutrition, setShowNutrition] = useState(false)
 
   useEffect(() => {
     api.getDish(id).then(setDish).catch(() => navigate('/dishes')).finally(() => setLoading(false))
@@ -187,21 +188,59 @@ export default function DishDetailPage() {
           <>
             <h2 className="section-title" style={{ fontSize: 18 }}>🛒 Ингредиенты</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-              {dish.ingredients.map(ing => (
-                <div key={ing.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '6px 12px', background: 'var(--bg3)',
-                  border: '1px solid var(--border)', borderRadius: 20,
-                  fontSize: 13, fontWeight: 600,
-                }}>
-                  {ing.emoji && <span>{ing.emoji}</span>}
-                  {ing.name}
-                  {ing.amount && <span style={{ color: 'var(--text2)', fontWeight: 400 }}> — {ing.amount}</span>}
-                  {ing.optional && <span style={{ color: 'var(--text3)', fontSize: 11 }}> (опц.)</span>}
-                </div>
-              ))}
+              {dish.ingredients.map(ing => {
+                const amountStr = ing.toTaste ? 'по вкусу'
+                  : ing.amountValue && ing.unit ? `${ing.amountValue} ${ing.unit}`
+                  : ing.amount || null
+                return (
+                  <div key={ing.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 12px', background: 'var(--bg3)',
+                    border: '1px solid var(--border)', borderRadius: 20,
+                    fontSize: 13, fontWeight: 600,
+                  }}>
+                    {ing.emoji && <span>{ing.emoji}</span>}
+                    {ing.name}
+                    {amountStr && <span style={{ color: 'var(--text2)', fontWeight: 400 }}> — {amountStr}</span>}
+                    {ing.optional && <span style={{ color: 'var(--text3)', fontSize: 11 }}> (опц.)</span>}
+                  </div>
+                )
+              })}
             </div>
           </>
+        )}
+
+        {/* КБЖУ */}
+        {dish.nutrition && (
+          <div style={{ marginBottom: 24 }}>
+            <button type="button" style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 14, fontWeight: 700, color: 'var(--text1)', padding: 0, marginBottom: 12,
+            }} onClick={() => setShowNutrition(v => !v)}>
+              🔥 КБЖУ <span style={{ fontSize: 12, color: 'var(--text2)', fontWeight: 400 }}>(на блюдо)</span>
+              <span style={{ marginLeft: 4, fontSize: 12 }}>{showNutrition ? '▲' : '▼'}</span>
+            </button>
+            {showNutrition && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                {[
+                  { label: 'Калории', value: `${dish.nutrition.calories} ккал`, icon: '🔥' },
+                  { label: 'Белки', value: `${dish.nutrition.protein} г`, icon: '💪' },
+                  { label: 'Жиры', value: `${dish.nutrition.fat} г`, icon: '🫒' },
+                  { label: 'Углеводы', value: `${dish.nutrition.carbs} г`, icon: '🌾' },
+                ].map(item => (
+                  <div key={item.label} style={{
+                    background: 'var(--bg3)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', padding: '10px 8px', textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text1)' }}>{item.value}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {dish.recipe && (

@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
+const { calculateNutrition } = require('../utils/nutrition')
 
 // Вспомогательная — список groupId где user является участником
 async function getMemberGroupIds(userId) {
@@ -219,6 +220,9 @@ router.post('/', auth, async (req, res, next) => {
             create: ingredients.map(ing => ({
               ingredientId: ing.id,
               amount: ing.amount || null,
+              amountValue: ing.amountValue ? Number(ing.amountValue) : null,
+              unit: ing.unit || null,
+              toTaste: ing.toTaste || false,
               optional: ing.optional || false,
             })),
           },
@@ -226,6 +230,15 @@ router.post('/', auth, async (req, res, next) => {
       },
       include: { ingredients: { include: { ingredient: true } } },
     })
+
+    // Автоматический расчёт калорий если не введены вручную
+    if (!calories && dish.ingredients.length) {
+      const nutrition = calculateNutrition(dish.ingredients)
+      if (nutrition) {
+        await prisma.dish.update({ where: { id: dish.id }, data: { calories: nutrition.calories } })
+        dish.calories = nutrition.calories
+      }
+    }
 
     res.status(201).json(formatDish(dish))
   } catch (err) {
@@ -277,6 +290,9 @@ router.put('/:id', auth, async (req, res, next) => {
             create: ingredients.map(ing => ({
               ingredientId: ing.id,
               amount: ing.amount || null,
+              amountValue: ing.amountValue ? Number(ing.amountValue) : null,
+              unit: ing.unit || null,
+              toTaste: ing.toTaste || false,
               optional: ing.optional || false,
             })),
           },
@@ -284,6 +300,15 @@ router.put('/:id', auth, async (req, res, next) => {
       },
       include: { ingredients: { include: { ingredient: true } } },
     })
+
+    // Пересчитать калории если ингредиенты изменились и calories не передан вручную
+    if (ingredients !== undefined && !calories && updated.ingredients.length) {
+      const nutrition = calculateNutrition(updated.ingredients)
+      if (nutrition) {
+        await prisma.dish.update({ where: { id: updated.id }, data: { calories: nutrition.calories } })
+        updated.calories = nutrition.calories
+      }
+    }
 
     res.json(formatDish(updated))
   } catch (err) {
@@ -317,6 +342,7 @@ function buildBaseFilter({ mealTime, category, tags, cuisine }) {
 }
 
 function formatDish(dish) {
+  const nutrition = dish.ingredients?.length ? calculateNutrition(dish.ingredients) : null
   return {
     id: dish.id,
     name: dish.nameRu,
@@ -328,6 +354,7 @@ function formatDish(dish) {
     cookTime: dish.cookTime,
     difficulty: dish.difficulty,
     calories: dish.calories,
+    nutrition,
     imageUrl: dish.imageUrl,
     videoUrl: dish.videoUrl,
     recipe: dish.recipe,
@@ -339,6 +366,9 @@ function formatDish(dish) {
       name: di.ingredient.nameRu,
       emoji: di.ingredient.emoji,
       amount: di.amount,
+      amountValue: di.amountValue,
+      unit: di.unit,
+      toTaste: di.toTaste,
       optional: di.optional,
     })),
   }

@@ -432,10 +432,12 @@ async function main() {
   console.log('Creating ingredients...')
   const ingredientMap = {}
   for (const ing of ingredients) {
+    const { name, nameRu, category, protein = null, fat = null, carbs = null, avgWeightG = null, isBasic = false, emoji = null } = ing
+    const data = { name, nameRu, category, protein, fat, carbs, avgWeightG, isBasic, emoji }
     const created = await prisma.ingredient.upsert({
-      where: { name: ing.name },
-      update: {},
-      create: { name: ing.name, nameRu: ing.nameRu, category: ing.category },
+      where: { name },
+      update: { nameRu, category, protein, fat, carbs, avgWeightG, isBasic, emoji },
+      create: data,
     })
     ingredientMap[ing.name] = created.id
   }
@@ -453,12 +455,13 @@ async function main() {
     const created = await prisma.dish.create({
       data: {
         ...dishData,
-        isPublic: true,
+        visibility: 'PUBLIC',
         authorId: null,
         ingredients: {
           create: dishIngredients.map(ing => ({
             ingredientId: ingredientMap[ing.name],
             amount: ing.amount,
+            toTaste: ing.amount === 'по вкусу' || ing.amount === 'щепотка',
           })),
         },
       },

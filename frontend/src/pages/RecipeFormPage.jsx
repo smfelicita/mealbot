@@ -27,7 +27,7 @@ const DIFFICULTIES = [
   { value: 'hard', label: 'Сложно' },
 ]
 
-const UNITS = ['г', 'кг', 'шт', 'мл', 'л', 'ч.л.', 'ст.л.', 'щепотка', 'зубчик', 'веточка', 'по вкусу']
+const UNITS = ['г', 'мл', 'шт', 'зубчик', 'пучок', 'щепотка']
 
 const CUISINES = ['Русская', 'Итальянская', 'Азиатская', 'Средиземноморская', 'Греческая', 'Французская', 'Мексиканская', 'Японская', 'Индийская', 'Европейская', 'Американская']
 
@@ -106,7 +106,10 @@ export default function RecipeFormPage() {
           setSelectedGroupId(dish.groupId || '')
           setIngredients(dish.ingredients.map(ing => ({
             id: ing.id, name: ing.name, emoji: ing.emoji,
-            quantity: '', unit: '',
+            amountValue: ing.amountValue || '',
+            unit: ing.unit || 'г',
+            toTaste: ing.toTaste || false,
+            optional: ing.optional || false,
             amount: ing.amount || '',
           })))
         })
@@ -141,7 +144,7 @@ export default function RecipeFormPage() {
     if (ingredients.find(i => i.id === ing.id)) return
     setIngredients(prev => [...prev, {
       id: ing.id, name: ing.nameRu, emoji: ing.emoji,
-      quantity: '', unit: 'г', amount: '', optional: false,
+      amountValue: '', unit: 'г', toTaste: false, optional: false, amount: '',
     }])
   }
 
@@ -153,11 +156,15 @@ export default function RecipeFormPage() {
     setIngredients(prev => prev.map(i => {
       if (i.id !== ingId) return i
       const updated = { ...i, [key]: value }
-      // Пересобираем amount из quantity + unit
-      if (key === 'quantity' || key === 'unit') {
-        const q = key === 'quantity' ? value : updated.quantity
-        const u = key === 'unit' ? value : updated.unit
-        updated.amount = u === 'по вкусу' ? 'по вкусу' : q ? `${q} ${u}`.trim() : ''
+      // Пересобираем строковый amount для совместимости
+      if (key === 'amountValue' || key === 'unit' || key === 'toTaste') {
+        if (updated.toTaste) {
+          updated.amount = 'по вкусу'
+        } else {
+          const q = updated.amountValue
+          const u = updated.unit
+          updated.amount = q ? `${q} ${u}`.trim() : ''
+        }
       }
       return updated
     }))
@@ -222,7 +229,14 @@ export default function RecipeFormPage() {
         cookTime: form.cookTime ? Number(form.cookTime) : null,
         calories: form.calories ? Number(form.calories) : null,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-        ingredients: ingredients.map(i => ({ id: i.id, amount: i.amount, optional: i.optional || false })),
+        ingredients: ingredients.map(i => ({
+          id: i.id,
+          amount: i.amount || null,
+          amountValue: i.amountValue ? Number(i.amountValue) : null,
+          unit: i.toTaste ? null : (i.unit || null),
+          toTaste: i.toTaste || false,
+          optional: i.optional || false,
+        })),
         groupId: selectedGroupId || null,
         visibility: form.visibility,
       }
@@ -435,24 +449,25 @@ export default function RecipeFormPage() {
                   <span style={{ flex: 1, fontSize: 13, fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {ing.name}
                   </span>
-                  {/* Количество */}
-                  <input type="number" className="input" placeholder="0"
-                    style={{ width: 56, padding: '4px 8px', fontSize: 12 }}
-                    value={ing.quantity}
-                    onChange={e => updateIngredient(ing.id, 'quantity', e.target.value)} />
-                  {/* Единица */}
-                  <select className="input" style={{ width: 90, padding: '4px 6px', fontSize: 12, appearance: 'auto' }}
-                    value={ing.unit}
-                    onChange={e => updateIngredient(ing.id, 'unit', e.target.value)}>
-                    {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                  </select>
-                  {/* Опционально */}
+                  {/* По вкусу */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <div className={`toggle ${ing.optional ? 'on' : ''}`}
+                    <div className={`toggle ${ing.toTaste ? 'on' : ''}`}
                       style={{ width: 28, height: 16, cursor: 'pointer', flexShrink: 0 }}
-                      onClick={() => updateIngredient(ing.id, 'optional', !ing.optional)} />
-                    <span style={{ fontSize: 10, color: 'var(--text2)', whiteSpace: 'nowrap' }}>опц.</span>
+                      onClick={() => updateIngredient(ing.id, 'toTaste', !ing.toTaste)} />
+                    <span style={{ fontSize: 10, color: 'var(--text2)', whiteSpace: 'nowrap' }}>вкус</span>
                   </div>
+                  {/* Количество + единица (скрываем если toTaste) */}
+                  {!ing.toTaste && (<>
+                    <input type="number" className="input" placeholder="0"
+                      style={{ width: 54, padding: '4px 6px', fontSize: 12 }}
+                      value={ing.amountValue}
+                      onChange={e => updateIngredient(ing.id, 'amountValue', e.target.value)} />
+                    <select className="input" style={{ width: 80, padding: '4px 6px', fontSize: 12, appearance: 'auto' }}
+                      value={ing.unit}
+                      onChange={e => updateIngredient(ing.id, 'unit', e.target.value)}>
+                      {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </>)}
                   <button type="button" className="btn btn-ghost btn-sm"
                     style={{ padding: '4px 6px', color: 'var(--text3)', flexShrink: 0 }}
                     onClick={() => removeIngredient(ing.id)}>✕</button>
