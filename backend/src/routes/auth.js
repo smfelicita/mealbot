@@ -3,6 +3,30 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { z } = require('zod')
 const prisma = require('../lib/prisma')
+const { Resend } = require('resend')
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+const FROM = process.env.RESEND_FROM || 'MealBot <noreply@smarussya.ru>'
+
+async function sendEmailCode(email, code) {
+  if (!resend) {
+    console.log(`[EMAIL STUB] Код подтверждения для ${email}: ${code}`)
+    return
+  }
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: 'Ваш код подтверждения — MealBot',
+    html: `
+      <div style="font-family:sans-serif;max-width:420px;margin:0 auto">
+        <h2 style="color:#e85d04">🍽️ MealBot</h2>
+        <p>Ваш код подтверждения:</p>
+        <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#e85d04;margin:16px 0">${code}</div>
+        <p style="color:#888;font-size:13px">Код действителен 15 минут. Если вы не регистрировались — просто проигнорируйте это письмо.</p>
+      </div>
+    `,
+  })
+}
 
 const signToken = (userId, role) =>
   jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: '30d' })
@@ -49,7 +73,7 @@ router.post('/register', async (req, res, next) => {
 
     const code = genCode()
     await saveCode('email', email, code)
-    console.log(`[EMAIL STUB] Код подтверждения для ${email}: ${code}`)
+    await sendEmailCode(email, code)
 
     res.status(201).json({ requireVerification: true, email })
   } catch (err) {
@@ -99,7 +123,7 @@ router.post('/resend-email-code', async (req, res, next) => {
 
     const code = genCode()
     await saveCode('email', email, code)
-    console.log(`[EMAIL STUB] Повторный код для ${email}: ${code}`)
+    await sendEmailCode(email, code)
 
     res.json({ sent: true })
   } catch (err) { next(err) }
