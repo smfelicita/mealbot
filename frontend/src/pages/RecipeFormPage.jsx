@@ -352,8 +352,8 @@ export default function RecipeFormPage() {
           </div>
         </div>
 
-        {/* Сложность + Время + Калории */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+        {/* Сложность + Время */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div className="form-group">
             <label>Сложность</label>
             <select className="input" value={form.difficulty}
@@ -367,11 +367,6 @@ export default function RecipeFormPage() {
             <label>Время (мин)</label>
             <input type="number" className="input" placeholder="30" min="1"
               value={form.cookTime} onChange={e => setField('cookTime', e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Калории</label>
-            <input type="number" className="input" placeholder="350" min="0"
-              value={form.calories} onChange={e => setField('calories', e.target.value)} />
           </div>
         </div>
 
