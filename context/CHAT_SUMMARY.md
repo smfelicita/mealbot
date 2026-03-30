@@ -4,7 +4,7 @@
 - **Пользователь:** Марина (marinasirota / smfelicita на GitHub)
 - **Mac** (Air-Marina), зона Amsterdam
 - **Опыт:** прикладной middle веб-разработчик — PHP, HTML, JS, CSS, 1C-Bitrix, WordPress
-- **Новое для неё:** Node.js, React, Prisma, деплой на Railway/Vercel, Git SSH
+- **Новое для неё:** Node.js, React, Prisma, деплой на VPS, Linux
 
 ---
 
@@ -14,8 +14,7 @@
 Кроссплатформенный сервис для выбора блюд:
 - Поиск по названию, продуктам, тегам
 - Инклюзивная фильтрация (показать блюдо если хотя бы один продукт совпадает)
-- Режим холодильника — эксклюзивная фильтрация (показать блюдо только если ВСЕ
-  его продукты есть в холодильнике)
+- Режим холодильника — эксклюзивная фильтрация (только если ВСЕ продукты есть)
 - Холодильник заполняется через приложение или Telegram-бот
 - ИИ-помощник который помогает выбрать блюдо в диалоге
 
@@ -23,51 +22,60 @@
 - Приоритет: ИИ-помощник → Telegram-бот → веб-сайт → мобилка
 - Стек: Node.js (не PHP — для нового проекта)
 - Мобилка: PWA (не Flutter — проще для старта)
-- Хостинг: Railway + Vercel (не свой сервер)
+- Хостинг: VPS Timeweb (IP 194.87.130.215) + nginx + PM2
 
-### Что было сделано
-Claude написал весь код проекта с нуля:
-1. Полный бэкенд (Express + Prisma + PostgreSQL)
-2. Полный фронтенд (React + PWA, тёмная тема)
-3. Telegram-бот с полным функционалом
-4. База из 20 блюд и 37 продуктов с рецептами на русском
-5. Пошаговую HTML-инструкцию по запуску (mealbot-guide.html)
+---
 
-### Процесс запуска (что прошли)
-1. Установка Node.js, Git, VS Code ✅
-2. Создание БД на Supabase ✅
-3. Получение API-ключа Anthropic ✅
-4. Исправление ошибок в seed.js ✅
-5. Исправление JSX ошибки в useToast ✅
-6. Решение проблемы с GitHub (SSH вместо пароля) ✅
-7. Решение проблемы с подключением к Supabase ✅
-8. Код загружен на GitHub ✅
+## Текущий статус (актуально)
 
-### Текущий статус
-- Бэкенд: запускается локально ✅ (DATABASE_URL исправлен)
-- Фронтенд: запускается локально ✅
-- Деплой на Railway/Vercel: ещё не сделан
-- Telegram-бот: ещё не настроен
+### Деплой
+- **Домен:** https://smarussya.ru (A-запись → 194.87.130.215)
+- **HTTPS:** Let's Encrypt через certbot ✅
+- **Backend:** PM2, порт 3001, nginx reverse proxy ✅
+- **Frontend:** собранные статические файлы через nginx ✅
+- **GitHub:** git@github.com:smfelicita/mealbot.git
+
+### Реализованные функции
+Смотри TASKS.md — там актуальный список
+
+### Авторизация (реализовано)
+- Email + пароль + подтверждение кода (отправка через Resend)
+- Телефон + SMS-код (заглушка — код в логи PM2)
+- Google OAuth (@react-oauth/google фронт + google-auth-library бэк)
+
+### Что настроено на сервере
+- `RESEND_API_KEY` — реальная отправка email через Resend
+- `GOOGLE_CLIENT_ID` — Google OAuth
+- `VITE_GOOGLE_CLIENT_ID` — в frontend/.env для сборки
 
 ---
 
 ## Важные детали
 
 ### Файлы которые НЕ должны быть в git
-- `backend/.env` — содержит DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY
-- `telegram-bot/.env` — содержит TELEGRAM_BOT_TOKEN
+- `backend/.env` — все секреты бэкенда
+- `frontend/.env` — VITE_* переменные
+- `telegram-bot/.env` — токен бота
 
 ### Supabase проект
 - Project ID: `nwtqeytmmqmkwqafkgin`
-- Используй Transaction Pooler (не прямое подключение)
-- URL pooler: `aws-0-eu-central-1.pooler.supabase.com:6543`
+- Pooler URL: `aws-1-eu-west-2.pooler.supabase.com:5432` (Session Pooler!)
+- ВАЖНО: использовать Session Pooler (порт 5432), НЕ Transaction Pooler (6543)
 
 ### GitHub
 - Username: smfelicita
 - Repo: `git@github.com:smfelicita/mealbot.git`
 - Настроен SSH
 
-### Философия проекта
-Марина раньше работала с PHP/WordPress (всё на одном сервере).
-Объяснили зачем бэк и фронт на разных серверах.
-PWA выбрали вместо нативного приложения для старта.
+### Деплой после изменений
+```bash
+# Локально:
+git add -A && git commit -m "..." && git push
+
+# На сервере:
+cd /var/www/mealbot && git pull
+cd backend && npm install
+pm2 restart mealbot-backend
+# Если изменился фронтенд:
+cd ../frontend && npm run build
+```

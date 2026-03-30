@@ -3,57 +3,70 @@
 ## backend/.env
 
 ```env
-# 1. Строка подключения к Supabase
-# Брать из: supabase.com → Project Settings → Database → Transaction pooler → URI
-# ВАЖНО: использовать Transaction Pooler (порт 6543), не прямое подключение (порт 5432)
-DATABASE_URL="postgresql://postgres.PROJECT_ID:ПАРОЛЬ@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+# 1. БД Supabase — Session Pooler, порт 5432 (НЕ 6543!)
+DATABASE_URL="postgresql://postgres.PROJECT_ID:ПАРОЛЬ@aws-1-eu-west-2.pooler.supabase.com:5432/postgres"
+DIRECT_URL="postgresql://postgres.PROJECT_ID:ПАРОЛЬ@aws-1-eu-west-2.pooler.supabase.com:5432/postgres"
 
-# 2. Секрет для JWT токенов — любая случайная строка от 32 символов
-# Сгенерировать: openssl rand -hex 32
-JWT_SECRET="любой_длинный_случайный_текст_минимум_32_символа"
+# 2. JWT секрет (минимум 32 символа)
+JWT_SECRET="любой_длинный_случайный_текст"
 
-# 3. API ключ Anthropic для ИИ-помощника
-# Взять из: console.anthropic.com → API Keys
-# Начинается с sk-ant-
-ANTHROPIC_API_KEY="sk-ant-api03-..."
+# 3. Anthropic API (ИИ-помощник)
+ANTHROPIC_API_KEY="sk-ant-..."
 
 # 4. URL фронтенда (для CORS)
-# Локально:
-FRONTEND_URL="http://localhost:5173"
-# После деплоя на Vercel заменить на:
-# FRONTEND_URL="https://mealbot.vercel.app"
+FRONTEND_URL="https://smarussya.ru"
 
-# 5. Порт сервера (можно не менять)
+# 5. Порт
 PORT=3001
+
+# 6. Supabase Storage (загрузка фото/видео)
+SUPABASE_URL="https://PROJECT_ID.supabase.co"
+SUPABASE_SERVICE_KEY="eyJ..."   # service_role key (не anon!)
+
+# 7. Telegram Bot
+TELEGRAM_BOT_TOKEN="7123456789:AAH..."
+TELEGRAM_WEBHOOK_URL="https://smarussya.ru/telegram/webhook"
+
+# 8. Google OAuth
+GOOGLE_CLIENT_ID="xxxxxxxxx.apps.googleusercontent.com"
+
+# 9. Resend (отправка email)
+RESEND_API_KEY="re_..."
+RESEND_FROM="MealBot <noreply@smarussya.ru>"
 ```
 
----
+## frontend/.env
+
+```env
+VITE_API_URL="https://smarussya.ru/api"
+VITE_GOOGLE_CLIENT_ID="xxxxxxxxx.apps.googleusercontent.com"
+```
 
 ## telegram-bot/.env
 
 ```env
-# 1. Токен бота от @BotFather в Telegram
 TELEGRAM_BOT_TOKEN="7123456789:AAH..."
-
-# 2. Та же строка что в backend/.env
 DATABASE_URL="postgresql://..."
-
-# 3. Тот же ключ что в backend/.env
 ANTHROPIC_API_KEY="sk-ant-..."
+API_URL="http://localhost:3001"
 ```
 
 ---
 
-## Переменные для Railway (деплой бэкенда)
+## Настройка Google OAuth (инструкция)
 
-Добавить в Railway → Variables:
-- `DATABASE_URL` — строка Supabase (Transaction Pooler)
-- `JWT_SECRET` — секрет
-- `ANTHROPIC_API_KEY` — ключ Anthropic
-- `FRONTEND_URL` — URL Vercel после деплоя
-- `PORT` — 3001
+1. console.cloud.google.com → создать проект
+2. APIs & Services → Credentials → Create → OAuth 2.0 Client ID
+3. Application type: Web application
+4. Authorized JavaScript origins:
+   - `http://localhost:5173`
+   - `https://smarussya.ru`
+5. Скопировать Client ID → в backend/.env (GOOGLE_CLIENT_ID) и frontend/.env (VITE_GOOGLE_CLIENT_ID)
+6. Пересобрать frontend после добавления VITE_GOOGLE_CLIENT_ID
 
-## Переменные для Vercel (деплой фронтенда)
+## Настройка Resend (отправка email)
 
-Добавить в Vercel → Environment Variables:
-- `VITE_API_URL` — URL Railway бэкенда (например https://mealbot-production.up.railway.app)
+1. resend.com → зарегистрироваться
+2. API Keys → Create API Key → скопировать в RESEND_API_KEY
+3. Domains → Add Domain → `smarussya.ru` → добавить DNS-записи в Timeweb
+4. После верификации домена письма будут отправляться с noreply@smarussya.ru

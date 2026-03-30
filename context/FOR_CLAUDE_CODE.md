@@ -1,29 +1,59 @@
-# Инструкция для Claude Code в VS Code
+# Инструкция для Claude Code
 
 Привет! Ты продолжаешь работу над проектом MealBot.
-Прочитай все файлы в этой папке `context/` чтобы войти в курс дела.
+Прочитай файлы в `context/` чтобы войти в курс дела.
 
 ## С чего начать
 
-1. Прочитай `README.md` — структура проекта
-2. Прочитай `CHAT_SUMMARY.md` — история и текущий статус
-3. Прочитай `TASKS.md` — что сделано и что осталось
-4. Прочитай `ERRORS.md` — все ошибки которые уже были решены
-5. Прочитай `ENV_TEMPLATE.md` — что нужно в .env файлах
+1. Прочитай `CHAT_SUMMARY.md` — история, текущий статус, деплой
+2. Прочитай `TASKS.md` — что сделано и что осталось
+3. Прочитай `ERRORS.md` — все ошибки которые уже были решены
+4. Прочитай `ENV_TEMPLATE.md` — что нужно в .env файлах
 
-## Текущие приоритеты
+## Стек и структура
 
-1. Убедиться что бэкенд запускается (`cd backend && npm run dev`)
-2. Убедиться что фронтенд запускается (`cd frontend && npm run dev`)
-3. Задеплоить на Railway (бэкенд) и Vercel (фронтенд)
-4. Настроить Telegram-бот
+- **Backend:** Node.js + Express + Prisma + PostgreSQL (Supabase), порт 3001
+- **Frontend:** React + Vite + PWA (тёмная тема)
+- **Telegram-бот:** node-telegram-bot-api
+- **Деплой:** VPS Timeweb, nginx + PM2, домен smarussya.ru
+
+```
+backend/src/
+  routes/    — auth, dishes, fridge, groups, chat, ingredients, upload
+  middleware/— auth.js (authMiddleware, optionalAuth, requireRole)
+  lib/       — prisma.js (singleton!), supabase.js
+frontend/src/
+  pages/     — ChatPage, DishesPage, FridgePage, GroupsPage, AuthPage, ...
+  components/— DishCard, Layout, DishModal
+  api/index.js
+  store/index.js — Zustand
+```
 
 ## Важные правила
 
-- Файлы `.env` существуют локально, НЕ в git — не трогай их без необходимости
-- Supabase использует Transaction Pooler (порт 6543), не прямое подключение
-- `useToast` должен быть с расширением `.jsx` (не `.js`)!
+### БД
+- DATABASE_URL: Session Pooler, порт **5432** (НЕ 6543 Transaction Pooler!)
+- `prisma db push` использует DIRECT_URL (тоже 5432)
+- Seed: `DATABASE_URL="...5432..." npm run db:seed`
+- `prisma migrate dev` не работает в non-interactive среде → использовать `prisma db push --accept-data-loss`
+
+### PrismaClient
+- Всегда импортировать из `../lib/prisma`, никогда не создавать `new PrismaClient()` в роутах
+
+### Код
+- `useToast` должен быть с расширением `.jsx` (не `.js`)
 - seed.js использует `findFirst` + `create` (не `upsert`) для блюд
+- `.env` файлы НЕ в git
+
+### Авторизация
+- `authMiddleware` — требует JWT, 401 если нет
+- `optionalAuth` — не блокирует, кладёт userId если токен есть
+- `requireRole('ADMIN')` — после authMiddleware
+
+### Email
+- Отправка через Resend (пакет `resend`)
+- Если `RESEND_API_KEY` не задан — fallback на console.log (заглушка)
+- Домен smarussya.ru нужно верифицировать в Resend для отправки на любые адреса
 
 ## Пользователь
 
