@@ -94,6 +94,17 @@ model Ingredient {
   category String
   emoji    String?
 
+  // КБЖУ на 100г
+  protein Float?
+  fat     Float?
+  carbs   Float?
+
+  // Средний вес 1 штуки в граммах (для unit="шт")
+  avgWeightG Float?
+
+  // Базовый продукт (соль, масло и т.д.) — не требуется в холодильнике
+  isBasic Boolean @default(false)
+
   // Кастомные ингредиенты пользователей
   authorId String?
   author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
@@ -162,7 +173,10 @@ model DishIngredient {
   dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
   ingredientId String
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
-  amount       String?
+  amount       String?    // текстовое отображение (для совместимости)
+  amountValue  Float?     // числовое значение
+  unit         String?    // г | мл | шт | зубчик | пучок | щепотка
+  toTaste      Boolean    @default(false) // "по вкусу" — не считается в КБЖУ и фильтрации
   optional     Boolean    @default(false)
 
   @@unique([dishId, ingredientId])
