@@ -35,6 +35,7 @@ export const api = {
     return request(`/dishes?${q}`)
   },
   getDish: (id) => request(`/dishes/${id}`),
+  getRecommendations: (id) => request(`/dishes/${id}/recommendations`),
 
   // Ingredients
   getIngredients: (q = '') =>

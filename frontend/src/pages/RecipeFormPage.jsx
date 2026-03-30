@@ -62,6 +62,7 @@ export default function RecipeFormPage() {
   const [groups, setGroups] = useState([])
   const [selectedGroupId, setSelectedGroupId] = useState(location.state?.groupId || '')
   const [saving, setSaving] = useState(false)
+  const [images, setImages] = useState([])
   const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadingVideo, setUploadingVideo] = useState(false)
   const [showIngPicker, setShowIngPicker] = useState(false)
@@ -102,6 +103,10 @@ export default function RecipeFormPage() {
             tags: (dish.tags || []).join(', '),
             visibility: dish.visibility || 'PRIVATE',
           })
+          const existingImages = dish.images?.length
+            ? dish.images
+            : (dish.imageUrl ? [dish.imageUrl] : [])
+          setImages(existingImages)
           setCuisineInput(dish.cuisine || '')
           setSelectedGroupId(dish.groupId || '')
           setIngredients(dish.ingredients.map(ing => ({
@@ -195,14 +200,38 @@ export default function RecipeFormPage() {
     }
   }
 
-  async function uploadImage(file) {
+  async function uploadImages(files) {
+    const fileArr = Array.from(files).slice(0, 10 - images.length)
+    if (!fileArr.length) return
     setUploadingImage(true)
     try {
-      const { url } = await api.uploadFile('image', file)
-      setField('imageUrl', url)
-      show('Фото загружено', 'success')
+      const urls = await Promise.all(fileArr.map(f => api.uploadFile('image', f).then(r => r.url)))
+      setImages(prev => {
+        const next = [...prev, ...urls]
+        setField('imageUrl', next[0] || '')
+        return next
+      })
+      show(urls.length > 1 ? `Загружено ${urls.length} фото` : 'Фото загружено', 'success')
     } catch (e) { show(e.message, 'error') }
     finally { setUploadingImage(false) }
+  }
+
+  function setMainImage(idx) {
+    setImages(prev => {
+      const next = [...prev]
+      const [img] = next.splice(idx, 1)
+      next.unshift(img)
+      setField('imageUrl', next[0] || '')
+      return next
+    })
+  }
+
+  function removeImage(idx) {
+    setImages(prev => {
+      const next = prev.filter((_, i) => i !== idx)
+      setField('imageUrl', next[0] || '')
+      return next
+    })
   }
 
   async function uploadVideo(file) {
@@ -219,12 +248,20 @@ export default function RecipeFormPage() {
     const errs = {}
     if (!form.nameRu.trim()) errs.nameRu = 'Укажите название'
     if (!form.categories.length) errs.categories = 'Выберите хотя бы одну категорию'
-    if (Object.keys(errs).length) { setErrors(errs); return }
+    if (Object.keys(errs).length) {
+      setErrors(errs)
+      setTimeout(() => {
+        document.querySelector('.form-error')?.closest('.form-group')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 50)
+      return
+    }
 
     setSaving(true)
     try {
       const data = {
         ...form,
+        imageUrl: images[0] || null,
+        images,
         cuisine: cuisineInput.trim() || null,
         cookTime: form.cookTime ? Number(form.cookTime) : null,
         calories: form.calories ? Number(form.calories) : null,
@@ -379,28 +416,49 @@ export default function RecipeFormPage() {
 
         {/* Фото */}
         <div className="form-group">
-          <label>Фото блюда</label>
-          {form.imageUrl ? (
-            <div style={{ position: 'relative' }}>
-              <img src={form.imageUrl} alt="" style={{
-                width: '100%', maxHeight: 200, objectFit: 'cover',
-                borderRadius: 'var(--radius-sm)', display: 'block',
-              }} />
-              <button type="button" onClick={() => setField('imageUrl', '')} style={{
-                position: 'absolute', top: 8, right: 8,
-                background: 'rgba(0,0,0,.65)', color: '#fff', border: 'none',
-                borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12,
-              }}>
-                Удалить
-              </button>
+          <label>Фото блюда <span style={{ color: 'var(--text3)', fontSize: 11, fontWeight: 400 }}>до 10 штук</span></label>
+          {images.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+              {images.map((url, idx) => (
+                <div key={url} style={{ position: 'relative', width: 90, height: 90, flexShrink: 0 }}>
+                  <img src={url} alt="" style={{
+                    width: '100%', height: '100%', objectFit: 'cover',
+                    borderRadius: 8,
+                    border: idx === 0 ? '2.5px solid var(--accent)' : '2px solid var(--border)',
+                  }} />
+                  {idx === 0 ? (
+                    <div style={{
+                      position: 'absolute', top: 4, left: 4,
+                      background: 'var(--accent)', color: '#fff',
+                      borderRadius: 4, padding: '1px 5px', fontSize: 10, fontWeight: 700,
+                    }}>★</div>
+                  ) : (
+                    <button type="button" onClick={() => setMainImage(idx)} title="Сделать главным" style={{
+                      position: 'absolute', top: 4, left: 4,
+                      background: 'rgba(0,0,0,.55)', color: '#fff',
+                      border: 'none', borderRadius: 4, padding: '1px 5px', fontSize: 10, cursor: 'pointer',
+                    }}>★</button>
+                  )}
+                  <button type="button" onClick={() => removeImage(idx)} style={{
+                    position: 'absolute', top: 4, right: 4,
+                    background: 'rgba(0,0,0,.65)', color: '#fff',
+                    border: 'none', borderRadius: '50%', width: 20, height: 20,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, cursor: 'pointer', padding: 0,
+                  }}>✕</button>
+                </div>
+              ))}
             </div>
-          ) : (
+          )}
+          {images.length < 10 && (
             <label style={{ cursor: 'pointer', display: 'block' }}>
               <div className="btn btn-secondary" style={{ width: '100%', pointerEvents: 'none' }}>
-                {uploadingImage ? <span className="loader" style={{ width: 14, height: 14 }} /> : '📷 Загрузить фото'}
+                {uploadingImage
+                  ? <span className="loader" style={{ width: 14, height: 14 }} />
+                  : images.length === 0 ? '📷 Загрузить фото' : '📷 Добавить ещё'}
               </div>
-              <input type="file" accept="image/*" hidden
-                onChange={e => e.target.files[0] && uploadImage(e.target.files[0])} />
+              <input type="file" accept="image/*" multiple hidden
+                onChange={e => e.target.files?.length && uploadImages(e.target.files)} />
             </label>
           )}
         </div>

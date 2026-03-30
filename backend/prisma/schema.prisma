@@ -145,6 +145,7 @@ model Dish {
   difficulty  String?
   calories    Int?
   imageUrl    String?
+  images      String[]
   videoUrl    String?
   recipe      String?
 

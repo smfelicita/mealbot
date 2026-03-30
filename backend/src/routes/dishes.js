@@ -184,7 +184,7 @@ router.post('/', auth, async (req, res, next) => {
   try {
     const {
       nameRu, description, categories, cuisine, mealTime, tags,
-      cookTime, difficulty, calories, imageUrl, videoUrl,
+      cookTime, difficulty, calories, imageUrl, images, videoUrl,
       recipe, ingredients, visibility = 'PRIVATE', groupId,
     } = req.body
 
@@ -210,6 +210,7 @@ router.post('/', auth, async (req, res, next) => {
         difficulty: difficulty || null,
         calories: calories ? Number(calories) : null,
         imageUrl: imageUrl || null,
+        images: images || [],
         videoUrl: videoUrl || null,
         recipe: recipe || null,
         visibility,
@@ -255,7 +256,7 @@ router.put('/:id', auth, async (req, res, next) => {
 
     const {
       nameRu, description, categories, cuisine, mealTime, tags,
-      cookTime, difficulty, calories, imageUrl, videoUrl,
+      cookTime, difficulty, calories, imageUrl, images, videoUrl,
       recipe, ingredients, visibility, groupId,
     } = req.body
 
@@ -281,6 +282,7 @@ router.put('/:id', auth, async (req, res, next) => {
         ...(difficulty !== undefined && { difficulty: difficulty || null }),
         ...(calories !== undefined && { calories: calories ? Number(calories) : null }),
         ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
+        ...(images !== undefined && { images: images || [] }),
         ...(videoUrl !== undefined && { videoUrl: videoUrl || null }),
         ...(recipe !== undefined && { recipe: recipe || null }),
         ...(visibility !== undefined && { visibility }),
@@ -329,6 +331,87 @@ router.delete('/:id', auth, async (req, res, next) => {
   }
 })
 
+// GET /api/dishes/:id/recommendations
+router.get('/:id/recommendations', optionalAuth, async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const dish = await prisma.dish.findUnique({
+      where: { id },
+      include: { ingredients: { select: { ingredientId: true, toTaste: true } } },
+    })
+    if (!dish) return res.status(404).json({ error: 'Блюдо не найдено' })
+
+    const dishIngIds = dish.ingredients.filter(di => !di.toTaste).map(di => di.ingredientId)
+
+    const visibilityFilter = await buildVisibilityFilter(req.userId)
+
+    // Все видимые блюда (кроме текущего) с ингредиентами
+    const allDishes = await prisma.dish.findMany({
+      where: { ...visibilityFilter, id: { not: id } },
+      include: {
+        ingredients: {
+          include: { ingredient: { select: { id: true, nameRu: true, emoji: true } } },
+        },
+      },
+    })
+
+    // Похожие: >= 2 общих ингредиента
+    const similar = allDishes
+      .map(d => {
+        const dIngIds = d.ingredients.filter(di => !di.toTaste).map(di => di.ingredientId)
+        const overlap = dIngIds.filter(iid => dishIngIds.includes(iid)).length
+        return { d, overlap }
+      })
+      .filter(({ overlap }) => overlap >= 2)
+      .sort((a, b) => b.overlap - a.overlap)
+      .slice(0, 6)
+      .map(({ d }) => formatDish(d))
+
+    if (!req.userId) {
+      return res.json({ similar, fromFridge: null, nearMatch: null })
+    }
+
+    // Семейный холодильник или личный
+    const familyMembership = await prisma.groupMember.findFirst({
+      where: { userId: req.userId, group: { type: 'FAMILY' } },
+      select: { groupId: true },
+    })
+    const fridgeWhere = familyMembership
+      ? { groupId: familyMembership.groupId }
+      : { userId: req.userId, groupId: null }
+    const fridgeItems = await prisma.fridgeItem.findMany({ where: fridgeWhere, select: { ingredientId: true } })
+    const fridgeIds = fridgeItems.map(f => f.ingredientId)
+
+    // Из холодильника: все обязательные ингредиенты есть
+    const fromFridge = allDishes
+      .filter(d => {
+        const required = d.ingredients.filter(di => !di.toTaste && !di.optional).map(di => di.ingredientId)
+        return required.length > 0 && required.every(iid => fridgeIds.includes(iid))
+      })
+      .slice(0, 6)
+      .map(d => formatDish(d))
+
+    // nearMatch: 1–3 недостающих обязательных ингредиента
+    const nearMatch = allDishes
+      .map(d => {
+        const required = d.ingredients.filter(di => !di.toTaste && !di.optional)
+        const missing = required.filter(di => !fridgeIds.includes(di.ingredientId))
+        return {
+          dish: formatDish(d),
+          missing: missing.map(di => ({ name: di.ingredient.nameRu, emoji: di.ingredient.emoji })),
+        }
+      })
+      .filter(({ missing }) => missing.length >= 1 && missing.length <= 3)
+      .sort((a, b) => a.missing.length - b.missing.length)
+      .slice(0, 6)
+
+    res.json({ similar, fromFridge, nearMatch })
+  } catch (err) {
+    next(err)
+  }
+})
+
 function buildBaseFilter({ mealTime, category, tags, cuisine }) {
   const where = {}
   if (mealTime) where.mealTime = { has: mealTime }
@@ -356,6 +439,7 @@ function formatDish(dish) {
     calories: dish.calories,
     nutrition,
     imageUrl: dish.imageUrl,
+    images: dish.images || [],
     videoUrl: dish.videoUrl,
     recipe: dish.recipe,
     visibility: dish.visibility,

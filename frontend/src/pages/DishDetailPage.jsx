@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { useToast } from '../hooks/useToast.jsx'
+import DishCard from '../components/DishCard'
 
 function renderMarkdown(text) {
   if (!text) return ''
@@ -37,9 +38,12 @@ export default function DishDetailPage() {
   const [dish, setDish] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showNutrition, setShowNutrition] = useState(false)
+  const [activeImage, setActiveImage] = useState(null)
+  const [recs, setRecs] = useState(null)
 
   useEffect(() => {
     api.getDish(id).then(setDish).catch(() => navigate('/dishes')).finally(() => setLoading(false))
+    api.getRecommendations(id).then(setRecs).catch(() => {})
   }, [id])
 
   async function handleDelete() {
@@ -60,12 +64,15 @@ export default function DishDetailPage() {
   )
   if (!dish) return null
 
+  const dishImages = dish.images?.length ? dish.images : (dish.imageUrl ? [dish.imageUrl] : [])
+  const displayImage = activeImage || dishImages[0] || null
+
   return (
     <div className="fade-in">
       <div style={{ background: 'var(--bg2)', borderBottom: '1px solid var(--border)' }}>
-        {dish.imageUrl ? (
+        {displayImage ? (
           <div style={{ position: 'relative', height: 220, overflow: 'hidden' }}>
-            <img src={dish.imageUrl} alt={dish.name}
+            <img src={displayImage} alt={dish.name}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             <div style={{
               position: 'absolute', inset: 0,
@@ -123,6 +130,19 @@ export default function DishDetailPage() {
                 <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.5 }}>{dish.description}</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {dishImages.length > 1 && (
+          <div style={{ display: 'flex', gap: 8, padding: '0 16px 12px', overflowX: 'auto' }}>
+            {dishImages.map((url, idx) => (
+              <div key={url} onClick={() => setActiveImage(url)} style={{
+                flexShrink: 0, width: 64, height: 64, borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
+                border: (activeImage || dishImages[0]) === url ? '2.5px solid var(--accent)' : '2px solid var(--border)',
+              }}>
+                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            ))}
           </div>
         )}
 
@@ -253,7 +273,59 @@ export default function DishDetailPage() {
           </>
         )}
       </div>
+
+      {/* Рекомендации */}
+      {recs && (
+        <div style={{ paddingBottom: 32 }}>
+          {/* Из холодильника */}
+          {user && recs.fromFridge?.length > 0 && (
+            <RecSection title="🧊 Из холодильника" dishes={recs.fromFridge} navigate={navigate} />
+          )}
+
+          {/* Купите ещё */}
+          {user && recs.nearMatch?.length > 0 && (
+            <div style={{ padding: '20px 16px 0' }}>
+              <h2 className="section-title" style={{ fontSize: 16, marginBottom: 12 }}>🛒 Купите ещё немного</h2>
+              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+                {recs.nearMatch.map(({ dish: d, missing }) => (
+                  <div key={d.id} style={{ flexShrink: 0, width: 200 }}>
+                    <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+                    <div style={{
+                      marginTop: 6, padding: '5px 8px',
+                      background: 'var(--bg3)', borderRadius: 'var(--radius-sm)',
+                      fontSize: 11, color: 'var(--text2)',
+                    }}>
+                      Нет: {missing.map(m => `${m.emoji || ''} ${m.name}`.trim()).join(', ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Похожие */}
+          {recs.similar?.length > 0 && (
+            <RecSection title="🍽 Похожие рецепты" dishes={recs.similar} navigate={navigate} />
+          )}
+        </div>
+      )}
+
       {Toast}
+    </div>
+  )
+}
+
+function RecSection({ title, dishes, navigate }) {
+  return (
+    <div style={{ padding: '20px 16px 0' }}>
+      <h2 className="section-title" style={{ fontSize: 16, marginBottom: 12 }}>{title}</h2>
+      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+        {dishes.map(d => (
+          <div key={d.id} style={{ flexShrink: 0, width: 200 }}>
+            <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
