@@ -56,6 +56,10 @@ model User {
   name             String?
   telegramId       String?   @unique
   telegramUsername String?
+  phone            String?   @unique
+  phoneVerified    Boolean   @default(false)
+  googleId         String?   @unique
+  emailVerified    Boolean   @default(false)
   role             Role      @default(USER)
   subscriptionUntil DateTime?
   createdAt        DateTime  @default(now())
@@ -215,6 +219,20 @@ model GroupMember {
 
   @@unique([groupId, userId])
   @@map("group_members")
+}
+
+// ─── Коды верификации ─────────────────────────────────────────────────────────
+
+model VerificationCode {
+  id        String    @id @default(cuid())
+  type      String    // "email" | "phone"
+  target    String    // email или номер телефона
+  code      String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("verification_codes")
 }
 
 // ─── Чат ─────────────────────────────────────────────────────────────────────

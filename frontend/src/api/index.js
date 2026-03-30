@@ -27,6 +27,16 @@ export const api = {
   login: (email, password) =>
     request('/auth/login', { method: 'POST', body: { email, password } }),
   me: () => request('/auth/me'),
+  verifyEmail: (email, code) =>
+    request('/auth/verify-email', { method: 'POST', body: { email, code } }),
+  resendEmailCode: (email) =>
+    request('/auth/resend-email-code', { method: 'POST', body: { email } }),
+  sendPhoneCode: (phone) =>
+    request('/auth/send-phone-code', { method: 'POST', body: { phone } }),
+  verifyPhone: (phone, code, name) =>
+    request('/auth/verify-phone', { method: 'POST', body: { phone, code, name } }),
+  googleAuth: (token) =>
+    request('/auth/google', { method: 'POST', body: { token } }),
 
   // Dishes
   getDishes: (params = {}) => {
