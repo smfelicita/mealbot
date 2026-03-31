@@ -98,4 +98,14 @@ export const api = {
   sendMessage: (message, platform = 'web') =>
     request('/chat', { method: 'POST', body: { message, platform } }),
   clearChat: () => request('/chat', { method: 'DELETE' }),
+
+  // Meal plans
+  getMealPlans: () => request('/meal-plans'),
+  addMealPlan: (data) => request('/meal-plans', { method: 'POST', body: data }),
+  deleteMealPlan: (id) => request(`/meal-plans/${id}`, { method: 'DELETE' }),
+
+  // Push subscriptions
+  getVapidKey: () => request('/push/vapid-key'),
+  subscribePush: (sub) => request('/push/subscribe', { method: 'POST', body: sub }),
+  unsubscribePush: (endpoint) => request('/push/unsubscribe', { method: 'DELETE', body: { endpoint } }),
 }

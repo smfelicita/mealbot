@@ -12,6 +12,7 @@ import RecipeFormPage from './pages/RecipeFormPage'
 import GroupsPage from './pages/GroupsPage'
 import GroupDetailPage from './pages/GroupDetailPage'
 import GroupFormPage from './pages/GroupFormPage'
+import MealPlanPage from './pages/MealPlanPage'
 
 function RequireAuth({ children }) {
   const token = useStore(s => s.token)
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="groups/new" element={<RequireAuth><GroupFormPage /></RequireAuth>} />
           <Route path="groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
           <Route path="groups/:id/edit" element={<RequireAuth><GroupFormPage /></RequireAuth>} />
+          <Route path="plan" element={<RequireAuth><MealPlanPage /></RequireAuth>} />
         </Route>
       </Routes>
     </BrowserRouter>

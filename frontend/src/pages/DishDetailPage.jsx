@@ -4,6 +4,7 @@ import { api } from '../api'
 import { useStore } from '../store'
 import { useToast } from '../hooks/useToast.jsx'
 import DishCard from '../components/DishCard'
+import AddToPlanModal from '../components/AddToPlanModal'
 
 function renderMarkdown(text) {
   if (!text) return ''
@@ -40,10 +41,17 @@ export default function DishDetailPage() {
   const [showNutrition, setShowNutrition] = useState(false)
   const [activeImage, setActiveImage] = useState(null)
   const [recs, setRecs] = useState(null)
+  const [showPlanModal, setShowPlanModal] = useState(false)
+  const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
 
   useEffect(() => {
     api.getDish(id).then(setDish).catch(() => navigate('/dishes')).finally(() => setLoading(false))
     api.getRecommendations(id).then(setRecs).catch(() => {})
+    if (user) {
+      api.getGroups().then(groups => {
+        setHasFamilyGroup(groups.some(g => g.type === 'FAMILY'))
+      }).catch(() => {})
+    }
   }, [id])
 
   async function handleDelete() {
@@ -82,6 +90,11 @@ export default function DishDetailPage() {
               <button className="btn btn-icon" style={{ background: 'rgba(0,0,0,.5)', borderColor: 'transparent' }}
                 onClick={() => navigate(-1)}>←</button>
               <div style={{ flex: 1 }} />
+              {user && (
+                <button className="btn btn-secondary btn-sm"
+                  style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)' }}
+                  onClick={() => setShowPlanModal(true)}>📅 В план</button>
+              )}
               {isOwner && (
                 <>
                   <button className="btn btn-secondary btn-sm"
@@ -107,14 +120,19 @@ export default function DishDetailPage() {
               <button className="btn btn-icon" onClick={() => navigate(-1)}>←</button>
               <span style={{ fontSize: 13, color: 'var(--text2)' }}>Назад</span>
               <div style={{ flex: 1 }} />
-              {isOwner && (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-secondary btn-sm"
-                    onClick={() => navigate(`/my-recipes/${id}/edit`)}>Редактировать</button>
-                  <button className="btn btn-ghost btn-sm" style={{ color: '#f87171' }}
-                    onClick={handleDelete}>Удалить</button>
-                </div>
-              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {user && (
+                  <button className="btn btn-secondary btn-sm" onClick={() => setShowPlanModal(true)}>📅 В план</button>
+                )}
+                {isOwner && (
+                  <>
+                    <button className="btn btn-secondary btn-sm"
+                      onClick={() => navigate(`/my-recipes/${id}/edit`)}>Редактировать</button>
+                    <button className="btn btn-ghost btn-sm" style={{ color: '#f87171' }}
+                      onClick={handleDelete}>Удалить</button>
+                  </>
+                )}
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 16 }}>
               <div style={{
@@ -308,6 +326,15 @@ export default function DishDetailPage() {
             <RecSection title="🍽 Похожие рецепты" dishes={recs.similar} navigate={navigate} />
           )}
         </div>
+      )}
+
+      {showPlanModal && dish && (
+        <AddToPlanModal
+          dish={dish}
+          hasFamilyGroup={hasFamilyGroup}
+          onClose={() => setShowPlanModal(false)}
+          onAdded={() => show('Добавлено в план!')}
+        />
       )}
 
       {Toast}

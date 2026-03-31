@@ -10,12 +10,12 @@ export default defineConfig({
       // Используем наш manifest.json из public/
       manifest: false,
       includeAssets: ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png'],
-      workbox: {
-        // Кешируем все статические файлы
+      // injectManifest: кастомный SW для push-уведомлений
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,woff}'],
-        // API-запросы не кешируем (данные должны быть свежими)
-        navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api/],
       },
     }),
   ],

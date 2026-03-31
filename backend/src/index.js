@@ -11,6 +11,8 @@ const chatRoutes = require('./routes/chat')
 const ingredientRoutes = require('./routes/ingredients')
 const uploadRoutes = require('./routes/upload')
 const groupRoutes = require('./routes/groups')
+const mealPlanRoutes = require('./routes/meal-plans')
+const pushRoutes = require('./routes/push')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -35,6 +37,8 @@ app.use('/api/chat', chatRoutes)
 app.use('/api/ingredients', ingredientRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/groups', groupRoutes)
+app.use('/api/meal-plans', mealPlanRoutes)
+app.use('/api/push', pushRoutes)
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }))

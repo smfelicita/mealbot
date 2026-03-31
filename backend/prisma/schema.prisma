@@ -47,6 +47,14 @@ enum MealCategory {
   DRINK
 }
 
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+  ANYTIME
+}
+
 // ─── Пользователи ────────────────────────────────────────────────────────────
 
 model User {
@@ -72,6 +80,8 @@ model User {
   customIngredients   Ingredient[]
   ownedGroups         Group[]
   groupMembers        GroupMember[]
+  mealPlans           MealPlan[]
+  pushSubscriptions   PushSubscription[]
 
   @@map("users")
 }
@@ -165,6 +175,7 @@ model Dish {
   group   Group?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
   ingredients DishIngredient[]
+  mealPlans   MealPlan[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -204,6 +215,7 @@ model Group {
   members     GroupMember[]
   dishes      Dish[]
   fridgeItems FridgeItem[]
+  mealPlans   MealPlan[]
 
   @@map("groups")
 }
@@ -233,6 +245,36 @@ model VerificationCode {
   createdAt DateTime  @default(now())
 
   @@map("verification_codes")
+}
+
+// ─── План питания ─────────────────────────────────────────────────────────────
+
+model MealPlan {
+  id        String    @id @default(cuid())
+  dishId    String
+  dish      Dish      @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId   String?
+  group     Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  mealType  MealType  @default(ANYTIME)
+  date      DateTime?
+  note      String?
+  createdAt DateTime  @default(now())
+
+  @@map("meal_plans")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@map("push_subscriptions")
 }
 
 // ─── Чат ─────────────────────────────────────────────────────────────────────

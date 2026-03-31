@@ -5,9 +5,8 @@ import InstallPrompt from './InstallPrompt'
 const TABS = [
   { to: '/',           icon: '🏠', label: 'Главная',      auth: false },
   { to: '/dishes',     icon: '🍽️', label: 'Рецепты',      auth: false },
-  { to: '/fridge',     icon: '🧊', label: 'Холодильник',  auth: false },
-  { to: '/my-recipes', icon: '📖', label: 'Мои рецепты',  auth: true  },
-  { to: '/groups',     icon: '👥', label: 'Группы',       auth: true  },
+  { to: '/fridge',     icon: '🧊', label: 'Холодильник',  auth: true  },
+  { to: '/plan',       icon: '📅', label: 'План',          auth: true  },
   { to: '/chat',       icon: '✨', label: 'ИИ-чат',       auth: false },
 ]
 
