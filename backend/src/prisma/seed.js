@@ -16,11 +16,11 @@ const dishes = [
     calories: 220,
     recipe: `## Омлет классический\n\n**Ингредиенты:**\n- 3 яйца\n- 50 мл молока\n- Соль, перец\n- Сливочное масло\n\n**Приготовление:**\n1. Взбить яйца с молоком, посолить\n2. Растопить масло на сковороде\n3. Вылить смесь, готовить 3-4 минуты\n4. Сложить пополам, подавать горячим`,
     ingredients: [
-      { name: 'chicken_egg', amount: '3 шт' },
-      { name: 'milk', amount: '50 мл' },
-      { name: 'butter', amount: '1 ст.л.' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'black_pepper', amount: 'по вкусу' },
+      { name: 'chicken_egg', amount: '3 шт',   amountValue: 3,  unit: 'шт' },
+      { name: 'milk',        amount: '50 мл',  amountValue: 50, unit: 'мл' },
+      { name: 'butter',      amount: '1 ст.л.', amountValue: 15, unit: 'г' },
+      { name: 'salt',        amount: 'по вкусу' },
+      { name: 'black_pepper',amount: 'по вкусу' },
     ],
   },
   {
@@ -36,12 +36,12 @@ const dishes = [
     calories: 250,
     recipe: `## Омлет с помидорами\n\n**Приготовление:**\n1. Нарезать помидор кубиками\n2. Взбить яйца с молоком\n3. Обжарить помидоры 1-2 минуты\n4. Залить яичной смесью, готовить до готовности`,
     ingredients: [
-      { name: 'chicken_egg', amount: '3 шт' },
-      { name: 'milk', amount: '50 мл' },
-      { name: 'butter', amount: '1 ст.л.' },
-      { name: 'tomato', amount: '1 шт' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'dill', amount: 'пучок' },
+      { name: 'chicken_egg', amount: '3 шт',   amountValue: 3,  unit: 'шт' },
+      { name: 'milk',        amount: '50 мл',  amountValue: 50, unit: 'мл' },
+      { name: 'butter',      amount: '1 ст.л.', amountValue: 15, unit: 'г' },
+      { name: 'tomato',      amount: '1 шт',   amountValue: 1,  unit: 'шт' },
+      { name: 'salt',        amount: 'по вкусу' },
+      { name: 'dill',        amount: 'пучок',  amountValue: 1,  unit: 'пучок' },
     ],
   },
   {
@@ -57,9 +57,9 @@ const dishes = [
     calories: 180,
     recipe: `## Яичница глазунья\n\n1. Разогреть сковороду с маслом\n2. Разбить яйца, посолить\n3. Жарить 3-4 минуты`,
     ingredients: [
-      { name: 'chicken_egg', amount: '2-3 шт' },
-      { name: 'butter', amount: '1 ч.л.' },
-      { name: 'salt', amount: 'по вкусу' },
+      { name: 'chicken_egg', amount: '2 шт',  amountValue: 2, unit: 'шт' },
+      { name: 'butter',      amount: '1 ч.л.', amountValue: 5, unit: 'г' },
+      { name: 'salt',        amount: 'по вкусу' },
     ],
   },
   {
@@ -75,10 +75,10 @@ const dishes = [
     calories: 300,
     recipe: `## Овсяная каша\n\n1. Залить овсянку молоком 1:2\n2. Варить 5-7 минут помешивая\n3. Добавить мёд и банан`,
     ingredients: [
-      { name: 'oatmeal', amount: '100 г' },
-      { name: 'milk', amount: '200 мл' },
-      { name: 'honey', amount: '1 ст.л.' },
-      { name: 'banana', amount: '1 шт' },
+      { name: 'oatmeal', amount: '100 г',   amountValue: 100, unit: 'г' },
+      { name: 'milk',    amount: '200 мл',  amountValue: 200, unit: 'мл' },
+      { name: 'honey',   amount: '1 ст.л.', amountValue: 25,  unit: 'г' },
+      { name: 'banana',  amount: '1 шт',    amountValue: 1,   unit: 'шт' },
     ],
   },
   {
@@ -94,12 +94,12 @@ const dishes = [
     calories: 350,
     recipe: `## Блины\n\n**Ингредиенты:**\n- 2 яйца\n- 500 мл молока\n- 1 стакан муки\n- 1 ст.л. сахара\n- Щепотка соли\n- 2 ст.л. масла\n\n**Приготовление:**\n1. Смешать яйца, молоко, муку, сахар, соль\n2. Добавить масло в тесто\n3. Жарить на горячей сковороде по 1-2 минуты с каждой стороны`,
     ingredients: [
-      { name: 'chicken_egg', amount: '2 шт' },
-      { name: 'milk', amount: '500 мл' },
-      { name: 'wheat_flour', amount: '1 стакан' },
-      { name: 'sugar', amount: '1 ст.л.' },
-      { name: 'salt', amount: 'щепотка' },
-      { name: 'butter', amount: '2 ст.л.' },
+      { name: 'chicken_egg',  amount: '2 шт',     amountValue: 2,   unit: 'шт' },
+      { name: 'milk',         amount: '500 мл',   amountValue: 500, unit: 'мл' },
+      { name: 'wheat_flour',  amount: '200 г',    amountValue: 200, unit: 'г' },
+      { name: 'sugar',        amount: '1 ст.л.',  amountValue: 15,  unit: 'г' },
+      { name: 'salt',         amount: 'щепотка' },
+      { name: 'butter',       amount: '2 ст.л.',  amountValue: 30,  unit: 'г' },
     ],
   },
   {
@@ -115,13 +115,13 @@ const dishes = [
     calories: 320,
     recipe: `## Сырники\n\n1. Смешать творог, яйца, муку, сахар, соль\n2. Сформировать лепёшки\n3. Обжарить на масле по 3 минуты с каждой стороны\n4. Подавать со сметаной`,
     ingredients: [
-      { name: 'cottage_cheese', amount: '500 г' },
-      { name: 'chicken_egg', amount: '2 шт' },
-      { name: 'wheat_flour', amount: '3 ст.л.' },
-      { name: 'sugar', amount: '2 ст.л.' },
-      { name: 'salt', amount: 'щепотка' },
-      { name: 'butter', amount: '2 ст.л.' },
-      { name: 'sour_cream', amount: 'для подачи' },
+      { name: 'cottage_cheese', amount: '500 г',   amountValue: 500, unit: 'г' },
+      { name: 'chicken_egg',    amount: '2 шт',    amountValue: 2,   unit: 'шт' },
+      { name: 'wheat_flour',    amount: '3 ст.л.', amountValue: 45,  unit: 'г' },
+      { name: 'sugar',          amount: '2 ст.л.', amountValue: 30,  unit: 'г' },
+      { name: 'salt',           amount: 'щепотка' },
+      { name: 'butter',         amount: '2 ст.л.', amountValue: 30,  unit: 'г' },
+      { name: 'sour_cream',     amount: 'по вкусу' },
     ],
   },
   {
@@ -137,13 +137,13 @@ const dishes = [
     calories: 180,
     recipe: `## Куриный суп\n\n1. Отварить курицу 40 минут, снять пену\n2. Добавить нарезанные морковь, лук, картофель\n3. Варить ещё 20 минут\n4. Посолить, добавить зелень`,
     ingredients: [
-      { name: 'chicken_breast', amount: '400 г' },
-      { name: 'potato', amount: '3 шт' },
-      { name: 'carrot', amount: '1 шт' },
-      { name: 'onion', amount: '1 шт' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'dill', amount: 'пучок' },
-      { name: 'parsley', amount: 'пучок' },
+      { name: 'chicken_breast', amount: '400 г',  amountValue: 400, unit: 'г' },
+      { name: 'potato',         amount: '3 шт',   amountValue: 3,   unit: 'шт' },
+      { name: 'carrot',         amount: '1 шт',   amountValue: 1,   unit: 'шт' },
+      { name: 'onion',          amount: '1 шт',   amountValue: 1,   unit: 'шт' },
+      { name: 'salt',           amount: 'по вкусу' },
+      { name: 'dill',           amount: 'пучок',  amountValue: 1,   unit: 'пучок' },
+      { name: 'parsley',        amount: 'пучок',  amountValue: 1,   unit: 'пучок' },
     ],
   },
   {
@@ -159,12 +159,12 @@ const dishes = [
     calories: 520,
     recipe: `## Паста карбонара\n\n1. Отварить пасту al dente\n2. Смешать яйца, тёртый сыр, перец\n3. Обжарить бекон\n4. Смешать горячую пасту с яичной смесью\n5. Подавать сразу`,
     ingredients: [
-      { name: 'pasta', amount: '200 г' },
-      { name: 'chicken_egg', amount: '3 шт' },
-      { name: 'parmesan', amount: '50 г' },
-      { name: 'bacon', amount: '100 г' },
-      { name: 'black_pepper', amount: 'по вкусу' },
-      { name: 'salt', amount: 'по вкусу' },
+      { name: 'pasta',       amount: '200 г', amountValue: 200, unit: 'г' },
+      { name: 'chicken_egg', amount: '3 шт',  amountValue: 3,   unit: 'шт' },
+      { name: 'parmesan',    amount: '50 г',  amountValue: 50,  unit: 'г' },
+      { name: 'bacon',       amount: '100 г', amountValue: 100, unit: 'г' },
+      { name: 'black_pepper',amount: 'по вкусу' },
+      { name: 'salt',        amount: 'по вкусу' },
     ],
   },
   {
@@ -180,11 +180,11 @@ const dishes = [
     calories: 380,
     recipe: `## Жареная картошка\n\n1. Нарезать картофель ломтиками\n2. Разогреть масло на сковороде\n3. Жарить 15-20 минут, перемешивая\n4. Добавить лук, жарить ещё 5 минут\n5. Посолить, добавить укроп`,
     ingredients: [
-      { name: 'potato', amount: '500 г' },
-      { name: 'onion', amount: '1 шт' },
-      { name: 'sunflower_oil', amount: '3 ст.л.' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'dill', amount: 'пучок' },
+      { name: 'potato',       amount: '500 г',   amountValue: 500, unit: 'г' },
+      { name: 'onion',        amount: '1 шт',    amountValue: 1,   unit: 'шт' },
+      { name: 'sunflower_oil',amount: '3 ст.л.', amountValue: 45,  unit: 'мл' },
+      { name: 'salt',         amount: 'по вкусу' },
+      { name: 'dill',         amount: 'пучок',   amountValue: 1,   unit: 'пучок' },
     ],
   },
   {
@@ -200,12 +200,12 @@ const dishes = [
     calories: 280,
     recipe: `## Рис с овощами\n\n1. Промыть и отварить рис\n2. Нарезать морковь, перец, лук\n3. Обжарить овощи 7-10 минут\n4. Смешать с рисом, посолить`,
     ingredients: [
-      { name: 'rice', amount: '200 г' },
-      { name: 'carrot', amount: '1 шт' },
-      { name: 'bell_pepper', amount: '1 шт' },
-      { name: 'onion', amount: '1 шт' },
-      { name: 'sunflower_oil', amount: '2 ст.л.' },
-      { name: 'salt', amount: 'по вкусу' },
+      { name: 'rice',         amount: '200 г',   amountValue: 200, unit: 'г' },
+      { name: 'carrot',       amount: '1 шт',    amountValue: 1,   unit: 'шт' },
+      { name: 'bell_pepper',  amount: '1 шт',    amountValue: 1,   unit: 'шт' },
+      { name: 'onion',        amount: '1 шт',    amountValue: 1,   unit: 'шт' },
+      { name: 'sunflower_oil',amount: '2 ст.л.', amountValue: 30,  unit: 'мл' },
+      { name: 'salt',         amount: 'по вкусу' },
     ],
   },
   {
@@ -221,13 +221,13 @@ const dishes = [
     calories: 220,
     recipe: `## Греческий салат\n\n1. Нарезать помидоры, огурцы, перец\n2. Добавить сыр фета кубиками\n3. Заправить оливковым маслом и лимоном\n4. Посолить, поперчить`,
     ingredients: [
-      { name: 'tomato', amount: '2 шт' },
-      { name: 'cucumber', amount: '1 шт' },
-      { name: 'bell_pepper', amount: '1 шт' },
-      { name: 'feta', amount: '100 г' },
-      { name: 'olive_oil', amount: '2 ст.л.' },
-      { name: 'lemon', amount: '1/2 шт' },
-      { name: 'salt', amount: 'по вкусу' },
+      { name: 'tomato',    amount: '2 шт',    amountValue: 2,   unit: 'шт' },
+      { name: 'cucumber',  amount: '1 шт',    amountValue: 1,   unit: 'шт' },
+      { name: 'bell_pepper',amount: '1 шт',   amountValue: 1,   unit: 'шт' },
+      { name: 'feta',      amount: '100 г',   amountValue: 100, unit: 'г' },
+      { name: 'olive_oil', amount: '2 ст.л.', amountValue: 30,  unit: 'мл' },
+      { name: 'lemon',     amount: '0.5 шт',  amountValue: 0.5, unit: 'шт' },
+      { name: 'salt',      amount: 'по вкусу' },
     ],
   },
   {
@@ -243,13 +243,13 @@ const dishes = [
     calories: 150,
     recipe: `## Грибной суп\n\n1. Обжарить грибы с луком\n2. Добавить нарезанный картофель\n3. Залить водой, варить 25 минут\n4. Добавить сметану, зелень`,
     ingredients: [
-      { name: 'mushrooms', amount: '300 г' },
-      { name: 'potato', amount: '3 шт' },
-      { name: 'onion', amount: '1 шт' },
-      { name: 'sour_cream', amount: '2 ст.л.' },
-      { name: 'butter', amount: '1 ст.л.' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'dill', amount: 'пучок' },
+      { name: 'mushrooms', amount: '300 г',   amountValue: 300, unit: 'г' },
+      { name: 'potato',    amount: '3 шт',    amountValue: 3,   unit: 'шт' },
+      { name: 'onion',     amount: '1 шт',    amountValue: 1,   unit: 'шт' },
+      { name: 'sour_cream',amount: '2 ст.л.', amountValue: 30,  unit: 'г' },
+      { name: 'butter',    amount: '1 ст.л.', amountValue: 15,  unit: 'г' },
+      { name: 'salt',      amount: 'по вкусу' },
+      { name: 'dill',      amount: 'пучок',   amountValue: 1,   unit: 'пучок' },
     ],
   },
   {
@@ -265,14 +265,14 @@ const dishes = [
     calories: 420,
     recipe: `## Тушёная говядина\n\n1. Обжарить говядину кусочками\n2. Добавить лук, морковь\n3. Добавить томаты, тушить 60-70 минут\n4. Посолить, поперчить`,
     ingredients: [
-      { name: 'beef', amount: '500 г' },
-      { name: 'onion', amount: '1 шт' },
-      { name: 'carrot', amount: '1 шт' },
-      { name: 'canned_tomatoes', amount: '400 г' },
-      { name: 'garlic', amount: '3 зубчика' },
-      { name: 'olive_oil', amount: '2 ст.л.' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'black_pepper', amount: 'по вкусу' },
+      { name: 'beef',           amount: '500 г',   amountValue: 500, unit: 'г' },
+      { name: 'onion',          amount: '1 шт',    amountValue: 1,   unit: 'шт' },
+      { name: 'carrot',         amount: '1 шт',    amountValue: 1,   unit: 'шт' },
+      { name: 'canned_tomatoes',amount: '400 г',   amountValue: 400, unit: 'г' },
+      { name: 'garlic',         amount: '3 зубчика', amountValue: 3, unit: 'зубчик' },
+      { name: 'olive_oil',      amount: '2 ст.л.', amountValue: 30,  unit: 'мл' },
+      { name: 'salt',           amount: 'по вкусу' },
+      { name: 'black_pepper',   amount: 'по вкусу' },
     ],
   },
   {
@@ -288,13 +288,13 @@ const dishes = [
     calories: 200,
     recipe: `## Жаркое из овощей\n\n1. Нарезать все овощи соломкой\n2. Обжарить на сильном огне 5-7 минут\n3. Добавить соевый соус, чеснок\n4. Подавать с рисом`,
     ingredients: [
-      { name: 'bell_pepper', amount: '2 шт' },
-      { name: 'carrot', amount: '1 шт' },
-      { name: 'mushrooms', amount: '200 г' },
-      { name: 'onion', amount: '1 шт' },
-      { name: 'garlic', amount: '2 зубчика' },
-      { name: 'soy_sauce', amount: '3 ст.л.' },
-      { name: 'sunflower_oil', amount: '2 ст.л.' },
+      { name: 'bell_pepper',  amount: '2 шт',    amountValue: 2,  unit: 'шт' },
+      { name: 'carrot',       amount: '1 шт',    amountValue: 1,  unit: 'шт' },
+      { name: 'mushrooms',    amount: '200 г',   amountValue: 200, unit: 'г' },
+      { name: 'onion',        amount: '1 шт',    amountValue: 1,  unit: 'шт' },
+      { name: 'garlic',       amount: '2 зубчика', amountValue: 2, unit: 'зубчик' },
+      { name: 'soy_sauce',    amount: '3 ст.л.', amountValue: 45, unit: 'мл' },
+      { name: 'sunflower_oil',amount: '2 ст.л.', amountValue: 30, unit: 'мл' },
     ],
   },
   {
@@ -310,12 +310,12 @@ const dishes = [
     calories: 450,
     recipe: `## Курица с рисом\n\n1. Замариновать курицу с чесноком и специями\n2. Обжарить до золотистой корочки\n3. Отварить рис\n4. Подавать вместе`,
     ingredients: [
-      { name: 'chicken_breast', amount: '400 г' },
-      { name: 'rice', amount: '200 г' },
-      { name: 'garlic', amount: '3 зубчика' },
-      { name: 'sunflower_oil', amount: '2 ст.л.' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'black_pepper', amount: 'по вкусу' },
+      { name: 'chicken_breast', amount: '400 г',     amountValue: 400, unit: 'г' },
+      { name: 'rice',           amount: '200 г',     amountValue: 200, unit: 'г' },
+      { name: 'garlic',         amount: '3 зубчика', amountValue: 3,   unit: 'зубчик' },
+      { name: 'sunflower_oil',  amount: '2 ст.л.',   amountValue: 30,  unit: 'мл' },
+      { name: 'salt',           amount: 'по вкусу' },
+      { name: 'black_pepper',   amount: 'по вкусу' },
     ],
   },
   {
@@ -331,11 +331,11 @@ const dishes = [
     calories: 260,
     recipe: `## Манная каша\n\n1. Вскипятить молоко\n2. Всыпать манку тонкой струйкой, помешивая\n3. Варить 5 минут\n4. Добавить масло, сахар по вкусу`,
     ingredients: [
-      { name: 'semolina', amount: '4 ст.л.' },
-      { name: 'milk', amount: '400 мл' },
-      { name: 'butter', amount: '1 ст.л.' },
-      { name: 'sugar', amount: '1 ст.л.' },
-      { name: 'salt', amount: 'щепотка' },
+      { name: 'semolina', amount: '60 г',    amountValue: 60,  unit: 'г' },
+      { name: 'milk',     amount: '400 мл',  amountValue: 400, unit: 'мл' },
+      { name: 'butter',   amount: '1 ст.л.', amountValue: 15,  unit: 'г' },
+      { name: 'sugar',    amount: '1 ст.л.', amountValue: 15,  unit: 'г' },
+      { name: 'salt',     amount: 'щепотка' },
     ],
   },
   {
@@ -351,9 +351,9 @@ const dishes = [
     calories: 280,
     recipe: `## Тост с сыром\n\n1. Поджарить хлеб\n2. Положить сыр сверху\n3. Отправить под гриль на 1-2 минуты\n4. Подавать горячим`,
     ingredients: [
-      { name: 'toast_bread', amount: '2 ломтика' },
-      { name: 'cheese', amount: '50 г' },
-      { name: 'butter', amount: '1 ч.л.' },
+      { name: 'toast_bread', amount: '2 ломтика', amountValue: 60, unit: 'г' },
+      { name: 'cheese',      amount: '50 г',      amountValue: 50, unit: 'г' },
+      { name: 'butter',      amount: '1 ч.л.',    amountValue: 5,  unit: 'г' },
     ],
   },
   {
@@ -369,14 +369,14 @@ const dishes = [
     calories: 220,
     recipe: `## Фасолевый суп\n\n1. Обжарить лук, морковь, чеснок\n2. Добавить фасоль, томаты\n3. Залить водой, варить 25 минут\n4. Посолить, добавить зелень`,
     ingredients: [
-      { name: 'canned_beans', amount: '400 г' },
-      { name: 'onion', amount: '1 шт' },
-      { name: 'carrot', amount: '1 шт' },
-      { name: 'garlic', amount: '2 зубчика' },
-      { name: 'canned_tomatoes', amount: '400 г' },
-      { name: 'olive_oil', amount: '2 ст.л.' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'parsley', amount: 'пучок' },
+      { name: 'canned_beans',   amount: '400 г',     amountValue: 400, unit: 'г' },
+      { name: 'onion',          amount: '1 шт',      amountValue: 1,   unit: 'шт' },
+      { name: 'carrot',         amount: '1 шт',      amountValue: 1,   unit: 'шт' },
+      { name: 'garlic',         amount: '2 зубчика', amountValue: 2,   unit: 'зубчик' },
+      { name: 'canned_tomatoes',amount: '400 г',     amountValue: 400, unit: 'г' },
+      { name: 'olive_oil',      amount: '2 ст.л.',   amountValue: 30,  unit: 'мл' },
+      { name: 'salt',           amount: 'по вкусу' },
+      { name: 'parsley',        amount: 'пучок',     amountValue: 1,   unit: 'пучок' },
     ],
   },
   {
@@ -392,12 +392,12 @@ const dishes = [
     calories: 260,
     recipe: `## Омлет со шпинатом\n\n1. Обжарить шпинат с чесноком 2 минуты\n2. Взбить яйца с молоком\n3. Залить шпинат яичной смесью\n4. Посыпать сыром, готовить под крышкой`,
     ingredients: [
-      { name: 'chicken_egg', amount: '3 шт' },
-      { name: 'spinach', amount: '100 г' },
-      { name: 'cheese', amount: '50 г' },
-      { name: 'garlic', amount: '1 зубчик' },
-      { name: 'butter', amount: '1 ст.л.' },
-      { name: 'salt', amount: 'по вкусу' },
+      { name: 'chicken_egg', amount: '3 шт',     amountValue: 3,   unit: 'шт' },
+      { name: 'spinach',     amount: '100 г',    amountValue: 100, unit: 'г' },
+      { name: 'cheese',      amount: '50 г',     amountValue: 50,  unit: 'г' },
+      { name: 'garlic',      amount: '1 зубчик', amountValue: 1,   unit: 'зубчик' },
+      { name: 'butter',      amount: '1 ст.л.',  amountValue: 15,  unit: 'г' },
+      { name: 'salt',        amount: 'по вкусу' },
     ],
   },
   {
@@ -413,14 +413,14 @@ const dishes = [
     calories: 380,
     recipe: `## Паста в томатном соусе\n\n1. Отварить пасту\n2. Обжарить чеснок и лук\n3. Добавить томаты, тушить 10 минут\n4. Смешать с пастой, посыпать сыром`,
     ingredients: [
-      { name: 'pasta', amount: '200 г' },
-      { name: 'canned_tomatoes', amount: '400 г' },
-      { name: 'onion', amount: '1 шт' },
-      { name: 'garlic', amount: '2 зубчика' },
-      { name: 'olive_oil', amount: '2 ст.л.' },
-      { name: 'cheese', amount: '50 г' },
-      { name: 'salt', amount: 'по вкусу' },
-      { name: 'black_pepper', amount: 'по вкусу' },
+      { name: 'pasta',          amount: '200 г',     amountValue: 200, unit: 'г' },
+      { name: 'canned_tomatoes',amount: '400 г',     amountValue: 400, unit: 'г' },
+      { name: 'onion',          amount: '1 шт',      amountValue: 1,   unit: 'шт' },
+      { name: 'garlic',         amount: '2 зубчика', amountValue: 2,   unit: 'зубчик' },
+      { name: 'olive_oil',      amount: '2 ст.л.',   amountValue: 30,  unit: 'мл' },
+      { name: 'cheese',         amount: '50 г',      amountValue: 50,  unit: 'г' },
+      { name: 'salt',           amount: 'по вкусу' },
+      { name: 'black_pepper',   amount: 'по вкусу' },
     ],
   },
 ]
@@ -443,33 +443,42 @@ async function main() {
   }
   console.log(`✅ Created ${ingredients.length} ingredients`)
 
-  // Создаём блюда (системные, isPublic: true)
+  // Создаём / обновляем блюда
   console.log('Creating dishes...')
   for (const dish of dishes) {
     const { ingredients: dishIngredients, ...dishData } = dish
+
+    const ingData = dishIngredients.map(ing => ({
+      ingredientId: ingredientMap[ing.name],
+      amount: ing.amount,
+      amountValue: ing.amountValue ?? null,
+      unit: ing.unit ?? null,
+      toTaste: !ing.amountValue || ing.amount === 'по вкусу' || ing.amount === 'щепотка',
+    }))
+
     const existing = await prisma.dish.findFirst({ where: { name: dish.name } })
     if (existing) {
-      console.log(`  ⏭  ${dishData.nameRu} уже есть`)
+      // Обновить ингредиенты существующего блюда (добавляем amountValue/unit)
+      await prisma.dishIngredient.deleteMany({ where: { dishId: existing.id } })
+      await prisma.dishIngredient.createMany({
+        data: ingData.map(i => ({ dishId: existing.id, ...i })),
+      })
+      console.log(`  🔄 ${dishData.nameRu} обновлено`)
       continue
     }
+
     const created = await prisma.dish.create({
       data: {
         ...dishData,
         visibility: 'PUBLIC',
         authorId: null,
-        ingredients: {
-          create: dishIngredients.map(ing => ({
-            ingredientId: ingredientMap[ing.name],
-            amount: ing.amount,
-            toTaste: ing.amount === 'по вкусу' || ing.amount === 'щепотка',
-          })),
-        },
+        ingredients: { create: ingData },
       },
     })
     console.log(`  ✅ ${created.nameRu}`)
   }
 
-  console.log(`\n🎉 Seed complete! ${dishes.length} dishes created`)
+  console.log(`\n🎉 Seed complete! ${dishes.length} dishes processed`)
 }
 
 main()
