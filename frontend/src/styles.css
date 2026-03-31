@@ -144,3 +144,14 @@ input, textarea { font-family:var(--font); }
 .toast.error { border-color:#ff6b6b; color:#ff6b6b; }
 
 .diff-easy{color:var(--teal)} .diff-medium{color:var(--accent2)} .diff-hard{color:#f87171}
+
+/* ===== PWA Install Prompt ===== */
+.install-prompt { position:fixed; bottom:72px; left:12px; right:12px; z-index:250; background:var(--bg3); border:1px solid var(--accent); border-radius:var(--radius); padding:12px 14px; display:flex; align-items:center; gap:10px; box-shadow:0 4px 24px rgba(0,0,0,.5); animation:slideUp .3s ease; }
+.install-prompt__icon { font-size:24px; flex-shrink:0; }
+.install-prompt__text { flex:1; display:flex; flex-direction:column; gap:2px; }
+.install-prompt__text strong { font-size:13px; font-weight:800; color:var(--text); }
+.install-prompt__text span { font-size:12px; color:var(--text2); line-height:1.4; }
+.install-prompt__close { flex-shrink:0; background:none; border:none; color:var(--text2); font-size:16px; cursor:pointer; padding:4px; line-height:1; }
+.install-prompt--ios { flex-direction:column; align-items:stretch; }
+.install-prompt__ios-content { display:flex; align-items:flex-start; gap:10px; }
+.install-prompt__share { display:inline-block; background:var(--accent); color:#fff; border-radius:4px; padding:1px 5px; font-size:11px; font-weight:800; }

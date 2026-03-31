@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
+import InstallPrompt from './InstallPrompt'
 
 const TABS = [
   { to: '/',           icon: '🏠', label: 'Главная',      auth: false },
@@ -26,6 +27,7 @@ export default function Layout() {
       <div className="main-content">
         <Outlet />
       </div>
+      <InstallPrompt />
       <nav className="bottom-nav">
         {tabs.map(t => (
           <NavLink key={t.to} to={t.to} end={t.to === '/'}>
