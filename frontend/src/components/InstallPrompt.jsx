@@ -6,14 +6,19 @@ function isIOS() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent)
 }
 
+function isIOSSafari() {
+  return isIOS() && /safari/i.test(navigator.userAgent) && !/crios|fxios|opios|mercury|yabrowser/i.test(navigator.userAgent)
+}
+
 function isInStandaloneMode() {
   return window.matchMedia('(display-mode: standalone)').matches
     || window.navigator.standalone === true
 }
 
 export default function InstallPrompt() {
-  const [showAndroid, setShowAndroid] = useState(false)
-  const [showIOS, setShowIOS]         = useState(false)
+  const [showAndroid, setShowAndroid]       = useState(false)
+  const [showIOS, setShowIOS]               = useState(false)
+  const [showIOSNotSafari, setShowIOSNotSafari] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState(null)
 
   useEffect(() => {
@@ -22,9 +27,15 @@ export default function InstallPrompt() {
     if (sessionStorage.getItem(DISMISSED_KEY)) return
 
     if (isIOS()) {
-      // iOS: показываем инструкцию через 3 секунды
-      const t = setTimeout(() => setShowIOS(true), 3000)
-      return () => clearTimeout(t)
+      if (isIOSSafari()) {
+        // Safari на iOS: показываем инструкцию через 3 секунды
+        const t = setTimeout(() => setShowIOS(true), 3000)
+        return () => clearTimeout(t)
+      } else {
+        // Chrome/Firefox/Яндекс на iOS: предлагаем открыть в Safari
+        const t = setTimeout(() => setShowIOSNotSafari(true), 3000)
+        return () => clearTimeout(t)
+      }
     }
 
     // Android/Chrome: ловим браузерный промпт
@@ -41,6 +52,7 @@ export default function InstallPrompt() {
     sessionStorage.setItem(DISMISSED_KEY, '1')
     setShowAndroid(false)
     setShowIOS(false)
+    setShowIOSNotSafari(false)
   }
 
   async function installAndroid() {
@@ -80,6 +92,21 @@ export default function InstallPrompt() {
               Нажмите <span className="install-prompt__share">⎙</span> внизу браузера,
               затем «На экран "Домой"»
             </span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (showIOSNotSafari) {
+    return (
+      <div className="install-prompt install-prompt--ios">
+        <button className="install-prompt__close" onClick={dismiss} aria-label="Закрыть">✕</button>
+        <div className="install-prompt__ios-content">
+          <div className="install-prompt__icon">🧭</div>
+          <div className="install-prompt__text">
+            <strong>Установить MealBot</strong>
+            <span>Для установки на экран откройте сайт в <strong>Safari</strong></span>
           </div>
         </div>
       </div>
