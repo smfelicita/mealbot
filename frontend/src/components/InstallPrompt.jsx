@@ -15,6 +15,11 @@ function isInStandaloneMode() {
     || window.navigator.standalone === true
 }
 
+function isMobile() {
+  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent)
+    || window.matchMedia('(pointer: coarse)').matches
+}
+
 export default function InstallPrompt() {
   const [showAndroid, setShowAndroid]       = useState(false)
   const [showIOS, setShowIOS]               = useState(false)
@@ -22,8 +27,9 @@ export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
 
   useEffect(() => {
-    // Уже установлено или уже закрыли — не показывать
+    // Уже установлено, не мобильный, или уже закрыли — не показывать
     if (isInStandaloneMode()) return
+    if (!isMobile()) return
     if (sessionStorage.getItem(DISMISSED_KEY)) return
 
     if (isIOS()) {
