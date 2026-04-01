@@ -30,6 +30,35 @@ function saveGuestState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
 }
 
+function cleanAndFormat(text) {
+  return text
+    .replace(/\[DISH:[a-z0-9]+\]/gi, '')
+    .replace(/\n/g, '<br/>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+}
+
+function InlineDishCard({ dish, onClick }) {
+  const img = dish.images?.[0] || dish.imageUrl
+  return (
+    <div onClick={onClick} style={{
+      display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+      background: 'var(--bg2)', borderRadius: 8, padding: '7px 10px',
+      border: '1px solid var(--border)',
+    }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: 6, overflow: 'hidden', flexShrink: 0,
+        background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+      }}>
+        {img
+          ? <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : '🍽'}
+      </div>
+      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)', flex: 1 }}>{dish.nameRu || dish.name}</span>
+      <span style={{ fontSize: 12, color: 'var(--text3)' }}>→</span>
+    </div>
+  )
+}
+
 export default function ChatPage() {
   const { chatMessages, addChatMessage, clearChatMessages, token } = useStore()
   const [input, setInput] = useState('')
@@ -58,14 +87,12 @@ export default function ChatPage() {
     setLoading(true)
     try {
       const res = await api.sendMessage(msg)
-      addChatMessage({ role: 'assistant', content: res.message, id: Date.now() + 1 })
+      addChatMessage({ role: 'assistant', content: res.message, dishes: res.dishes || [], id: Date.now() + 1 })
 
-      if (isGuest) {
-        if (res.guestMessagesLeft !== undefined) {
-          setGuestLeft(res.guestMessagesLeft)
-          const s = getGuestState()
-          saveGuestState({ count: GUEST_LIMIT - res.guestMessagesLeft, date: s.date })
-        }
+      if (isGuest && res.guestMessagesLeft !== undefined) {
+        setGuestLeft(res.guestMessagesLeft)
+        const s = getGuestState()
+        saveGuestState({ count: GUEST_LIMIT - res.guestMessagesLeft, date: s.date })
       }
     } catch (e) {
       if (e.message === 'Лимит исчерпан') {
@@ -127,10 +154,18 @@ export default function ChatPage() {
 
         {chatMessages.map(msg => (
           <div key={msg.id} className={`chat-bubble ${msg.role}`}>
-            {msg.role === 'assistant'
-              ? <span dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-              : msg.content
-            }
+            {msg.role === 'assistant' ? (
+              <>
+                <span dangerouslySetInnerHTML={{ __html: cleanAndFormat(msg.content) }} />
+                {msg.dishes?.length > 0 && (
+                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {msg.dishes.map(d => (
+                      <InlineDishCard key={d.id} dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : msg.content}
           </div>
         ))}
 

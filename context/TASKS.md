@@ -66,13 +66,12 @@
 
 ## 🔄 Приоритетные задачи (делать сейчас)
 
-### Этап 7 — PWA: установка на мобильный
-> Цель: пользователь на смартфоне видит кнопку "Добавить на экран" и устанавливает как приложение
-- [ ] Добавить `vite-plugin-pwa` в vite.config.js (сейчас его нет → нет Service Worker → нет баннера на Android)
-- [ ] Настроить Service Worker: precache статики, offline-страница
-- [ ] Настроить install prompt: показывать красивый баннер внутри приложения (не браузерный)
-- [ ] Проверить иконки (icon-192.png, icon-512.png) — что они существуют и хорошо выглядят
-- [ ] Мобильный UX: touch targets ≥ 48px, убрать hover-эффекты на тач, быстрый scroll
+### Этап 7 — PWA: установка на мобильный ✅
+- [x] vite-plugin-pwa + Service Worker (precache статики)
+- [x] Иконки: icon-192.png, icon-512.png, apple-touch-icon.png
+- [x] manifest.json: maskable иконка, categories
+- [x] InstallPrompt: Android (beforeinstallprompt), iOS Safari (инструкция), iOS др. браузеры ("открой в Safari")
+- [ ] Мобильный UX: touch targets ≥ 48px, убрать hover-эффекты на тач
 
 ### Этап 8 — UX холодильника
 > Цель: добавление продуктов занимает < 10 секунд
