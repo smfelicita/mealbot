@@ -7,9 +7,13 @@ import { useToast } from '../hooks/useToast.jsx'
 function TelegramBanner({ onLinked }) {
   const [status, setStatus] = useState('idle') // idle | loading | polling
   const pollRef = useRef(null)
+  const timeoutRef = useRef(null)
 
   useEffect(() => {
-    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
   }, [])
 
   async function connect() {
@@ -36,8 +40,8 @@ function TelegramBanner({ onLinked }) {
       }, 3000)
 
       // Остановить поллинг через 3 минуты
-      setTimeout(() => {
-        if (pollRef.current) { clearInterval(pollRef.current); setStatus('idle') }
+      timeoutRef.current = setTimeout(() => {
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; setStatus('idle') }
       }, 180_000)
     } catch {
       setStatus('idle')
@@ -122,7 +126,7 @@ export default function FridgePage() {
   const [pendingIds, setPendingIds]         = useState(new Set())
   const [loadingBulk, setLoadingBulk]       = useState(false)
   const [familyGroupId, setFamilyGroupId]   = useState(null)
-  const [telegramLinked, setTelegramLinked] = useState(true) // оптимистично скрываем, покажем после проверки
+  const [telegramLinked, setTelegramLinked] = useState(null) // null = ещё не проверено (баннер скрыт)
   const { fridge, setFridge, addToFridge, removeFromFridge } = useStore()
   const { show, Toast } = useToast()
 
@@ -132,7 +136,7 @@ export default function FridgePage() {
       setFamilyGroupId(data.familyGroupId || null)
     }).catch(() => {})
     api.getIngredients().then(setAllIngredients).catch(() => {})
-    api.getTelegramLinkStatus().then(d => setTelegramLinked(d.linked)).catch(() => setTelegramLinked(true))
+    api.getTelegramLinkStatus().then(d => setTelegramLinked(d.linked)).catch(() => setTelegramLinked(false))
   }, [])
 
   // ID продуктов которые уже в холодильнике
@@ -240,7 +244,7 @@ export default function FridgePage() {
       </div>
 
       <div className="page" style={{ paddingTop: 16 }}>
-        {!telegramLinked && (
+        {telegramLinked === false && (
           <TelegramBanner onLinked={() => { setTelegramLinked(true); show('Telegram подключён! 🎉', 'success') }} />
         )}
         {fridge.length === 0 ? (

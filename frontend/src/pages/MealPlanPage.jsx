@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { useToast } from '../hooks/useToast.jsx'
-import DishCard from '../components/DishCard'
 
 const MEAL_RU = {
   BREAKFAST: '🌅 Завтрак',

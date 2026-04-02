@@ -233,8 +233,6 @@ async function startAddProducts(chatId, session) {
   session.state = 'adding_products'
   const ingredients = await prisma.ingredient.findMany({ orderBy: { nameRu: 'asc' } })
   session.data.ingredients = ingredients
-
-  const chunks = chunkArray(ingredients, 8)
   session.data.page = 0
   session.data.selected = []
 
@@ -479,6 +477,7 @@ bot.on('callback_query', async (query) => {
 
   // Fridge: back to main view
   if (data === 'show_fridge') {
+    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
     return showFridge(chatId, user.id)
   }
 
@@ -533,12 +532,6 @@ function buildIngredientKeyboard(session) {
   if (selected.length > 0) keyboard.push([{ text: `✅ Добавить выбранные (${selected.length})`, callback_data: 'confirm_products' }])
   keyboard.push([{ text: '❌ Отмена', callback_data: 'cancel_add' }])
   return { inline_keyboard: keyboard }
-}
-
-function chunkArray(arr, size) {
-  const chunks = []
-  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size))
-  return chunks
 }
 
 console.log('🤖 MealBot Telegram запущен...')
