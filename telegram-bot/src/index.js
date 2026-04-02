@@ -49,11 +49,21 @@ const MAIN_MENU = {
       [{ text: '🌅 Завтрак' }, { text: '☀️ Обед' }],
       [{ text: '🌙 Ужин' },    { text: '🍎 Перекус' }],
       [{ text: '🧊 Мой холодильник' }, { text: '➕ Добавить продукты' }],
-      [{ text: '🎲 Случайное блюдо' }, { text: '🤖 Спросить ИИ' }],
+      [{ text: '📅 Буду готовить' }, { text: '🎲 Случайное блюдо' }],
+      [{ text: '🤖 Спросить ИИ' }],
     ],
     resize_keyboard: true,
   },
 }
+
+const MEAL_RU = {
+  BREAKFAST: '🌅 Завтрак',
+  LUNCH:     '☀️ Обед',
+  DINNER:    '🌙 Ужин',
+  SNACK:     '🍎 Перекус',
+  ANYTIME:   '🍽 Без привязки',
+}
+const MEAL_ORDER = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'ANYTIME']
 
 // ─── /start ───────────────────────────────────────────────────────────────
 bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
@@ -228,6 +238,103 @@ async function showFridgeManage(chatId, userId) {
   )
 }
 
+// ─── Meal plan: show ──────────────────────────────────────────────────────
+async function showMealPlan(chatId, userId) {
+  const plans = await prisma.mealPlan.findMany({
+    where: { userId },
+    include: { dish: true },
+    orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+  })
+
+  if (!plans.length) {
+    return bot.sendMessage(chatId,
+      '📅 *Буду готовить*\n\nСписок пуст\\. Добавляйте блюда в приложении или через кнопку 📋 Рецепт\\.',
+      { parse_mode: 'MarkdownV2' }
+    )
+  }
+
+  // Группировка по дате
+  const grouped = new Map()
+  for (const p of plans) {
+    const key = p.date ? p.date.toISOString().slice(0, 10) : 'no-date'
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key).push(p)
+  }
+
+  const sortedKeys = [...grouped.keys()].sort((a, b) => {
+    if (a === 'no-date') return 1
+    if (b === 'no-date') return -1
+    return a.localeCompare(b)
+  })
+
+  let text = `📅 *Буду готовить* (${plans.length}):\n`
+
+  for (const key of sortedKeys) {
+    const dayPlans = grouped.get(key)
+    const dateLabel = key === 'no-date'
+      ? '\n📋 *Без даты*'
+      : `\n📆 *${new Date(key).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}*`
+
+    text += `\n${dateLabel}`
+
+    const byMeal = {}
+    for (const p of dayPlans) {
+      if (!byMeal[p.mealType]) byMeal[p.mealType] = []
+      byMeal[p.mealType].push(p)
+    }
+
+    for (const mt of MEAL_ORDER) {
+      if (!byMeal[mt]) continue
+      text += `\n  ${MEAL_RU[mt]}`
+      for (const p of byMeal[mt]) {
+        text += `\n   • ${p.dish.nameRu}`
+        if (p.note) text += ` _(${p.note})_`
+      }
+    }
+  }
+
+  await bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [[
+        { text: '🗑 Управлять списком', callback_data: 'manage_plan' },
+      ]],
+    },
+  })
+}
+
+// ─── Meal plan: manage (delete items) ────────────────────────────────────
+async function showMealPlanManage(chatId, userId) {
+  const plans = await prisma.mealPlan.findMany({
+    where: { userId },
+    include: { dish: true },
+    orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+  })
+
+  if (!plans.length) {
+    return bot.sendMessage(chatId, '📅 Список уже пуст!')
+  }
+
+  const keyboard = plans.map(p => {
+    const dateStr = p.date
+      ? new Date(p.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ' · '
+      : ''
+    return [{
+      text: `❌ ${dateStr}${MEAL_RU[p.mealType] || ''} · ${p.dish.nameRu}`,
+      callback_data: `remove_plan_${p.id}`,
+    }]
+  })
+  keyboard.push([{ text: '← Назад', callback_data: 'show_plan' }])
+
+  await bot.sendMessage(chatId,
+    '🗑 *Управление списком*\n\nНажми на блюдо чтобы убрать его:',
+    {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: keyboard },
+    }
+  )
+}
+
 // ─── Add products flow ────────────────────────────────────────────────────
 async function startAddProducts(chatId, session) {
   session.state = 'adding_products'
@@ -329,6 +436,7 @@ bot.on('message', async (msg) => {
   // Menu commands
   if (text === '🧊 Мой холодильник') return showFridge(chatId, user.id)
   if (text === '➕ Добавить продукты') return startAddProducts(chatId, session)
+  if (text === '📅 Буду готовить') return showMealPlan(chatId, user.id)
 
   if (text === '🎲 Случайное блюдо') {
     const dishes = await prisma.dish.findMany({ include: { ingredients: { include: { ingredient: true } } } })
@@ -390,7 +498,25 @@ bot.on('callback_query', async (query) => {
       const plain = dish.recipe.replace(/^##\s/gm,'').replace(/\*\*/g,'*').slice(0, 800)
       text += `\n*Рецепт:*\n${plain}`
     }
-    return bot.sendMessage(chatId, text, { parse_mode: 'Markdown' })
+    return bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [[
+          { text: '📅 Буду готовить', callback_data: `plan_add_${dish.id}` },
+        ]],
+      },
+    })
+  }
+
+  // Add to meal plan
+  if (data.startsWith('plan_add_')) {
+    const dishId = data.slice(9)
+    const existing = await prisma.mealPlan.findFirst({ where: { userId: user.id, dishId } })
+    if (existing) {
+      return bot.sendMessage(chatId, '📅 Это блюдо уже в списке «Буду готовить»!')
+    }
+    await prisma.mealPlan.create({ data: { userId: user.id, dishId } })
+    return bot.sendMessage(chatId, '✅ Добавлено в «Буду готовить»! Смотри кнопку 📅 в меню.')
   }
 
   // Fridge meal suggestions
@@ -468,6 +594,51 @@ bot.on('callback_query', async (query) => {
 
   if (data === 'add_products') {
     return startAddProducts(chatId, session)
+  }
+
+  // Meal plan: show
+  if (data === 'show_plan') {
+    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
+    return showMealPlan(chatId, user.id)
+  }
+
+  // Meal plan: manage
+  if (data === 'manage_plan') {
+    return showMealPlanManage(chatId, user.id)
+  }
+
+  // Meal plan: remove item
+  if (data.startsWith('remove_plan_')) {
+    const planId = data.slice(12)
+    await prisma.mealPlan.deleteMany({ where: { id: planId, userId: user.id } })
+
+    const remaining = await prisma.mealPlan.findMany({
+      where: { userId: user.id },
+      include: { dish: true },
+      orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+    })
+
+    if (!remaining.length) {
+      await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
+      return bot.sendMessage(chatId, '📅 Список пуст!')
+    }
+
+    const keyboard = remaining.map(p => {
+      const dateStr = p.date
+        ? new Date(p.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ' · '
+        : ''
+      return [{
+        text: `❌ ${dateStr}${MEAL_RU[p.mealType] || ''} · ${p.dish.nameRu}`,
+        callback_data: `remove_plan_${p.id}`,
+      }]
+    })
+    keyboard.push([{ text: '← Назад', callback_data: 'show_plan' }])
+
+    await bot.editMessageReplyMarkup(
+      { inline_keyboard: keyboard },
+      { chat_id: chatId, message_id: query.message.message_id }
+    ).catch(() => {})
+    return
   }
 
   // Fridge: manage mode
