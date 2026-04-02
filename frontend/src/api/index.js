@@ -108,4 +108,8 @@ export const api = {
   getVapidKey: () => request('/push/vapid-key'),
   subscribePush: (sub) => request('/push/subscribe', { method: 'POST', body: sub }),
   unsubscribePush: (endpoint) => request('/push/unsubscribe', { method: 'DELETE', body: { endpoint } }),
+
+  // Telegram linking
+  getTelegramLinkToken: () => request('/telegram/link-token', { method: 'POST' }),
+  getTelegramLinkStatus: () => request('/telegram/link-status'),
 }

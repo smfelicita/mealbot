@@ -43,30 +43,59 @@ function formatDish(dish) {
   return text
 }
 
+const MAIN_MENU = {
+  reply_markup: {
+    keyboard: [
+      [{ text: '🌅 Завтрак' }, { text: '☀️ Обед' }],
+      [{ text: '🌙 Ужин' },    { text: '🍎 Перекус' }],
+      [{ text: '🧊 Мой холодильник' }, { text: '➕ Добавить продукты' }],
+      [{ text: '🎲 Случайное блюдо' }, { text: '🤖 Спросить ИИ' }],
+    ],
+    resize_keyboard: true,
+  },
+}
+
 // ─── /start ───────────────────────────────────────────────────────────────
-bot.onText(/\/start/, async (msg) => {
+bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
+  const chatId = msg.chat.id
+  const payload = match?.[1]?.trim()
+
+  // Связка аккаунта: /start link_TOKEN
+  if (payload?.startsWith('link_')) {
+    const token = payload.slice(5)
+    const webUser = await prisma.user.findUnique({ where: { pendingTelegramLink: token } })
+    if (!webUser) {
+      await bot.sendMessage(chatId, '❌ Ссылка недействительна или уже использована\\. Получите новую в приложении\\.', { parse_mode: 'MarkdownV2' })
+      return
+    }
+    // Привязать telegramId к существующему аккаунту
+    await prisma.user.update({
+      where: { id: webUser.id },
+      data: {
+        telegramId: String(msg.from.id),
+        telegramUsername: msg.from.username,
+        pendingTelegramLink: null,
+      },
+    })
+    const name = webUser.name || msg.from.first_name || 'друг'
+    await bot.sendMessage(chatId,
+      `✅ Telegram успешно подключён к аккаунту *${name}*\\!\n\nТеперь вы можете управлять холодильником и получать рецепты прямо здесь:`,
+      { parse_mode: 'MarkdownV2', ...MAIN_MENU }
+    )
+    return
+  }
+
   const user = await getUser(msg.from)
   const name = user.name || 'друг'
 
-  await bot.sendMessage(msg.chat.id,
+  await bot.sendMessage(chatId,
     `👋 Привет, *${name}*\\! Я MealBot — помогу выбрать что приготовить\\.\n\n` +
     `Что умею:\n` +
     `🍳 Предлагать блюда на завтрак, обед, ужин\n` +
     `🧊 Учитывать что есть в холодильнике\n` +
     `✨ Отвечать на вопросы про еду\n\n` +
     `Просто напиши что хочешь поесть, или используй меню ниже:`,
-    {
-      parse_mode: 'MarkdownV2',
-      reply_markup: {
-        keyboard: [
-          [{ text: '🌅 Завтрак' }, { text: '☀️ Обед' }],
-          [{ text: '🌙 Ужин' },    { text: '🍎 Перекус' }],
-          [{ text: '🧊 Мой холодильник' }, { text: '➕ Добавить продукты' }],
-          [{ text: '🎲 Случайное блюдо' }, { text: '🤖 Спросить ИИ' }],
-        ],
-        resize_keyboard: true,
-      },
-    }
+    { parse_mode: 'MarkdownV2', ...MAIN_MENU }
   )
 })
 

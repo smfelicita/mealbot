@@ -1,8 +1,70 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { useToast } from '../hooks/useToast.jsx'
+
+function TelegramBanner({ onLinked }) {
+  const [status, setStatus] = useState('idle') // idle | loading | polling
+  const pollRef = useRef(null)
+
+  useEffect(() => {
+    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+  }, [])
+
+  async function connect() {
+    setStatus('loading')
+    try {
+      const { token, botUsername, already_linked } = await api.getTelegramLinkToken()
+      if (already_linked) { onLinked(); return }
+      if (!botUsername) {
+        alert('Имя бота не настроено на сервере (TELEGRAM_BOT_USERNAME). Спросите администратора.')
+        setStatus('idle')
+        return
+      }
+      window.open(`https://t.me/${botUsername}?start=link_${token}`, '_blank')
+      setStatus('polling')
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const d = await api.getTelegramLinkStatus()
+          if (d.linked) {
+            clearInterval(pollRef.current)
+            onLinked()
+          }
+        } catch {}
+      }, 3000)
+
+      // Остановить поллинг через 3 минуты
+      setTimeout(() => {
+        if (pollRef.current) { clearInterval(pollRef.current); setStatus('idle') }
+      }, 180_000)
+    } catch {
+      setStatus('idle')
+    }
+  }
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      background: 'var(--bg2)', border: '1px solid var(--border)',
+      borderRadius: 12, padding: '12px 14px', marginBottom: 16,
+    }}>
+      <span style={{ fontSize: 22, flexShrink: 0 }}>🤖</span>
+      <span style={{ fontSize: 13, color: 'var(--text2)', flex: 1, lineHeight: 1.4 }}>
+        Подключите бота — управляйте холодильником в Telegram
+      </span>
+      <button
+        className="btn btn-primary btn-sm"
+        style={{ flexShrink: 0, fontSize: 12 }}
+        onClick={connect}
+        disabled={status !== 'idle'}
+      >
+        {status === 'loading' ? '...' : status === 'polling' ? 'Ожидание...' : 'Подключить'}
+      </button>
+    </div>
+  )
+}
 
 const CAT_RU = {
   dairy:     '🥛 Молочное',
@@ -60,6 +122,7 @@ export default function FridgePage() {
   const [pendingIds, setPendingIds]         = useState(new Set())
   const [loadingBulk, setLoadingBulk]       = useState(false)
   const [familyGroupId, setFamilyGroupId]   = useState(null)
+  const [telegramLinked, setTelegramLinked] = useState(true) // оптимистично скрываем, покажем после проверки
   const { fridge, setFridge, addToFridge, removeFromFridge } = useStore()
   const { show, Toast } = useToast()
 
@@ -69,6 +132,7 @@ export default function FridgePage() {
       setFamilyGroupId(data.familyGroupId || null)
     }).catch(() => {})
     api.getIngredients().then(setAllIngredients).catch(() => {})
+    api.getTelegramLinkStatus().then(d => setTelegramLinked(d.linked)).catch(() => setTelegramLinked(true))
   }, [])
 
   // ID продуктов которые уже в холодильнике
@@ -176,6 +240,9 @@ export default function FridgePage() {
       </div>
 
       <div className="page" style={{ paddingTop: 16 }}>
+        {!telegramLinked && (
+          <TelegramBanner onLinked={() => { setTelegramLinked(true); show('Telegram подключён! 🎉', 'success') }} />
+        )}
         {fridge.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🧊</div>
