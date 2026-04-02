@@ -183,15 +183,47 @@ async function showFridge(chatId, userId) {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: '🌅 Завтрак из холодильника', callback_data: 'fridge_breakfast' },
+            { text: '🌅 Завтрак', callback_data: 'fridge_breakfast' },
             { text: '☀️ Обед', callback_data: 'fridge_lunch' },
+            { text: '🌙 Ужин', callback_data: 'fridge_dinner' },
           ],
           [
-            { text: '🌙 Ужин', callback_data: 'fridge_dinner' },
-            { text: '🗑 Очистить', callback_data: 'fridge_clear' },
+            { text: '➕ Добавить продукты', callback_data: 'add_products' },
+            { text: '✏️ Управлять', callback_data: 'manage_fridge' },
+          ],
+          [
+            { text: '🗑 Очистить всё', callback_data: 'fridge_clear' },
           ],
         ],
       },
+    }
+  )
+}
+
+// ─── Fridge: manage (delete items) ─────────────────────────────────────────
+async function showFridgeManage(chatId, userId) {
+  const items = await prisma.fridgeItem.findMany({
+    where: { userId },
+    include: { ingredient: true },
+    orderBy: { ingredient: { nameRu: 'asc' } },
+  })
+
+  if (!items.length) {
+    return bot.sendMessage(chatId, '🧊 Холодильник уже пустой!')
+  }
+
+  // Каждый продукт — отдельная строка с кнопкой удаления
+  const keyboard = items.map(i => [{
+    text: `❌ ${i.ingredient.emoji || ''} ${i.ingredient.nameRu}`.trim(),
+    callback_data: `remove_${i.ingredientId}`,
+  }])
+  keyboard.push([{ text: '← Назад', callback_data: 'show_fridge' }])
+
+  await bot.sendMessage(chatId,
+    `✏️ *Управление холодильником*\n\nНажми на продукт чтобы убрать его:`,
+    {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: keyboard },
     }
   )
 }
@@ -410,11 +442,13 @@ bot.on('callback_query', async (query) => {
     if (!ids.length) return
 
     for (const ingredientId of ids) {
-      await prisma.fridgeItem.upsert({
-        where: { userId_ingredientId: { userId: user.id, ingredientId } },
-        update: {},
-        create: { userId: user.id, ingredientId },
+      // Проверяем что ещё нет в холодильнике (нет уникального индекса после рефакторинга)
+      const existing = await prisma.fridgeItem.findFirst({
+        where: { userId: user.id, ingredientId, groupId: null },
       })
+      if (!existing) {
+        await prisma.fridgeItem.create({ data: { userId: user.id, ingredientId } })
+      }
     }
 
     session.state = 'idle'
@@ -436,6 +470,47 @@ bot.on('callback_query', async (query) => {
 
   if (data === 'add_products') {
     return startAddProducts(chatId, session)
+  }
+
+  // Fridge: manage mode
+  if (data === 'manage_fridge') {
+    return showFridgeManage(chatId, user.id)
+  }
+
+  // Fridge: back to main view
+  if (data === 'show_fridge') {
+    return showFridge(chatId, user.id)
+  }
+
+  // Fridge: remove single item
+  if (data.startsWith('remove_')) {
+    const ingredientId = data.slice(7)
+    await prisma.fridgeItem.deleteMany({ where: { userId: user.id, ingredientId } })
+
+    // Обновить список: если остались продукты — показать управление, иначе пустой
+    const remaining = await prisma.fridgeItem.findMany({
+      where: { userId: user.id },
+      include: { ingredient: true },
+      orderBy: { ingredient: { nameRu: 'asc' } },
+    })
+
+    if (!remaining.length) {
+      await bot.deleteMessage(chatId, query.message.message_id).catch(()=>{})
+      return bot.sendMessage(chatId, '🗑 Холодильник пуст!')
+    }
+
+    // Перестроить клавиатуру
+    const keyboard = remaining.map(i => [{
+      text: `❌ ${i.ingredient.emoji || ''} ${i.ingredient.nameRu}`.trim(),
+      callback_data: `remove_${i.ingredientId}`,
+    }])
+    keyboard.push([{ text: '← Назад', callback_data: 'show_fridge' }])
+
+    await bot.editMessageReplyMarkup(
+      { inline_keyboard: keyboard },
+      { chat_id: chatId, message_id: query.message.message_id }
+    ).catch(()=>{})
+    return
   }
 })
 
