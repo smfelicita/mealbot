@@ -15,7 +15,7 @@ async function getFamilyGroupId(userId) {
 
 // Upsert: для семейного холодильника — уникально по (groupId, ingredientId),
 // для личного — по (userId, ingredientId, groupId=null)
-async function upsertFridgeItem(userId, familyGroupId, ingredientId, expiresAt) {
+async function upsertFridgeItem(userId, familyGroupId, ingredientId, expiresAt, quantityValue, quantityUnit) {
   if (familyGroupId) {
     const existing = await prisma.fridgeItem.findFirst({
       where: { groupId: familyGroupId, ingredientId },
@@ -23,12 +23,16 @@ async function upsertFridgeItem(userId, familyGroupId, ingredientId, expiresAt) 
     if (existing) {
       return prisma.fridgeItem.update({
         where: { id: existing.id },
-        data: { expiresAt: expiresAt ? new Date(expiresAt) : null },
+        data: {
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+          ...(quantityValue !== undefined && { quantityValue: quantityValue ?? null }),
+          ...(quantityUnit !== undefined && { quantityUnit: quantityUnit ?? null }),
+        },
         include: { ingredient: true },
       })
     }
     return prisma.fridgeItem.create({
-      data: { userId, groupId: familyGroupId, ingredientId, expiresAt: expiresAt ? new Date(expiresAt) : null },
+      data: { userId, groupId: familyGroupId, ingredientId, expiresAt: expiresAt ? new Date(expiresAt) : null, quantityValue: quantityValue ?? null, quantityUnit: quantityUnit ?? null },
       include: { ingredient: true },
     })
   } else {
@@ -38,12 +42,16 @@ async function upsertFridgeItem(userId, familyGroupId, ingredientId, expiresAt) 
     if (existing) {
       return prisma.fridgeItem.update({
         where: { id: existing.id },
-        data: { expiresAt: expiresAt ? new Date(expiresAt) : null },
+        data: {
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+          ...(quantityValue !== undefined && { quantityValue: quantityValue ?? null }),
+          ...(quantityUnit !== undefined && { quantityUnit: quantityUnit ?? null }),
+        },
         include: { ingredient: true },
       })
     }
     return prisma.fridgeItem.create({
-      data: { userId, groupId: null, ingredientId, expiresAt: expiresAt ? new Date(expiresAt) : null },
+      data: { userId, groupId: null, ingredientId, expiresAt: expiresAt ? new Date(expiresAt) : null, quantityValue: quantityValue ?? null, quantityUnit: quantityUnit ?? null },
       include: { ingredient: true },
     })
   }
@@ -56,6 +64,8 @@ function formatItem(item) {
     name: item.ingredient.nameRu,
     emoji: item.ingredient.emoji,
     category: item.ingredient.category,
+    quantityValue: item.quantityValue ?? null,
+    quantityUnit: item.quantityUnit ?? null,
     addedAt: item.addedAt,
     expiresAt: item.expiresAt,
     addedByUserId: item.userId,
@@ -82,14 +92,14 @@ router.get('/', async (req, res, next) => {
 // POST /api/fridge
 router.post('/', async (req, res, next) => {
   try {
-    const { ingredientId, expiresAt } = req.body
+    const { ingredientId, expiresAt, quantityValue, quantityUnit } = req.body
     if (!ingredientId) return res.status(400).json({ error: 'ingredientId обязателен' })
 
     const ingredient = await prisma.ingredient.findUnique({ where: { id: ingredientId } })
     if (!ingredient) return res.status(404).json({ error: 'Продукт не найден' })
 
     const familyGroupId = await getFamilyGroupId(req.userId)
-    const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, expiresAt)
+    const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, expiresAt, quantityValue, quantityUnit)
 
     res.status(201).json(formatItem(item))
   } catch (err) { next(err) }
@@ -108,6 +118,25 @@ router.post('/bulk', async (req, res, next) => {
       results.push({ ingredientId, name: item.ingredient.nameRu })
     }
     res.json({ added: results })
+  } catch (err) { next(err) }
+})
+
+// PATCH /api/fridge/:ingredientId — обновить количество
+router.patch('/:ingredientId', async (req, res, next) => {
+  try {
+    const { quantityValue, quantityUnit } = req.body
+    const familyGroupId = await getFamilyGroupId(req.userId)
+    const where = familyGroupId
+      ? { groupId: familyGroupId, ingredientId: req.params.ingredientId }
+      : { userId: req.userId, ingredientId: req.params.ingredientId, groupId: null }
+
+    await prisma.fridgeItem.updateMany({
+      where,
+      data: { quantityValue: quantityValue ?? null, quantityUnit: quantityUnit ?? null },
+    })
+
+    const updated = await prisma.fridgeItem.findFirst({ where, include: { ingredient: true } })
+    res.json(formatItem(updated))
   } catch (err) { next(err) }
 })
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { api } from '../api'
 import { useToast } from '../hooks/useToast.jsx'
+import { UNITS } from '../constants'
 
 const CATEGORIES = [
   { value: 'BREAKFAST', label: '🍳 Завтрак' },
@@ -27,7 +28,6 @@ const DIFFICULTIES = [
   { value: 'hard', label: 'Сложно' },
 ]
 
-const UNITS = ['г', 'мл', 'шт', 'зубчик', 'пучок', 'щепотка']
 
 const CUISINES = ['Русская', 'Итальянская', 'Азиатская', 'Средиземноморская', 'Греческая', 'Французская', 'Мексиканская', 'Японская', 'Индийская', 'Европейская', 'Американская']
 

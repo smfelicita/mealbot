@@ -139,10 +139,12 @@ model FridgeItem {
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   ingredientId String
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
-  groupId      String?
-  group        Group?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  addedAt      DateTime   @default(now())
-  expiresAt    DateTime?
+  groupId       String?
+  group         Group?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  quantityValue Float?
+  quantityUnit  String?
+  addedAt       DateTime   @default(now())
+  expiresAt     DateTime?
 
   @@map("fridge_items")
 }

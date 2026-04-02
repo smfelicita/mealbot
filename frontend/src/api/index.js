@@ -58,6 +58,8 @@ export const api = {
     request('/fridge', { method: 'POST', body: { ingredientId } }),
   bulkAddFridge: (ingredientIds) =>
     request('/fridge/bulk', { method: 'POST', body: { ingredientIds } }),
+  updateFridgeItem: (ingredientId, data) =>
+    request(`/fridge/${ingredientId}`, { method: 'PATCH', body: data }),
   removeFromFridge: (ingredientId) =>
     request(`/fridge/${ingredientId}`, { method: 'DELETE' }),
   clearFridge: () => request('/fridge', { method: 'DELETE' }),

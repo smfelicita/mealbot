@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { useToast } from '../hooks/useToast.jsx'
+import { UNITS } from '../constants'
 
 function TelegramBanner({ onLinked }) {
   const [status, setStatus] = useState('idle') // idle | loading | polling
@@ -127,7 +128,10 @@ export default function FridgePage() {
   const [loadingBulk, setLoadingBulk]       = useState(false)
   const [familyGroupId, setFamilyGroupId]   = useState(null)
   const [telegramLinked, setTelegramLinked] = useState(null) // null = ещё не проверено (баннер скрыт)
-  const { fridge, setFridge, addToFridge, removeFromFridge } = useStore()
+  const [editingId, setEditingId]           = useState(null) // ingredientId редактируемого item
+  const [editQty, setEditQty]               = useState('')
+  const [editUnit, setEditUnit]             = useState(UNITS[0])
+  const { fridge, setFridge, addToFridge, removeFromFridge, updateFridgeItem } = useStore()
   const { show, Toast } = useToast()
 
   useEffect(() => {
@@ -223,6 +227,22 @@ export default function FridgePage() {
     } catch (e) { show(e.message, 'error') }
   }
 
+  function startEdit(item) {
+    setEditingId(item.ingredientId)
+    setEditQty(item.quantityValue != null ? String(item.quantityValue) : '')
+    setEditUnit(item.quantityUnit || UNITS[0])
+  }
+
+  async function saveEdit(ingredientId) {
+    try {
+      const quantityValue = editQty !== '' ? Number(editQty) : null
+      const quantityUnit  = quantityValue != null ? editUnit : null
+      await api.updateFridgeItem(ingredientId, { quantityValue, quantityUnit })
+      updateFridgeItem(ingredientId, { quantityValue, quantityUnit })
+      setEditingId(null)
+    } catch (e) { show(e.message, 'error') }
+  }
+
   async function clearAll() {
     if (!confirm('Очистить холодильник?')) return
     await api.clearFridge()
@@ -269,10 +289,46 @@ export default function FridgePage() {
                 </p>
                 <div className="fridge-grid">
                   {grouped[cat].map(item => (
-                    <div key={item.ingredientId} className="fridge-item">
-                      {item.emoji && <span>{item.emoji}</span>}
-                      <span>{item.name}</span>
-                      <button className="remove-btn" onClick={() => removeItem(item.ingredientId, item.name)}>×</button>
+                    <div key={item.ingredientId} className="fridge-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {item.emoji && <span>{item.emoji}</span>}
+                        <span
+                          style={{ flex: 1, cursor: 'pointer' }}
+                          onClick={() => editingId === item.ingredientId ? setEditingId(null) : startEdit(item)}
+                        >
+                          {item.name}
+                          {item.quantityValue != null && (
+                            <span style={{ color: 'var(--text3)', fontSize: 12, marginLeft: 4 }}>
+                              · {item.quantityValue} {item.quantityUnit}
+                            </span>
+                          )}
+                        </span>
+                        <button className="remove-btn" onClick={() => removeItem(item.ingredientId, item.name)}>×</button>
+                      </div>
+                      {editingId === item.ingredientId && (
+                        <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                          <input
+                            type="number"
+                            min="0"
+                            className="input"
+                            style={{ flex: 1, padding: '4px 8px', fontSize: 13 }}
+                            placeholder="Кол-во"
+                            value={editQty}
+                            onChange={e => setEditQty(e.target.value)}
+                            autoFocus
+                          />
+                          <select
+                            className="input"
+                            style={{ width: 80, padding: '4px 6px', fontSize: 12, appearance: 'auto' }}
+                            value={editUnit}
+                            onChange={e => setEditUnit(e.target.value)}
+                          >
+                            {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                          <button className="btn btn-primary btn-sm" style={{ padding: '4px 10px' }} onClick={() => saveEdit(item.ingredientId)}>✓</button>
+                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px 10px' }} onClick={() => setEditingId(null)}>✕</button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

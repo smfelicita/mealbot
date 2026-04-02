@@ -24,6 +24,8 @@ export const useStore = create((set, get) => ({
   }),
   removeFromFridge: (ingredientId) =>
     set(s => ({ fridge: s.fridge.filter(f => f.ingredientId !== ingredientId) })),
+  updateFridgeItem: (ingredientId, data) =>
+    set(s => ({ fridge: s.fridge.map(f => f.ingredientId === ingredientId ? { ...f, ...data } : f) })),
 
   // Chat
   chatMessages: [],
