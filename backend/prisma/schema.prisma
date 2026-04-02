@@ -65,6 +65,8 @@ model User {
   telegramId          String?   @unique
   telegramUsername    String?
   pendingTelegramLink String?   @unique
+  webLoginToken       String?   @unique
+  webLoginTokenAt     DateTime?
   phone            String?   @unique
   phoneVerified    Boolean   @default(false)
   googleId         String?   @unique

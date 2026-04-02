@@ -82,10 +82,23 @@ const MAIN_MENU = {
       [{ text: '📅 Буду готовить' },   { text: '🤖 Спросить ИИ' }],
       [{ text: '🌅 Завтрак' }, { text: '☀️ Обед' }],
       [{ text: '🌙 Ужин' },    { text: '🍎 Перекус' }],
-      [{ text: '🎲 Случайное блюдо' }],
+      [{ text: '🎲 Случайное блюдо' }, { text: '🌐 Открыть приложение' }],
     ],
     resize_keyboard: true,
   },
+}
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+
+// Генерирует одноразовый токен для входа в веб-приложение через Telegram
+async function generateWebLoginToken(userId) {
+  const { randomBytes } = require('crypto')
+  const token = randomBytes(32).toString('hex')
+  await prisma.user.update({
+    where: { id: userId },
+    data: { webLoginToken: token, webLoginTokenAt: new Date() },
+  })
+  return token
 }
 
 const MEAL_RU = {
@@ -147,6 +160,23 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     await bot.sendMessage(chatId,
       `✅ Telegram успешно подключён к аккаунту *${name}*\\!\n\nТеперь вы можете управлять холодильником и получать рецепты прямо здесь:`,
       { parse_mode: 'MarkdownV2', ...MAIN_MENU }
+    )
+    return
+  }
+
+  // Запрос ссылки для входа в веб-приложение (/start getlink)
+  if (payload === 'getlink') {
+    const user = await getUser(msg.from)
+    const token = await generateWebLoginToken(user.id)
+    const url = `${FRONTEND_URL}/auth/tg?token=${token}`
+    await bot.sendMessage(chatId,
+      '🌐 Нажми кнопку ниже чтобы войти в веб-приложение MealBot.\n\n_Ссылка действует 10 минут._',
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[{ text: '🌐 Открыть MealBot', url }]],
+        },
+      }
     )
     return
   }
@@ -601,6 +631,20 @@ bot.on('message', async (msg) => {
     return bot.sendMessage(chatId,
       '✨ Режим ИИ включён! Задавай вопросы про еду и рецепты.\n\n_Для выхода — /start_',
       { parse_mode: 'Markdown' }
+    )
+  }
+
+  if (text === '🌐 Открыть приложение') {
+    const token = await generateWebLoginToken(user.id)
+    const url = `${FRONTEND_URL}/auth/tg?token=${token}`
+    return bot.sendMessage(chatId,
+      '🌐 Нажми кнопку ниже чтобы войти в веб-приложение MealBot.\n\n_Ссылка действует 10 минут._',
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[{ text: '🌐 Открыть MealBot', url }]],
+        },
+      }
     )
   }
 

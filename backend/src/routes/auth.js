@@ -238,6 +238,32 @@ router.post('/google', async (req, res, next) => {
   }
 })
 
+// GET /api/auth/tg?token= — обмен одноразового токена на JWT
+router.get('/tg', async (req, res, next) => {
+  try {
+    const { token } = req.query
+    if (!token) return res.status(400).json({ error: 'Токен не передан' })
+
+    const user = await prisma.user.findUnique({ where: { webLoginToken: token } })
+    if (!user || !user.webLoginTokenAt) return res.status(401).json({ error: 'Недействительный токен' })
+
+    // Токен действует 10 минут
+    const age = Date.now() - new Date(user.webLoginTokenAt).getTime()
+    if (age > 10 * 60 * 1000) return res.status(401).json({ error: 'Токен истёк' })
+
+    // Сбрасываем токен после использования
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { webLoginToken: null, webLoginTokenAt: null },
+    })
+
+    res.json({
+      token: signToken(user.id, user.role),
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, telegramId: user.telegramId, telegramUsername: user.telegramUsername },
+    })
+  } catch (err) { next(err) }
+})
+
 // GET /api/auth/me
 const { authMiddleware } = require('../middleware/auth')
 router.get('/me', authMiddleware, async (req, res, next) => {

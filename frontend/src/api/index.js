@@ -37,6 +37,8 @@ export const api = {
     request('/auth/verify-phone', { method: 'POST', body: { phone, code, name } }),
   googleAuth: (token) =>
     request('/auth/google', { method: 'POST', body: { token } }),
+  telegramAuth: (token) =>
+    request(`/auth/tg?token=${encodeURIComponent(token)}`),
 
   // Dishes
   getDishes: (params = {}) => {

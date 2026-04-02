@@ -13,6 +13,7 @@ import GroupsPage from './pages/GroupsPage'
 import GroupDetailPage from './pages/GroupDetailPage'
 import GroupFormPage from './pages/GroupFormPage'
 import MealPlanPage from './pages/MealPlanPage'
+import TelegramAuthPage from './pages/TelegramAuthPage'
 
 function RequireAuth({ children }) {
   const token = useStore(s => s.token)
@@ -24,6 +25,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth/tg" element={<TelegramAuthPage />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="dishes" element={<DishesPage />} />
