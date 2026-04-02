@@ -71,6 +71,8 @@ model User {
   emailVerified    Boolean   @default(false)
   role             Role      @default(USER)
   subscriptionUntil DateTime?
+  aiMessagesDay    Int       @default(0)
+  aiMessagesDate   DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

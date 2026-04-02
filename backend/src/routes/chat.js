@@ -2,6 +2,7 @@ const router = require('express').Router()
 const Anthropic = require('@anthropic-ai/sdk')
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
+const { checkAiLimit } = require('../lib/aiLimit')
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -96,6 +97,12 @@ router.post('/', optionalAuth, async (req, res, next) => {
         return res.status(429).json({ error: 'Лимит исчерпан', guestLimitReached: true, guestMessagesLeft: 0 })
       }
       incrementGuestCount(ip)
+    } else {
+      // Проверка лимита для авторизованных пользователей (общий с ботом, через БД)
+      const { allowed } = await checkAiLimit(req.userId)
+      if (!allowed) {
+        return res.status(429).json({ error: 'Дневной лимит ИИ-сообщений исчерпан (50/день)', limitReached: true, messagesLeft: 0 })
+      }
     }
 
     // Блюда из БД — нужны всем

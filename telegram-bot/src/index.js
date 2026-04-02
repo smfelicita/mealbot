@@ -7,6 +7,32 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true })
 const prisma = new PrismaClient()
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+const USER_AI_LIMIT = 50
+
+async function checkAiLimit(userId) {
+  const today = new Date().toDateString()
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { aiMessagesDay: true, aiMessagesDate: true, role: true },
+  })
+  if (!user) return { allowed: false, left: 0 }
+  if (user.role === 'ADMIN') return { allowed: true, left: 999 }
+
+  const isToday = user.aiMessagesDate &&
+    new Date(user.aiMessagesDate).toDateString() === today
+  const count = isToday ? user.aiMessagesDay : 0
+  if (count >= USER_AI_LIMIT) return { allowed: false, left: 0 }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      aiMessagesDay: isToday ? { increment: 1 } : 1,
+      aiMessagesDate: new Date(),
+    },
+  })
+  return { allowed: true, left: USER_AI_LIMIT - count - 1 }
+}
+
 // User session state
 const sessions = {}
 
@@ -463,11 +489,17 @@ bot.on('message', async (msg) => {
   }
 
   // AI chat
-  if (session.state === 'ai_chat' || text.length > 3) {
+  if (session.state === 'ai_chat') {
+    const { allowed, left } = await checkAiLimit(user.id)
+    if (!allowed) {
+      session.state = 'idle'
+      return bot.sendMessage(chatId, `⚠️ Дневной лимит ИИ-сообщений исчерпан (${USER_AI_LIMIT}/день). Возвращайся завтра!`)
+    }
     await bot.sendChatAction(chatId, 'typing')
     try {
       const reply = await handleAiChat(chatId, user.id, text)
-      return bot.sendMessage(chatId, reply, { parse_mode: 'Markdown' })
+      const footer = left <= 5 ? `\n\n_Осталось запросов сегодня: ${left}_` : ''
+      return bot.sendMessage(chatId, reply + footer, { parse_mode: 'Markdown' })
     } catch (e) {
       return bot.sendMessage(chatId, '⚠️ Ошибка ИИ, попробуй позже')
     }
