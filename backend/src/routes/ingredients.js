@@ -1,6 +1,14 @@
 const router = require('express').Router()
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
+const { distance } = require('fastest-levenshtein')
+
+function fuzzyScore(query, name) {
+  const q = query.toLowerCase()
+  const n = name.toLowerCase()
+  if (n.includes(q)) return 0
+  return distance(q, n)
+}
 
 // GET /api/ingredients — публичные + свои кастомные (если авторизован)
 router.get('/', optionalAuth, async (req, res, next) => {
@@ -14,18 +22,37 @@ router.get('/', optionalAuth, async (req, res, next) => {
       ],
     }
 
-    const where = {
-      ...visibilityFilter,
-      ...(q ? { nameRu: { contains: q, mode: 'insensitive' } } : {}),
-      ...(category ? { category } : {}),
+    if (!q) {
+      const ingredients = await prisma.ingredient.findMany({
+        where: { ...visibilityFilter, ...(category ? { category } : {}) },
+        orderBy: [{ isPublic: 'desc' }, { nameRu: 'asc' }],
+      })
+      return res.json(ingredients)
     }
 
-    const ingredients = await prisma.ingredient.findMany({
-      where,
+    // Сначала точный поиск (contains)
+    const exact = await prisma.ingredient.findMany({
+      where: {
+        ...visibilityFilter,
+        nameRu: { contains: q, mode: 'insensitive' },
+        ...(category ? { category } : {}),
+      },
       orderBy: [{ isPublic: 'desc' }, { nameRu: 'asc' }],
     })
+    if (exact.length > 0) return res.json(exact)
 
-    res.json(ingredients)
+    // Fuzzy fallback — если ничего не нашли точным поиском
+    const all = await prisma.ingredient.findMany({
+      where: { ...visibilityFilter, ...(category ? { category } : {}) },
+    })
+    const threshold = Math.max(2, Math.floor(q.length / 3))
+    const fuzzy = all
+      .map(i => ({ ...i, _score: fuzzyScore(q, i.nameRu) }))
+      .filter(i => i._score <= threshold)
+      .sort((a, b) => a._score - b._score)
+      .map(({ _score, ...i }) => i)
+
+    res.json(fuzzy)
   } catch (err) {
     next(err)
   }
