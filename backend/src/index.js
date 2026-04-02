@@ -12,7 +12,7 @@ const ingredientRoutes = require('./routes/ingredients')
 const uploadRoutes = require('./routes/upload')
 const groupRoutes = require('./routes/groups')
 const mealPlanRoutes = require('./routes/meal-plans')
-const pushRoutes = require('./routes/push')
+// const pushRoutes = require('./routes/push') // отключено — уведомления через Telegram
 const telegramRoutes = require('./routes/telegram')
 
 const app = express()
@@ -39,7 +39,7 @@ app.use('/api/ingredients', ingredientRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/groups', groupRoutes)
 app.use('/api/meal-plans', mealPlanRoutes)
-app.use('/api/push', pushRoutes)
+// app.use('/api/push', pushRoutes) // отключено — уведомления через Telegram
 app.use('/api/telegram', telegramRoutes)
 
 // Health check

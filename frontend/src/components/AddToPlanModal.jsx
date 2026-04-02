@@ -35,7 +35,7 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-sheet" onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>📅 В план питания</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>📅 Буду готовить</h2>
           <button className="btn btn-icon" onClick={onClose} aria-label="Закрыть">✕</button>
         </div>
 
@@ -94,12 +94,12 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
           {hasFamilyGroup && (
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, cursor: 'pointer' }}>
               <input type="checkbox" checked={shared} onChange={e => setShared(e.target.checked)} style={{ width: 18, height: 18 }} />
-              <span style={{ fontSize: 14 }}>🏠 Добавить в общий семейный план</span>
+              <span style={{ fontSize: 14 }}>🏠 Поделиться с семьёй</span>
             </label>
           )}
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-            {loading ? 'Добавляю...' : 'Добавить в план'}
+            {loading ? 'Добавляю...' : 'Добавить'}
           </button>
         </form>
 

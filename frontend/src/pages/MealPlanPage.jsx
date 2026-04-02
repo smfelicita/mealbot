@@ -37,13 +37,8 @@ export default function MealPlanPage() {
   const { show, Toast } = useToast()
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
-  const [pushEnabled, setPushEnabled] = useState(false)
-  const [pushLoading, setPushLoading] = useState(false)
 
-  useEffect(() => {
-    loadPlans()
-    checkPushStatus()
-  }, [])
+  useEffect(() => { loadPlans() }, [])
 
   async function loadPlans() {
     try {
@@ -53,51 +48,6 @@ export default function MealPlanPage() {
       show(e.message, 'error')
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function checkPushStatus() {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) return
-    if (Notification.permission === 'granted') {
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.getSubscription()
-      setPushEnabled(!!sub)
-    }
-  }
-
-  async function togglePush() {
-    setPushLoading(true)
-    try {
-      if (pushEnabled) {
-        const reg = await navigator.serviceWorker.ready
-        const sub = await reg.pushManager.getSubscription()
-        if (sub) {
-          await api.unsubscribePush(sub.endpoint)
-          await sub.unsubscribe()
-        }
-        setPushEnabled(false)
-        show('Уведомления отключены')
-      } else {
-        const perm = await Notification.requestPermission()
-        if (perm !== 'granted') {
-          show('Разрешите уведомления в настройках браузера', 'error')
-          return
-        }
-        const { publicKey } = await api.getVapidKey()
-        const reg = await navigator.serviceWorker.ready
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey),
-        })
-        const json = sub.toJSON()
-        await api.subscribePush({ endpoint: json.endpoint, keys: json.keys })
-        setPushEnabled(true)
-        show('Уведомления включены!')
-      }
-    } catch (e) {
-      show(e.message, 'error')
-    } finally {
-      setPushLoading(false)
     }
   }
 
@@ -126,24 +76,14 @@ export default function MealPlanPage() {
 
   return (
     <div className="page fade-in" style={{ paddingBottom: 100 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-serif)', margin: 0 }}>📅 План питания</h1>
-        {'Notification' in window && (
-          <button
-            className={pushEnabled ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm'}
-            onClick={togglePush}
-            disabled={pushLoading}
-            title={pushEnabled ? 'Отключить уведомления' : 'Включить уведомления'}
-          >
-            {pushLoading ? '...' : pushEnabled ? '🔔 Вкл' : '🔕 Выкл'}
-          </button>
-        )}
-      </div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-serif)', marginBottom: 20 }}>
+        📅 Буду готовить
+      </h1>
 
       {plans.length === 0 && (
         <div style={{ textAlign: 'center', color: 'var(--text2)', padding: '40px 16px' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-          <p style={{ marginBottom: 16 }}>Ваш план пуст</p>
+          <p style={{ marginBottom: 16 }}>Список пуст — добавляйте блюда которые хотите приготовить</p>
           <button className="btn btn-primary" onClick={() => navigate('/dishes')}>
             Выбрать блюда
           </button>
@@ -154,7 +94,6 @@ export default function MealPlanPage() {
         const dayPlans = grouped.get(dateKey)
         const dateLabel = dateKey === 'no-date' ? 'Без даты' : formatDate(dayPlans[0].date)
 
-        // group by mealType within the day
         const byMeal = {}
         for (const p of dayPlans) {
           if (!byMeal[p.mealType]) byMeal[p.mealType] = []
@@ -241,18 +180,11 @@ function PlanItem({ plan, currentUserId, onNavigate, onRemove }) {
           className="btn btn-icon"
           style={{ color: 'var(--text3)', minWidth: 32, minHeight: 32, fontSize: 16 }}
           onClick={onRemove}
-          aria-label="Убрать из плана"
+          aria-label="Убрать из списка"
         >
           ✕
         </button>
       )}
     </div>
   )
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = atob(base64)
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
 }

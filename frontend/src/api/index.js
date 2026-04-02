@@ -104,11 +104,6 @@ export const api = {
   addMealPlan: (data) => request('/meal-plans', { method: 'POST', body: data }),
   deleteMealPlan: (id) => request(`/meal-plans/${id}`, { method: 'DELETE' }),
 
-  // Push subscriptions
-  getVapidKey: () => request('/push/vapid-key'),
-  subscribePush: (sub) => request('/push/subscribe', { method: 'POST', body: sub }),
-  unsubscribePush: (endpoint) => request('/push/unsubscribe', { method: 'DELETE', body: { endpoint } }),
-
   // Telegram linking
   getTelegramLinkToken: () => request('/telegram/link-token', { method: 'POST' }),
   getTelegramLinkStatus: () => request('/telegram/link-status'),

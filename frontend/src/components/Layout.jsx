@@ -6,7 +6,7 @@ const TABS = [
   { to: '/',           icon: '🏠', label: 'Главная',      auth: false },
   { to: '/dishes',     icon: '🍽️', label: 'Рецепты',      auth: false },
   { to: '/fridge',     icon: '🧊', label: 'Холодильник',  auth: true  },
-  { to: '/plan',       icon: '📅', label: 'План',          auth: true  },
+  { to: '/plan',       icon: '📅', label: 'Готовлю',       auth: true  },
   { to: '/chat',       icon: '✨', label: 'ИИ-чат',       auth: false },
 ]
 

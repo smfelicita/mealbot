@@ -93,7 +93,7 @@ export default function DishDetailPage() {
               {user && (
                 <button className="btn btn-secondary btn-sm"
                   style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)' }}
-                  onClick={() => setShowPlanModal(true)}>📅 В план</button>
+                  onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
               )}
               {isOwner && (
                 <>
@@ -122,7 +122,7 @@ export default function DishDetailPage() {
               <div style={{ flex: 1 }} />
               <div style={{ display: 'flex', gap: 8 }}>
                 {user && (
-                  <button className="btn btn-secondary btn-sm" onClick={() => setShowPlanModal(true)}>📅 В план</button>
+                  <button className="btn btn-secondary btn-sm" onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
                 )}
                 {isOwner && (
                   <>
@@ -333,7 +333,7 @@ export default function DishDetailPage() {
           dish={dish}
           hasFamilyGroup={hasFamilyGroup}
           onClose={() => setShowPlanModal(false)}
-          onAdded={() => show('Добавлено в план!')}
+          onAdded={() => show('Добавлено в список!')}
         />
       )}
 
