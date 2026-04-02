@@ -432,11 +432,11 @@ async function main() {
   console.log('Creating ingredients...')
   const ingredientMap = {}
   for (const ing of ingredients) {
-    const { name, nameRu, category, protein = null, fat = null, carbs = null, avgWeightG = null, isBasic = false, emoji = null } = ing
-    const data = { name, nameRu, category, protein, fat, carbs, avgWeightG, isBasic, emoji }
+    const { name, nameRu, category, protein = null, fat = null, carbs = null, avgWeightG = null, isBasic = false, emoji = null, defaultQuantity = null, defaultUnit = null } = ing
+    const data = { name, nameRu, category, protein, fat, carbs, avgWeightG, isBasic, emoji, defaultQuantity, defaultUnit }
     const created = await prisma.ingredient.upsert({
       where: { name },
-      update: { nameRu, category, protein, fat, carbs, avgWeightG, isBasic, emoji },
+      update: { nameRu, category, protein, fat, carbs, avgWeightG, isBasic, emoji, defaultQuantity, defaultUnit },
       create: data,
     })
     ingredientMap[ing.name] = created.id

@@ -15,7 +15,12 @@ async function getFamilyGroupId(userId) {
 
 // Upsert: для семейного холодильника — уникально по (groupId, ingredientId),
 // для личного — по (userId, ingredientId, groupId=null)
-async function upsertFridgeItem(userId, familyGroupId, ingredientId, expiresAt, quantityValue, quantityUnit) {
+// defaultQuantity/defaultUnit — дефолты из ингредиента, применяются только при создании нового item
+async function upsertFridgeItem(userId, familyGroupId, ingredientId, expiresAt, quantityValue, quantityUnit, defaultQuantity, defaultUnit) {
+  // При создании: если qty не передано явно — берём дефолт из ингредиента
+  const createQty = quantityValue !== undefined ? (quantityValue ?? null) : (defaultQuantity ?? null)
+  const createUnit = quantityUnit !== undefined ? (quantityUnit ?? null) : (defaultUnit ?? null)
+
   if (familyGroupId) {
     const existing = await prisma.fridgeItem.findFirst({
       where: { groupId: familyGroupId, ingredientId },
@@ -32,7 +37,7 @@ async function upsertFridgeItem(userId, familyGroupId, ingredientId, expiresAt, 
       })
     }
     return prisma.fridgeItem.create({
-      data: { userId, groupId: familyGroupId, ingredientId, expiresAt: expiresAt ? new Date(expiresAt) : null, quantityValue: quantityValue ?? null, quantityUnit: quantityUnit ?? null },
+      data: { userId, groupId: familyGroupId, ingredientId, expiresAt: expiresAt ? new Date(expiresAt) : null, quantityValue: createQty, quantityUnit: createUnit },
       include: { ingredient: true },
     })
   } else {
@@ -51,7 +56,7 @@ async function upsertFridgeItem(userId, familyGroupId, ingredientId, expiresAt, 
       })
     }
     return prisma.fridgeItem.create({
-      data: { userId, groupId: null, ingredientId, expiresAt: expiresAt ? new Date(expiresAt) : null, quantityValue: quantityValue ?? null, quantityUnit: quantityUnit ?? null },
+      data: { userId, groupId: null, ingredientId, expiresAt: expiresAt ? new Date(expiresAt) : null, quantityValue: createQty, quantityUnit: createUnit },
       include: { ingredient: true },
     })
   }
@@ -99,7 +104,7 @@ router.post('/', async (req, res, next) => {
     if (!ingredient) return res.status(404).json({ error: 'Продукт не найден' })
 
     const familyGroupId = await getFamilyGroupId(req.userId)
-    const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, expiresAt, quantityValue, quantityUnit)
+    const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, expiresAt, quantityValue, quantityUnit, ingredient.defaultQuantity, ingredient.defaultUnit)
 
     res.status(201).json(formatItem(item))
   } catch (err) { next(err) }
@@ -114,7 +119,8 @@ router.post('/bulk', async (req, res, next) => {
     const familyGroupId = await getFamilyGroupId(req.userId)
     const results = []
     for (const ingredientId of ingredientIds) {
-      const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, null)
+      const ingredient = await prisma.ingredient.findUnique({ where: { id: ingredientId }, select: { nameRu: true, defaultQuantity: true, defaultUnit: true } })
+      const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, null, undefined, undefined, ingredient?.defaultQuantity, ingredient?.defaultUnit)
       results.push({ ingredientId, name: item.ingredient.nameRu })
     }
     res.json({ added: results })

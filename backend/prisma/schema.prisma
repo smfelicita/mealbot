@@ -119,6 +119,10 @@ model Ingredient {
   // Средний вес 1 штуки в граммах (для unit="шт")
   avgWeightG Float?
 
+  // Дефолтное количество для холодильника
+  defaultQuantity Float?
+  defaultUnit     String?
+
   // Базовый продукт (соль, масло и т.д.) — не требуется в холодильнике
   isBasic Boolean @default(false)
 
