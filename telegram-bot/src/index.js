@@ -78,11 +78,11 @@ const AI_MODE_BUTTON = {
 const MAIN_MENU = {
   reply_markup: {
     keyboard: [
+      [{ text: '🧊 Мой холодильник' }, { text: '➕ Добавить продукты' }],
+      [{ text: '📅 Буду готовить' },   { text: '🤖 Спросить ИИ' }],
       [{ text: '🌅 Завтрак' }, { text: '☀️ Обед' }],
       [{ text: '🌙 Ужин' },    { text: '🍎 Перекус' }],
-      [{ text: '🧊 Мой холодильник' }, { text: '➕ Добавить продукты' }],
-      [{ text: '📅 Буду готовить' }, { text: '🎲 Случайное блюдо' }],
-      [{ text: '🤖 Спросить ИИ' }],
+      [{ text: '🎲 Случайное блюдо' }],
     ],
     resize_keyboard: true,
   },
@@ -160,12 +160,13 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
 
   await bot.sendMessage(chatId,
     `👋 Привет, *${name}*\\! Я MealBot — помогу выбрать что приготовить\\.\n\n` +
+    `🔐 Твой аккаунт уже создан через Telegram — холодильник и список блюд сохраняются автоматически\\.\n\n` +
     `Что умею:\n` +
+    `🧊 Вести твой холодильник \\(\\+ молоко, \\- яйца\\)\n` +
+    `📅 Хранить список «Буду готовить»\n` +
     `🍳 Предлагать блюда на завтрак, обед, ужин\n` +
-    `🧊 Учитывать что есть в холодильнике\n` +
-    `✨ Отвечать на вопросы про еду\n\n` +
-    `Просто напиши что хочешь поесть, или используй меню ниже:\n\n` +
-    `_Команды холодильника: *\\+ молоко* — добавить, *\\- яйца* — убрать_`,
+    `🤖 Отвечать на вопросы про еду через ИИ\n\n` +
+    `Выбери из меню или напиши *\\+ продукт* чтобы добавить в холодильник:`,
     { parse_mode: 'MarkdownV2', ...MAIN_MENU }
   )
 })
@@ -568,9 +569,13 @@ async function handleFridgeCommand(chatId, userId, text) {
 bot.on('message', async (msg) => {
   if (!msg.text) return
   const chatId = msg.chat.id
+  const text = msg.text
+
+  // Slash-команды обрабатываются отдельно (onText), здесь их игнорируем
+  if (text.startsWith('/')) return
+
   const user = await getUser(msg.from)
   const session = getSession(chatId)
-  const text = msg.text
 
   // Meal time buttons
   if (MEAL_MAP[text]) {
