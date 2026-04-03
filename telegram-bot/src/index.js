@@ -800,6 +800,24 @@ bot.on('message', async (msg) => {
     if (handled !== false) return
   }
 
+  // Fuzzy-поиск: если текст похож на ингредиент — спросить что делать
+  const allIngredients = await prisma.ingredient.findMany({ select: { id: true, nameRu: true, emoji: true } })
+  const guessed = fuzzyFindIngredient(text, allIngredients)
+  if (guessed) {
+    return bot.sendMessage(chatId,
+      `${guessed.emoji || '•'} *${guessed.nameRu}* — что сделать?`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: '➕ Добавить в холодильник', callback_data: `quick_add_${guessed.id}` },
+            { text: '➖ Убрать', callback_data: `quick_remove_${guessed.id}` },
+          ]],
+        },
+      }
+    )
+  }
+
   // Неизвестная команда — подсказка
   return bot.sendMessage(chatId,
     `Не понял 🤔\n\n*Команды холодильника:*\n+ молоко — добавить\n- яйца — убрать\n\nИли выбери из меню ниже, либо включи режим ИИ:`,
@@ -899,6 +917,31 @@ bot.on('callback_query', async (query) => {
   if (data === 'fridge_clear') {
     await prisma.fridgeItem.deleteMany({ where: { userId: user.id } })
     return bot.sendMessage(chatId, '🗑 Холодильник очищен!')
+  }
+
+  // Быстрое добавление/удаление по угаданному ингредиенту
+  if (data.startsWith('quick_add_')) {
+    const ingredientId = data.slice(10)
+    const ing = await prisma.ingredient.findUnique({ where: { id: ingredientId } })
+    const existing = await prisma.fridgeItem.findFirst({ where: { userId: user.id, ingredientId, groupId: null } })
+    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
+    if (existing) {
+      return bot.sendMessage(chatId, `${ing?.emoji || '•'} *${ing?.nameRu}* уже есть в холодильнике!`, { parse_mode: 'Markdown' })
+    }
+    await prisma.fridgeItem.create({ data: { userId: user.id, ingredientId } })
+    return bot.sendMessage(chatId, `✅ *${ing?.nameRu}* добавлен в холодильник!`, { parse_mode: 'Markdown' })
+  }
+
+  if (data.startsWith('quick_remove_')) {
+    const ingredientId = data.slice(13)
+    const ing = await prisma.ingredient.findUnique({ where: { id: ingredientId } })
+    const existing = await prisma.fridgeItem.findFirst({ where: { userId: user.id, ingredientId, groupId: null } })
+    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
+    if (!existing) {
+      return bot.sendMessage(chatId, `${ing?.emoji || '•'} *${ing?.nameRu}* нет в холодильнике.`, { parse_mode: 'Markdown' })
+    }
+    await prisma.fridgeItem.deleteMany({ where: { userId: user.id, ingredientId } })
+    return bot.sendMessage(chatId, `🗑 *${ing?.nameRu}* убран из холодильника.`, { parse_mode: 'Markdown' })
   }
 
   // Выбор категории
