@@ -94,13 +94,13 @@ export default function HomePage() {
         <div className="empty-state" style={{marginTop:40}}>
           <div className="empty-icon">🍽️</div>
           <h3>Ваша кухня пока пуста</h3>
-          <p>Добавьте свои блюда или скопируйте из готовых шаблонов</p>
+          <p>Добавьте свои блюда или скопируйте из готовых рецептов</p>
           <div style={{display:'flex',gap:10,justifyContent:'center',marginTop:16,flexWrap:'wrap'}}>
             <button className="btn btn-primary" onClick={() => navigate('/my-recipes/new')}>
               + Добавить рецепт
             </button>
             <button className="btn btn-secondary" onClick={() => navigate('/dishes?view=catalog')}>
-              Смотреть шаблоны →
+              Готовые рецепты →
             </button>
           </div>
         </div>

@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store'
+import { api } from './api'
 import Layout from './components/Layout'
 import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
@@ -22,6 +24,15 @@ function RequireAuth({ children }) {
 }
 
 export default function App() {
+  const token = useStore(s => s.token)
+  const setAuth = useStore(s => s.setAuth)
+  const logout = useStore(s => s.logout)
+
+  useEffect(() => {
+    if (!token) return
+    api.me().then(user => setAuth(user, token)).catch(() => logout())
+  }, [token])
+
   return (
     <BrowserRouter>
       <Routes>

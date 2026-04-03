@@ -82,7 +82,7 @@ export default function DishesPage() {
             <button className={`tag ${view==='catalog'?'active':''}`}
               style={{fontSize:13,padding:'6px 14px'}}
               onClick={() => setView('catalog')}>
-              📚 Шаблоны
+              📚 Готовые рецепты
             </button>
           </div>
         )}
@@ -149,10 +149,10 @@ export default function DishesPage() {
             <div className="empty-state">
               <div className="empty-icon">🍽️</div>
               <h3>Ваша кухня пока пуста</h3>
-              <p>Добавьте свои блюда или скопируйте из шаблонов</p>
+              <p>Добавьте свои блюда или скопируйте из готовых рецептов</p>
               <div style={{display:'flex',gap:10,justifyContent:'center',marginTop:16,flexWrap:'wrap'}}>
                 <button className="btn btn-primary" onClick={() => navigate('/my-recipes/new')}>+ Добавить рецепт</button>
-                <button className="btn btn-secondary" onClick={() => setView('catalog')}>Шаблоны →</button>
+                <button className="btn btn-secondary" onClick={() => setView('catalog')}>Готовые рецепты →</button>
               </div>
             </div>
           ) : (
