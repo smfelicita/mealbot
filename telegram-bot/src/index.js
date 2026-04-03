@@ -497,19 +497,62 @@ async function showMealPlanManage(chatId, userId) {
   )
 }
 
+// ─── Категории ингредиентов ───────────────────────────────────────────────
+const INGREDIENT_CATEGORIES = [
+  { key: 'vegetable', label: '🥦 Овощи' },
+  { key: 'meat',      label: '🥩 Мясо и птица' },
+  { key: 'dairy',     label: '🥛 Молочные' },
+  { key: 'fruit',     label: '🍎 Фрукты' },
+  { key: 'grain',     label: '🌾 Крупы' },
+  { key: 'fish',      label: '🐟 Рыба' },
+  { key: 'egg',       label: '🥚 Яйца' },
+  { key: 'bread',     label: '🍞 Хлеб' },
+  { key: 'canned',    label: '🥫 Консервы' },
+  { key: 'herb',      label: '🌿 Зелень' },
+  { key: 'spice',     label: '🧂 Специи' },
+  { key: 'nut',       label: '🥜 Орехи' },
+  { key: 'legume',    label: '🫘 Бобовые' },
+  { key: 'oil',       label: '🫙 Масла' },
+  { key: 'sauce',     label: '🥣 Соусы' },
+  { key: 'sweetener', label: '🍯 Сладкое' },
+]
+
 // ─── Add products flow ────────────────────────────────────────────────────
 async function startAddProducts(chatId, session) {
   session.state = 'adding_products'
-  const ingredients = await prisma.ingredient.findMany({ orderBy: { nameRu: 'asc' } })
-  session.data.ingredients = ingredients
-  session.data.page = 0
-  session.data.selected = []
+  if (!session.data.selected) session.data.selected = []
+  if (!session.data.allIngredients) {
+    session.data.allIngredients = await prisma.ingredient.findMany({ orderBy: { nameRu: 'asc' } })
+  }
+  session.data.view = 'categories'
+  await sendCategoryList(chatId, session)
+}
 
-  await sendIngredientPage(chatId, session)
+async function sendCategoryList(chatId, session) {
+  const selected = session.data.selected || []
+  // 2 кнопки в строку
+  const rows = []
+  for (let i = 0; i < INGREDIENT_CATEGORIES.length; i += 2) {
+    const row = [{ text: INGREDIENT_CATEGORIES[i].label, callback_data: `cat_${INGREDIENT_CATEGORIES[i].key}` }]
+    if (INGREDIENT_CATEGORIES[i + 1]) {
+      row.push({ text: INGREDIENT_CATEGORIES[i + 1].label, callback_data: `cat_${INGREDIENT_CATEGORIES[i + 1].key}` })
+    }
+    rows.push(row)
+  }
+  if (selected.length > 0) {
+    rows.push([{ text: `✅ Добавить выбранные (${selected.length})`, callback_data: 'confirm_products' }])
+  }
+  rows.push([{ text: '❌ Отмена', callback_data: 'cancel_add' }])
+
+  await bot.sendMessage(chatId,
+    `📋 *Добавить продукты в холодильник*\n\nВыбери категорию:${selected.length ? `\n_Уже отмечено: ${selected.length}_` : ''}`,
+    { parse_mode: 'Markdown', reply_markup: { inline_keyboard: rows } }
+  )
 }
 
 async function sendIngredientPage(chatId, session) {
-  const { ingredients, page, selected } = session.data
+  const { allIngredients, catIngredients, page, selected } = session.data
+  const ingredients = catIngredients || allIngredients
   const ITEMS_PER_PAGE = 8
   const start = page * ITEMS_PER_PAGE
   const chunk = ingredients.slice(start, start + ITEMS_PER_PAGE)
@@ -529,10 +572,11 @@ async function sendIngredientPage(chatId, session) {
   if (selected.length > 0) {
     keyboard.push([{ text: `✅ Добавить выбранные (${selected.length})`, callback_data: 'confirm_products' }])
   }
-  keyboard.push([{ text: '❌ Отмена', callback_data: 'cancel_add' }])
+  keyboard.push([{ text: '← Категории', callback_data: 'back_to_cats' }, { text: '❌ Отмена', callback_data: 'cancel_add' }])
 
+  const catLabel = INGREDIENT_CATEGORIES.find(c => c.key === session.data.currentCategory)?.label || ''
   await bot.sendMessage(chatId,
-    `📋 Выбери продукты для холодильника\n\n_Выбрано: ${selected.length}_\n\nНажимай на продукты или напиши название:`,
+    `${catLabel}\n\n_Выбрано: ${selected.length}_\n\nНажимай на продукты или напиши название:`,
     {
       parse_mode: 'Markdown',
       reply_markup: { inline_keyboard: keyboard },
@@ -720,12 +764,12 @@ bot.on('message', async (msg) => {
 
   // Adding products flow — fuzzy поиск по тексту
   if (session.state === 'adding_products') {
-    const found = fuzzyFindIngredient(text, session.data.ingredients || [])
+    const found = fuzzyFindIngredient(text, session.data.allIngredients || [])
     if (found) {
       if (!session.data.selected) session.data.selected = []
       if (!session.data.selected.includes(found.id)) {
         session.data.selected.push(found.id)
-        return bot.sendMessage(chatId, `✅ *${found.nameRu}* отмечен! Можешь выбрать ещё или нажми "Добавить".`, { parse_mode: 'Markdown' })
+        return bot.sendMessage(chatId, `✅ *${found.nameRu}* отмечен! Нажми "Добавить выбранные" или выбери ещё.`, { parse_mode: 'Markdown' })
       } else {
         return bot.sendMessage(chatId, `${found.emoji || '•'} *${found.nameRu}* уже отмечен.`, { parse_mode: 'Markdown' })
       }
@@ -784,7 +828,8 @@ bot.on('callback_query', async (query) => {
   }
   if (data === 'cancel_reset') {
     await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
-    return sendIngredientPage(chatId, session)
+    if (session.data.view === 'items') return sendIngredientPage(chatId, session)
+    return sendCategoryList(chatId, session)
   }
 
   // Включить режим ИИ
@@ -854,6 +899,27 @@ bot.on('callback_query', async (query) => {
   if (data === 'fridge_clear') {
     await prisma.fridgeItem.deleteMany({ where: { userId: user.id } })
     return bot.sendMessage(chatId, '🗑 Холодильник очищен!')
+  }
+
+  // Выбор категории
+  if (data.startsWith('cat_')) {
+    const catKey = data.slice(4)
+    session.data.currentCategory = catKey
+    session.data.catIngredients = (session.data.allIngredients || []).filter(i => i.category === catKey)
+    session.data.page = 0
+    session.data.view = 'items'
+    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
+    return sendIngredientPage(chatId, session)
+  }
+
+  // Назад к категориям
+  if (data === 'back_to_cats') {
+    session.data.view = 'categories'
+    session.data.currentCategory = null
+    session.data.catIngredients = null
+    session.data.page = 0
+    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
+    return sendCategoryList(chatId, session)
   }
 
   // Add products: toggle ingredient
@@ -1017,7 +1083,8 @@ bot.on('callback_query', async (query) => {
 })
 
 function buildIngredientKeyboard(session) {
-  const { ingredients, page, selected } = session.data
+  const { allIngredients, catIngredients, page, selected } = session.data
+  const ingredients = catIngredients || allIngredients
   const ITEMS_PER_PAGE = 8
   const start = page * ITEMS_PER_PAGE
   const chunk = ingredients.slice(start, start + ITEMS_PER_PAGE)
@@ -1033,7 +1100,7 @@ function buildIngredientKeyboard(session) {
     start + ITEMS_PER_PAGE < total ? { text: 'Вперёд →', callback_data: 'page_next' } : { text: ' ', callback_data: 'noop' },
   ])
   if (selected.length > 0) keyboard.push([{ text: `✅ Добавить выбранные (${selected.length})`, callback_data: 'confirm_products' }])
-  keyboard.push([{ text: '❌ Отмена', callback_data: 'cancel_add' }])
+  keyboard.push([{ text: '← Категории', callback_data: 'back_to_cats' }, { text: '❌ Отмена', callback_data: 'cancel_add' }])
   return { inline_keyboard: keyboard }
 }
 
