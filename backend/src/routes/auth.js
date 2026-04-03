@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const { z } = require('zod')
 const prisma = require('../lib/prisma')
 const { Resend } = require('resend')
+const { authMiddleware } = require('../middleware/auth')
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.RESEND_FROM || 'MealBot <noreply@smarussya.ru>'
@@ -291,7 +292,6 @@ router.get('/tg', async (req, res, next) => {
 })
 
 // GET /api/auth/me
-const { authMiddleware } = require('../middleware/auth')
 router.get('/me', authMiddleware, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
