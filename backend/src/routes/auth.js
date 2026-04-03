@@ -32,14 +32,17 @@ async function sendEmailCode(email, code) {
 const signToken = (userId, role) =>
   jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
-// Добавляет базовые продукты в холодильник нового пользователя (если холодильник пуст)
+// Добавляет базовые продукты в холодильник (только те, которых ещё нет)
 async function addDefaultFridgeItems(userId) {
-  const existing = await prisma.fridgeItem.count({ where: { userId, groupId: null } })
-  if (existing > 0) return
   const basics = await prisma.ingredient.findMany({ where: { isBasic: true }, select: { id: true, defaultQuantity: true, defaultUnit: true } })
   if (!basics.length) return
+  const basicIds = basics.map(b => b.id)
+  const existing = await prisma.fridgeItem.findMany({ where: { userId, groupId: null, ingredientId: { in: basicIds } }, select: { ingredientId: true } })
+  const existingIds = new Set(existing.map(e => e.ingredientId))
+  const missing = basics.filter(b => !existingIds.has(b.id))
+  if (!missing.length) return
   await prisma.fridgeItem.createMany({
-    data: basics.map(ing => ({
+    data: missing.map(ing => ({
       userId,
       ingredientId: ing.id,
       groupId: null,
@@ -158,6 +161,8 @@ router.post('/login', async (req, res, next) => {
 
     const ok = await bcrypt.compare(password, user.passwordHash)
     if (!ok) return res.status(401).json({ error: 'Неверный email или пароль' })
+
+    await addDefaultFridgeItems(user.id)
 
     res.json({
       token: signToken(user.id, user.role),

@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 
-const DISMISSED_KEY = 'pwa-install-dismissed'
+const DISMISSED_KEY = 'pwa-install-dismissed-date'
+
+function isDismissedToday() {
+  const val = localStorage.getItem(DISMISSED_KEY)
+  if (!val) return false
+  return val === new Date().toISOString().slice(0, 10)
+}
 
 function isIOS() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent)
@@ -30,7 +36,7 @@ export default function InstallPrompt() {
     // Уже установлено, не мобильный, или уже закрыли — не показывать
     if (isInStandaloneMode()) return
     if (!isMobile()) return
-    if (sessionStorage.getItem(DISMISSED_KEY)) return
+    if (isDismissedToday()) return
 
     if (isIOS()) {
       if (isIOSSafari()) {
@@ -55,7 +61,7 @@ export default function InstallPrompt() {
   }, [])
 
   function dismiss() {
-    sessionStorage.setItem(DISMISSED_KEY, '1')
+    localStorage.setItem(DISMISSED_KEY, new Date().toISOString().slice(0, 10))
     setShowAndroid(false)
     setShowIOS(false)
     setShowIOSNotSafari(false)
@@ -66,7 +72,7 @@ export default function InstallPrompt() {
     deferredPrompt.prompt()
     const { outcome } = await deferredPrompt.userChoice
     if (outcome === 'accepted') {
-      sessionStorage.setItem(DISMISSED_KEY, '1')
+      localStorage.setItem(DISMISSED_KEY, new Date().toISOString().slice(0, 10))
     }
     setShowAndroid(false)
     setDeferredPrompt(null)
