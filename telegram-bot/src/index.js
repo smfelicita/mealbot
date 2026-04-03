@@ -144,22 +144,64 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     const token = payload.slice(5)
     const webUser = await prisma.user.findUnique({ where: { pendingTelegramLink: token } })
     if (!webUser) {
-      await bot.sendMessage(chatId, '❌ Ссылка недействительна или уже использована\\. Получите новую в приложении\\.', { parse_mode: 'MarkdownV2' })
+      await bot.sendMessage(chatId, '❌ Ссылка недействительна или уже использована. Получите новую в приложении.')
       return
     }
-    // Привязать telegramId к существующему аккаунту
+
+    const tgIdStr = String(msg.from.id)
+
+    // Если для этого Telegram уже есть бот-аккаунт (отдельный от веб-аккаунта) —
+    // мигрируем данные и снимаем telegramId со старого аккаунта
+    const botAccount = await prisma.user.findUnique({ where: { telegramId: tgIdStr } })
+    if (botAccount && botAccount.id !== webUser.id) {
+      // Переносим холодильник (только личные позиции, без семейных групп)
+      const botFridge = await prisma.fridgeItem.findMany({
+        where: { userId: botAccount.id, groupId: null },
+      })
+      for (const item of botFridge) {
+        const exists = await prisma.fridgeItem.findFirst({
+          where: { userId: webUser.id, ingredientId: item.ingredientId, groupId: null },
+        })
+        if (!exists) {
+          await prisma.fridgeItem.update({
+            where: { id: item.id },
+            data: { userId: webUser.id },
+          })
+        } else {
+          await prisma.fridgeItem.delete({ where: { id: item.id } })
+        }
+      }
+
+      // Переносим план питания
+      await prisma.mealPlan.updateMany({
+        where: { userId: botAccount.id },
+        data: { userId: webUser.id },
+      })
+
+      // Снимаем telegramId со старого аккаунта
+      await prisma.user.update({
+        where: { id: botAccount.id },
+        data: { telegramId: null, telegramUsername: null },
+      })
+    }
+
+    // Привязываем Telegram к веб-аккаунту
     await prisma.user.update({
       where: { id: webUser.id },
       data: {
-        telegramId: String(msg.from.id),
+        telegramId: tgIdStr,
         telegramUsername: msg.from.username,
         pendingTelegramLink: null,
       },
     })
+
     const name = webUser.name || msg.from.first_name || 'друг'
+    const migratedNote = botAccount && botAccount.id !== webUser.id
+      ? '\n\n_Данные холодильника и план питания перенесены из бот-аккаунта._'
+      : ''
     await bot.sendMessage(chatId,
-      `✅ Telegram успешно подключён к аккаунту *${name}*\\!\n\nТеперь вы можете управлять холодильником и получать рецепты прямо здесь:`,
-      { parse_mode: 'MarkdownV2', ...MAIN_MENU }
+      `✅ Telegram успешно подключён к аккаунту *${name}*!${migratedNote}\n\nТеперь можно управлять холодильником и получать рецепты прямо здесь:`,
+      { parse_mode: 'Markdown', ...MAIN_MENU }
     )
     return
   }
