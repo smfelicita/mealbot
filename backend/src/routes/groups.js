@@ -17,10 +17,30 @@ async function getMembership(groupId, userId) {
 }
 
 async function migratePersonalFridgeToFamily(userId, groupId) {
-  await prisma.fridgeItem.updateMany({
+  // Получаем личные продукты пользователя
+  const personal = await prisma.fridgeItem.findMany({
     where: { userId, groupId: null },
-    data: { groupId },
+    select: { id: true, ingredientId: true },
   })
+  if (!personal.length) return
+
+  // Получаем уже существующие продукты в семейном холодильнике
+  const existing = await prisma.fridgeItem.findMany({
+    where: { groupId },
+    select: { ingredientId: true },
+  })
+  const existingIds = new Set(existing.map(f => f.ingredientId))
+
+  // Переносим только те, которых ещё нет в семейном; дубли удаляем
+  const toMove = personal.filter(i => !existingIds.has(i.ingredientId)).map(i => i.id)
+  const toDel  = personal.filter(i =>  existingIds.has(i.ingredientId)).map(i => i.id)
+
+  if (toMove.length) {
+    await prisma.fridgeItem.updateMany({ where: { id: { in: toMove } }, data: { groupId } })
+  }
+  if (toDel.length) {
+    await prisma.fridgeItem.deleteMany({ where: { id: { in: toDel } } })
+  }
 }
 
 async function restorePersonalFridge(userId, groupId) {

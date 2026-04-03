@@ -128,6 +128,9 @@ model Ingredient {
   // Базовый продукт (соль, масло и т.д.) — не требуется в холодильнике
   isBasic Boolean @default(false)
 
+  // Игнорировать при фильтрации по холодильнику (специи, приправы)
+  ignoreInFridgeFilter Boolean @default(false)
+
   // Кастомные ингредиенты пользователей
   authorId String?
   author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)

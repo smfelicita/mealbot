@@ -84,28 +84,28 @@ export default function DishDetailPage() {
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'linear-gradient(to top, rgba(22,22,42,.9) 0%, transparent 55%)',
+              background: 'linear-gradient(to top, rgba(0,0,0,.75) 0%, transparent 55%)',
             }} />
             <div style={{ position: 'absolute', top: 14, left: 16, right: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button className="btn btn-icon" style={{ background: 'rgba(0,0,0,.5)', borderColor: 'transparent' }}
+              <button className="btn btn-icon" style={{ background: 'rgba(0,0,0,.5)', borderColor: 'transparent', color: '#fff' }}
                 onClick={() => navigate(-1)}>←</button>
               <div style={{ flex: 1 }} />
               {user && (
                 <>
                   <button className="btn btn-secondary btn-sm"
-                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)' }}
+                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
                     onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
                   <button className="btn btn-secondary btn-sm"
-                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)' }}
+                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
                     onClick={() => navigate(`/my-recipes/new?copyFrom=${id}`)}>📋 Скопировать</button>
                 </>
               )}
               {isOwner && (
                 <>
                   <button className="btn btn-secondary btn-sm"
-                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)' }}
+                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
                     onClick={() => navigate(`/my-recipes/${id}/edit`)}>Редактировать</button>
-                  <button className="btn btn-ghost btn-sm" style={{ color: '#f87171' }}
+                  <button className="btn btn-ghost btn-sm" style={{ color: '#f87171', background: 'rgba(0,0,0,.4)' }}
                     onClick={handleDelete}>Удалить</button>
                 </>
               )}

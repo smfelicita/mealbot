@@ -128,7 +128,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
       })
 
       const filtered = allDishes.filter(dish => {
-        const required = dish.ingredients.filter(di => !di.optional).map(di => di.ingredientId)
+        const required = dish.ingredients.filter(di => !di.optional && !di.toTaste && !di.ingredient.ignoreInFridgeFilter).map(di => di.ingredientId)
         return required.every(id => fridgeIngredientIds.includes(id))
       })
 
@@ -406,19 +406,19 @@ router.get('/:id/recommendations', optionalAuth, async (req, res, next) => {
     const fridgeItems = await prisma.fridgeItem.findMany({ where: fridgeWhere, select: { ingredientId: true } })
     const fridgeIds = fridgeItems.map(f => f.ingredientId)
 
-    // Из холодильника: все обязательные ингредиенты есть
+    // Из холодильника: все обязательные ингредиенты есть (специи игнорируем)
     const fromFridge = allDishes
       .filter(d => {
-        const required = d.ingredients.filter(di => !di.toTaste && !di.optional).map(di => di.ingredientId)
+        const required = d.ingredients.filter(di => !di.toTaste && !di.optional && !di.ingredient.ignoreInFridgeFilter).map(di => di.ingredientId)
         return required.length > 0 && required.every(iid => fridgeIds.includes(iid))
       })
       .slice(0, 6)
       .map(d => formatDish(d))
 
-    // nearMatch: 1–3 недостающих обязательных ингредиента
+    // nearMatch: 1–3 недостающих обязательных ингредиента (специи игнорируем)
     const nearMatch = allDishes
       .map(d => {
-        const required = d.ingredients.filter(di => !di.toTaste && !di.optional)
+        const required = d.ingredients.filter(di => !di.toTaste && !di.optional && !di.ingredient.ignoreInFridgeFilter)
         const missing = required.filter(di => !fridgeIds.includes(di.ingredientId))
         return {
           dish: formatDish(d),
