@@ -32,6 +32,24 @@ async function sendEmailCode(email, code) {
 const signToken = (userId, role) =>
   jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
+// Добавляет базовые продукты в холодильник нового пользователя (если холодильник пуст)
+async function addDefaultFridgeItems(userId) {
+  const existing = await prisma.fridgeItem.count({ where: { userId, groupId: null } })
+  if (existing > 0) return
+  const basics = await prisma.ingredient.findMany({ where: { isBasic: true }, select: { id: true, defaultQuantity: true, defaultUnit: true } })
+  if (!basics.length) return
+  await prisma.fridgeItem.createMany({
+    data: basics.map(ing => ({
+      userId,
+      ingredientId: ing.id,
+      groupId: null,
+      quantityValue: ing.defaultQuantity ?? null,
+      quantityUnit: ing.defaultUnit ?? null,
+    })),
+    skipDuplicates: true,
+  })
+}
+
 function genCode() {
   return String(Math.floor(100000 + Math.random() * 900000))
 }
@@ -100,6 +118,7 @@ router.post('/verify-email', async (req, res, next) => {
       select: { id: true, email: true, name: true, role: true },
     })
 
+    await addDefaultFridgeItems(user.id)
     res.json({ token: signToken(user.id, user.role), user })
   } catch (err) { next(err) }
 })
@@ -186,6 +205,7 @@ router.post('/verify-phone', async (req, res, next) => {
     await prisma.verificationCode.update({ where: { id: vc.id }, data: { usedAt: new Date() } })
 
     let user = await prisma.user.findUnique({ where: { phone: normalized } })
+    const isNew = !user
     if (!user) {
       user = await prisma.user.create({
         data: { phone: normalized, phoneVerified: true, name: name || null },
@@ -197,6 +217,7 @@ router.post('/verify-phone', async (req, res, next) => {
       })
     }
 
+    if (isNew) await addDefaultFridgeItems(user.id)
     res.json({
       token: signToken(user.id, user.role),
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
@@ -223,10 +244,12 @@ router.post('/google', async (req, res, next) => {
         user = await prisma.user.update({ where: { id: user.id }, data: { googleId } })
       }
     }
+    const isNew = !user
     if (!user) {
       user = await prisma.user.create({ data: { googleId, email: email || null, name: name || null, emailVerified: !!email } })
     }
 
+    if (isNew) await addDefaultFridgeItems(user.id)
     res.json({
       token: signToken(user.id, user.role),
       user: { id: user.id, email: user.email, name: user.name, role: user.role },

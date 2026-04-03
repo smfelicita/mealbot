@@ -6,7 +6,7 @@
 const ingredients = [
   // --- МОЛОЧНЫЕ ---
   { name: 'milk',             nameRu: 'Молоко',               category: 'dairy',     protein: 3.2,  fat: 3.2,  carbs: 4.7,  defaultQuantity: 1,   defaultUnit: 'л'    },
-  { name: 'butter',           nameRu: 'Сливочное масло',      category: 'dairy',     protein: 0.5,  fat: 82.5, carbs: 0.8,  isBasic: true,        defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'butter',           nameRu: 'Сливочное масло',      category: 'dairy',     protein: 0.5,  fat: 82.5, carbs: 0.8,                        defaultQuantity: 200, defaultUnit: 'г'    },
   { name: 'cream',            nameRu: 'Сливки',               category: 'dairy',     protein: 2.5,  fat: 35.0, carbs: 3.3,  defaultQuantity: 200, defaultUnit: 'мл'   },
   { name: 'sour_cream',       nameRu: 'Сметана',              category: 'dairy',     protein: 2.8,  fat: 20.0, carbs: 3.2,  defaultQuantity: 400, defaultUnit: 'г'    },
   { name: 'yogurt',           nameRu: 'Йогурт',               category: 'dairy',     protein: 5.0,  fat: 3.2,  carbs: 6.0,  defaultQuantity: 400, defaultUnit: 'г'    },
@@ -150,7 +150,7 @@ const ingredients = [
   { name: 'sesame_oil',       nameRu: 'Кунжутное масло',      category: 'oil',       protein: 0.0,  fat: 99.9, carbs: 0.0,  defaultQuantity: 100, defaultUnit: 'мл'   },
 
   // --- СОУСЫ ---
-  { name: 'soy_sauce',        nameRu: 'Соевый соус',          category: 'sauce',     protein: 6.0,  fat: 0.0,  carbs: 6.6,  isBasic: true,        defaultQuantity: 200, defaultUnit: 'мл'   },
+  { name: 'soy_sauce',        nameRu: 'Соевый соус',          category: 'sauce',     protein: 6.0,  fat: 0.0,  carbs: 6.6,                        defaultQuantity: 200, defaultUnit: 'мл'   },
   { name: 'tomato_paste',     nameRu: 'Томатная паста',       category: 'sauce',     protein: 4.5,  fat: 0.5,  carbs: 20.5, defaultQuantity: 200, defaultUnit: 'г'    },
   { name: 'ketchup',          nameRu: 'Кетчуп',               category: 'sauce',     protein: 1.8,  fat: 0.1,  carbs: 22.3, defaultQuantity: 500, defaultUnit: 'г'    },
   { name: 'mayonnaise',       nameRu: 'Майонез',              category: 'sauce',     protein: 2.4,  fat: 67.0, carbs: 2.6,  defaultQuantity: 400, defaultUnit: 'г'    },
@@ -206,11 +206,11 @@ const ingredients = [
   { name: 'sugar',            nameRu: 'Сахар',                category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 99.8, isBasic: true,        defaultQuantity: 1,   defaultUnit: 'кг'   },
   { name: 'powdered_sugar',   nameRu: 'Сахарная пудра',       category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 99.9, defaultQuantity: 200, defaultUnit: 'г'    },
   { name: 'honey',            nameRu: 'Мёд',                  category: 'sweetener', protein: 0.8,  fat: 0.0,  carbs: 80.3, defaultQuantity: 400, defaultUnit: 'г'    },
-  { name: 'baking_powder',    nameRu: 'Разрыхлитель',         category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 27.7, isBasic: true,        defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'baking_powder',    nameRu: 'Разрыхлитель',         category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 27.7,                       defaultQuantity: 100, defaultUnit: 'г'    },
   { name: 'baking_soda',      nameRu: 'Сода',                 category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 0.0,  isBasic: true,        defaultQuantity: 200, defaultUnit: 'г'    },
   { name: 'cocoa',            nameRu: 'Какао',                category: 'sweetener', protein: 24.3, fat: 15.0, carbs: 10.2, defaultQuantity: 100, defaultUnit: 'г'    },
   { name: 'dark_chocolate',   nameRu: 'Тёмный шоколад',       category: 'sweetener', protein: 6.2,  fat: 35.4, carbs: 48.2, defaultQuantity: 100, defaultUnit: 'г'    },
-  { name: 'vanilla_sugar',    nameRu: 'Ванильный сахар',      category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 95.0, isBasic: true,        defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'vanilla_sugar',    nameRu: 'Ванильный сахар',      category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 95.0,                       defaultQuantity: 100, defaultUnit: 'г'    },
   { name: 'jam',              nameRu: 'Варенье',              category: 'sweetener', protein: 0.3,  fat: 0.0,  carbs: 65.0, defaultQuantity: 400, defaultUnit: 'г'    },
   { name: 'maple_syrup',      nameRu: 'Кленовый сироп',       category: 'sweetener', protein: 0.0,  fat: 0.3,  carbs: 67.0, defaultQuantity: 250, defaultUnit: 'мл'   },
 

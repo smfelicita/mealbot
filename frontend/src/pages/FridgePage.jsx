@@ -282,6 +282,11 @@ export default function FridgePage() {
               {fridge.length} {fridge.length === 1 ? 'продукт' : fridge.length < 5 ? 'продукта' : 'продуктов'}
               {familyGroupId && <span style={{ marginLeft: 8, color: 'var(--accent)', fontWeight: 600 }}>· Общий с семьёй</span>}
             </p>
+            {fridge.some(i => i.isBasic) && (
+              <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16, lineHeight: 1.5, padding: '8px 12px', background: 'var(--bg2)', borderRadius: 8 }}>
+                🧂 Продукты с меткой <b>базовый</b> всегда считаются доступными при подборе блюд — даже если их нет в холодильнике.
+              </p>
+            )}
             {CAT_ORDER.filter(cat => grouped[cat]).map(cat => (
               <div key={cat} style={{ marginBottom: 20 }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
@@ -289,7 +294,7 @@ export default function FridgePage() {
                 </p>
                 <div className="fridge-grid">
                   {grouped[cat].map(item => (
-                    <div key={item.ingredientId} className="fridge-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
+                    <div key={item.ingredientId} className={`fridge-item${item.isBasic ? ' fridge-item-basic' : ''}`} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         {item.emoji && <span>{item.emoji}</span>}
                         <span
@@ -297,6 +302,7 @@ export default function FridgePage() {
                           onClick={() => editingId === item.ingredientId ? setEditingId(null) : startEdit(item)}
                         >
                           {item.name}
+                          {item.isBasic && <span style={{ marginLeft: 5, fontSize: 10, color: 'var(--text3)', background: 'var(--bg3)', borderRadius: 4, padding: '1px 5px', verticalAlign: 'middle' }}>базовый</span>}
                           {item.quantityValue != null && (
                             <span style={{ color: 'var(--text3)', fontSize: 12, marginLeft: 4 }}>
                               · {item.quantityValue} {item.quantityUnit}

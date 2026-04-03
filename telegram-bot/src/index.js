@@ -64,6 +64,14 @@ async function getUser(tgUser) {
         name: tgUser.first_name,
       },
     })
+    // Добавляем базовые продукты новому пользователю
+    const basics = await prisma.ingredient.findMany({ where: { isBasic: true }, select: { id: true, defaultQuantity: true, defaultUnit: true } })
+    if (basics.length) {
+      await prisma.fridgeItem.createMany({
+        data: basics.map(ing => ({ userId: user.id, ingredientId: ing.id, groupId: null, quantityValue: ing.defaultQuantity ?? null, quantityUnit: ing.defaultUnit ?? null })),
+        skipDuplicates: true,
+      })
+    }
   }
   return user
 }

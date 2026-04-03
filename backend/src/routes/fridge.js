@@ -69,6 +69,7 @@ function formatItem(item) {
     name: item.ingredient.nameRu,
     emoji: item.ingredient.emoji,
     category: item.ingredient.category,
+    isBasic: item.ingredient.isBasic || false,
     quantityValue: item.quantityValue ?? null,
     quantityUnit: item.quantityUnit ?? null,
     addedAt: item.addedAt,
