@@ -1,13 +1,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:#0f0f1a; --bg2:#16162a; --bg3:#1e1e35; --card:#1a1a2e;
-  --border:rgba(255,255,255,0.08); --accent:#ff6b35; --accent2:#ffb347;
-  --teal:#2dd4bf; --purple:#a78bfa;
-  --text:#f0eee8; --text2:#9e9b91; --text3:#5e5c56;
+  --bg:#14120e; --bg2:#1c1a14; --bg3:#24211a; --card:#1e1c16;
+  --border:rgba(255,255,255,0.08); --accent:#c8a96e; --accent2:#e0cfa0;
+  --teal:#98c4b8; --purple:#c4a8d4;
+  --text:#f2ece0; --text2:#a09070; --text3:#60503a;
   --radius:14px; --radius-sm:8px;
   --shadow:0 4px 24px rgba(0,0,0,0.4);
-  --font:'Nunito',sans-serif; --font-serif:'Playfair Display',serif;
+  --font:'Nunito',sans-serif; --font-serif:'Nunito',sans-serif;
 }
 html { font-size:16px; }
 body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100dvh; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
