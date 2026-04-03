@@ -15,7 +15,7 @@ export default function HomePage() {
   const [dishes, setDishes] = useState([])
   const [loading, setLoading] = useState(true)
   const [mealTime, setMealTime] = useState(getDefaultMeal())
-  const { fridgeMode, toggleFridgeMode, token } = useStore()
+  const { fridgeMode, token } = useStore()
   const navigate = useNavigate()
 
   useEffect(() => { load() }, [mealTime, fridgeMode])
@@ -37,21 +37,11 @@ export default function HomePage() {
 
   return (
     <div className="page">
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20,gap:12}}>
-        <div>
-          <h1 style={{fontFamily:'var(--font-serif)',fontSize:26,fontWeight:700,marginBottom:4}}>
-            {greeting}! 👋
-          </h1>
-          <p style={{color:'var(--text2)',fontSize:14}}>Что будем готовить?</p>
-        </div>
-        {token && (
-          <div className="toggle-wrap" onClick={toggleFridgeMode} style={{flexShrink:0,marginTop:4}}>
-            <div className={`toggle ${fridgeMode?'on':''}`}/>
-            <span className="toggle-label" style={{color:fridgeMode?'var(--accent)':'var(--text2)',fontSize:12}}>
-              🧊
-            </span>
-          </div>
-        )}
+      <div style={{marginBottom:20}}>
+        <h1 style={{fontFamily:'var(--font-serif)',fontSize:26,fontWeight:700,marginBottom:4}}>
+          {greeting}! 👋
+        </h1>
+        <p style={{color:'var(--text2)',fontSize:14}}>Что будем готовить?</p>
       </div>
 
       <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>

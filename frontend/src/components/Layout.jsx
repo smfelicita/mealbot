@@ -95,6 +95,8 @@ function ProfileModal({ onClose }) {
 export default function Layout() {
   const token = useStore(s => s.token)
   const user = useStore(s => s.user)
+  const fridgeMode = useStore(s => s.fridgeMode)
+  const toggleFridgeMode = useStore(s => s.toggleFridgeMode)
   const navigate = useNavigate()
   const tabs = TABS.filter(t => !t.auth || token)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -105,6 +107,12 @@ export default function Layout() {
         <div className="app-header-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           🍽️ MealBot
         </div>
+        {token && (
+          <div className="toggle-wrap" onClick={toggleFridgeMode} style={{ marginLeft: 'auto', marginRight: 8 }}>
+            <div className={`toggle ${fridgeMode ? 'on' : ''}`} />
+            <span className="toggle-label" style={{ color: fridgeMode ? 'var(--accent)' : 'var(--text2)', fontSize: 12 }}>🧊</span>
+          </div>
+        )}
         {token ? (
           <button className="profile-avatar-btn" onClick={() => setProfileOpen(p => !p)} aria-label="Профиль">
             {user?.name?.[0]?.toUpperCase() || '👤'}
