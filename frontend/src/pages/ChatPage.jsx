@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 
@@ -61,7 +61,8 @@ function InlineDishCard({ dish, onClick }) {
 
 export default function ChatPage() {
   const { chatMessages, addChatMessage, clearChatMessages, token } = useStore()
-  const [input, setInput] = useState('')
+  const [searchParams] = useSearchParams()
+  const [input, setInput] = useState(() => searchParams.get('prompt') || '')
   const [loading, setLoading] = useState(false)
   const [guestLeft, setGuestLeft] = useState(() => {
     const s = getGuestState()

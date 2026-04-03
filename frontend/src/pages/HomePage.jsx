@@ -133,9 +133,12 @@ export default function HomePage() {
         </div>
       )}
 
-      <div style={{marginTop:20,textAlign:'center'}}>
+      <div style={{marginTop:20,display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
         <button className="btn btn-secondary" onClick={() => navigate('/dishes')}>
           Все блюда →
+        </button>
+        <button className="btn btn-secondary" onClick={() => navigate('/chat?prompt=' + encodeURIComponent('Предложи что приготовить сегодня'))}>
+          ✨ Предложи что приготовить
         </button>
       </div>
     </div>

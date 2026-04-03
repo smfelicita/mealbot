@@ -133,6 +133,7 @@ export default function FridgePage() {
   const [editUnit, setEditUnit]             = useState(UNITS[0])
   const { fridge, setFridge, addToFridge, removeFromFridge, updateFridgeItem } = useStore()
   const { show, Toast } = useToast()
+  const navigate = useNavigate()
 
   useEffect(() => {
     api.getFridge().then(data => {
@@ -278,10 +279,19 @@ export default function FridgePage() {
           </div>
         ) : (
           <>
-            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16 }}>
-              {fridge.length} {fridge.length === 1 ? 'продукт' : fridge.length < 5 ? 'продукта' : 'продуктов'}
-              {familyGroupId && <span style={{ marginLeft: 8, color: 'var(--accent)', fontWeight: 600 }}>· Общий с семьёй</span>}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+              <p style={{ fontSize: 13, color: 'var(--text2)', margin: 0 }}>
+                {fridge.length} {fridge.length === 1 ? 'продукт' : fridge.length < 5 ? 'продукта' : 'продуктов'}
+                {familyGroupId && <span style={{ marginLeft: 8, color: 'var(--accent)', fontWeight: 600 }}>· Общий с семьёй</span>}
+              </p>
+              <button
+                className="btn btn-secondary btn-sm"
+                style={{ marginLeft: 'auto' }}
+                onClick={() => navigate('/chat?prompt=' + encodeURIComponent('Что можно приготовить из продуктов в моём холодильнике?'))}
+              >
+                ✨ Что приготовить?
+              </button>
+            </div>
             {fridge.some(i => i.isBasic) && (
               <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16, lineHeight: 1.5, padding: '8px 12px', background: 'var(--bg2)', borderRadius: 8 }}>
                 🧂 Продукты с меткой <b>базовый</b> всегда считаются доступными при подборе блюд — даже если их нет в холодильнике.
