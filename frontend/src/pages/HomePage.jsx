@@ -14,18 +14,11 @@ const MEAL_TIMES = [
 export default function HomePage() {
   const [dishes, setDishes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [hasPersonalDishes, setHasPersonalDishes] = useState(true)
+  // null = ещё не знаем, true/false — известно
+  const [hasPersonalDishes, setHasPersonalDishes] = useState(null)
   const [mealTime, setMealTime] = useState(getDefaultMeal())
   const { fridgeMode, token } = useStore()
   const navigate = useNavigate()
-
-  // Проверяем наличие личных/семейных блюд при первом рендере
-  useEffect(() => {
-    if (!token) return
-    api.getDishes({ myKitchen: 'true' }).then(all => {
-      setHasPersonalDishes(all.length > 0)
-    }).catch(() => {})
-  }, [token])
 
   useEffect(() => { load() }, [mealTime, fridgeMode, token])
 
@@ -35,8 +28,19 @@ export default function HomePage() {
       let result = []
 
       if (token) {
-        // Залогинен: сначала личная/семейная кухня
+        // Проверяем наличие личных блюд БЕЗ фильтра mealTime
+        const allMy = await api.getDishes({ myKitchen: 'true' })
+        const hasPersonal = allMy.length > 0
+        setHasPersonalDishes(hasPersonal)
+
+        if (!hasPersonal) {
+          setDishes([])
+          return
+        }
+
+        // Загружаем с фильтром mealTime
         result = await api.getDishes({ mealTime, fridgeMode: fridgeMode ? 'true' : undefined, myKitchen: 'true' })
+
         // Добиваем публичными если меньше 6 и не fridgeMode
         if (result.length < 6 && !fridgeMode) {
           const existingIds = new Set(result.map(d => d.id))
@@ -45,6 +49,7 @@ export default function HomePage() {
           result = [...result, ...extra].slice(0, 6)
         }
       } else {
+        setHasPersonalDishes(false)
         // Гость: публичные блюда
         result = await api.getDishes({ mealTime, fridgeMode: fridgeMode ? 'true' : undefined })
         if (result.length === 0 && !fridgeMode) {
@@ -60,8 +65,24 @@ export default function HomePage() {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Доброе утро' : hour < 17 ? 'Добрый день' : 'Добрый вечер'
 
+  // Пока не определили состояние — просто лоадер
+  if (loading || hasPersonalDishes === null) {
+    return (
+      <div className="page">
+        <div style={{marginBottom:20}}>
+          <h1 style={{fontFamily:'var(--font-serif)',fontSize:26,fontWeight:700,marginBottom:4}}>
+            {greeting}! 👋
+          </h1>
+        </div>
+        <div style={{display:'flex',justifyContent:'center',padding:40}}>
+          <div className="loader"/>
+        </div>
+      </div>
+    )
+  }
+
   // Онбординг: пустая личная кухня
-  if (token && !hasPersonalDishes && !loading) {
+  if (token && !hasPersonalDishes) {
     return (
       <div className="page">
         <div style={{marginBottom:20}}>
@@ -113,11 +134,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {loading ? (
-        <div style={{display:'flex',justifyContent:'center',padding:40}}>
-          <div className="loader"/>
-        </div>
-      ) : dishes.length === 0 ? (
+      {dishes.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">🥺</div>
           <h3>Ничего не найдено</h3>
