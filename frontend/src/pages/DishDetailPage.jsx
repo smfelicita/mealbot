@@ -91,9 +91,14 @@ export default function DishDetailPage() {
                 onClick={() => navigate(-1)}>←</button>
               <div style={{ flex: 1 }} />
               {user && (
-                <button className="btn btn-secondary btn-sm"
-                  style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)' }}
-                  onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
+                <>
+                  <button className="btn btn-secondary btn-sm"
+                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)' }}
+                    onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
+                  <button className="btn btn-secondary btn-sm"
+                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)' }}
+                    onClick={() => navigate(`/my-recipes/new?copyFrom=${id}`)}>📋 Скопировать</button>
+                </>
               )}
               {isOwner && (
                 <>
@@ -122,7 +127,11 @@ export default function DishDetailPage() {
               <div style={{ flex: 1 }} />
               <div style={{ display: 'flex', gap: 8 }}>
                 {user && (
-                  <button className="btn btn-secondary btn-sm" onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
+                  <>
+                    <button className="btn btn-secondary btn-sm" onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
+                    <button className="btn btn-secondary btn-sm"
+                      onClick={() => navigate(`/my-recipes/new?copyFrom=${id}`)}>📋 Скопировать</button>
+                  </>
                 )}
                 {isOwner && (
                   <>

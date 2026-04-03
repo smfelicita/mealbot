@@ -13,6 +13,27 @@ async function getMemberGroupIds(userId) {
   return memberships.map(m => m.groupId)
 }
 
+// Вспомогательная — список FAMILY groupId пользователя
+async function getFamilyGroupIds(userId) {
+  if (!userId) return []
+  const groups = await prisma.groupMember.findMany({
+    where: { userId, group: { type: 'FAMILY' } },
+    select: { groupId: true },
+  })
+  return groups.map(g => g.groupId)
+}
+
+// Фильтр "Моя кухня": только личные и семейные блюда
+async function buildMyKitchenFilter(userId) {
+  const familyGroupIds = await getFamilyGroupIds(userId)
+  return {
+    OR: [
+      { authorId: userId },
+      ...(familyGroupIds.length ? [{ visibility: 'FAMILY', groupId: { in: familyGroupIds } }] : []),
+    ],
+  }
+}
+
 // Строит фильтр видимости с учётом групп и DishVisibility
 async function buildVisibilityFilter(userId) {
   const groupIds = await getMemberGroupIds(userId)
@@ -68,12 +89,14 @@ async function getSearchIds(q) {
 }
 
 // GET /api/dishes — поиск и фильтрация
-// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode
+// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode } = req.query
+    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen } = req.query
 
-    const visibilityFilter = await buildVisibilityFilter(req.userId)
+    const visibilityFilter = (myKitchen === 'true' && req.userId)
+      ? await buildMyKitchenFilter(req.userId)
+      : await buildVisibilityFilter(req.userId)
 
     const baseWhere = { ...visibilityFilter, ...buildBaseFilter({ mealTime, category, tags, cuisine }) }
     if (q) {

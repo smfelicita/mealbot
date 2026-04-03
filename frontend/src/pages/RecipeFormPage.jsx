@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useToast } from '../hooks/useToast.jsx'
 import { UNITS } from '../constants'
@@ -55,8 +55,11 @@ export default function RecipeFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { show, Toast } = useToast()
   const isEdit = Boolean(id)
+  const copyFromId = searchParams.get('copyFrom')
+  const [sourceDishName, setSourceDishName] = useState('')
 
   const [loading, setLoading] = useState(isEdit)
   const [groups, setGroups] = useState([])
@@ -120,8 +123,41 @@ export default function RecipeFormPage() {
         })
         .catch(() => navigate('/my-recipes'))
         .finally(() => setLoading(false))
+    } else if (copyFromId) {
+      api.getDish(copyFromId)
+        .then(dish => {
+          setSourceDishName(dish.name)
+          setForm({
+            nameRu: dish.name,
+            description: dish.description || '',
+            categories: dish.categories || [],
+            mealTime: dish.mealTime || [],
+            difficulty: dish.difficulty || '',
+            cookTime: dish.cookTime || '',
+            calories: dish.calories || '',
+            recipe: dish.recipe || '',
+            imageUrl: '',
+            videoUrl: '',
+            tags: (dish.tags || []).join(', '),
+            visibility: 'PRIVATE',
+          })
+          const existingImages = dish.images?.length
+            ? dish.images
+            : (dish.imageUrl ? [dish.imageUrl] : [])
+          setImages(existingImages)
+          setCuisineInput(dish.cuisine || '')
+          setIngredients(dish.ingredients.map(ing => ({
+            id: ing.id, name: ing.name, emoji: ing.emoji,
+            amountValue: ing.amountValue || '',
+            unit: ing.unit || 'г',
+            toTaste: ing.toTaste || false,
+            optional: ing.optional || false,
+            amount: ing.amount || '',
+          })))
+        })
+        .catch(() => {})
     }
-  }, [id])
+  }, [id, copyFromId])
 
   function setField(key, value) {
     setForm(f => ({ ...f, [key]: value }))
@@ -316,6 +352,11 @@ export default function RecipeFormPage() {
       </div>
 
       <div className="page" style={{ paddingTop: 16 }}>
+        {copyFromId && sourceDishName && (
+          <div style={{ background: 'rgba(45,212,191,.08)', border: '1px solid rgba(45,212,191,.2)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: 'var(--teal)' }}>
+            📋 Это копия рецепта «{sourceDishName}». Адаптируйте под себя и сохраните.
+          </div>
+        )}
         {/* Название */}
         <div className="form-group">
           <label>Название *</label>

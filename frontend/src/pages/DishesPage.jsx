@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import DishCard from '../components/DishCard'
@@ -18,8 +18,15 @@ export default function DishesPage() {
   const [mealTime, setMealTime] = useState('')
   const [activeTags, setActiveTags] = useState([])
   const [showFilters, setShowFilters] = useState(false)
-  const { fridgeMode, toggleFridgeMode } = useStore()
+  const { fridgeMode, toggleFridgeMode, token } = useStore()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  // Вкладка: 'my' — моя кухня, 'catalog' — шаблоны/все
+  const [view, setView] = useState(() => {
+    if (searchParams.get('view') === 'catalog') return 'catalog'
+    return token ? 'my' : 'catalog'
+  })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -30,11 +37,12 @@ export default function DishesPage() {
         mealTime: mealTime || undefined,
         tags: activeTags.length ? activeTags.join(',') : undefined,
         fridgeMode: fridgeMode ? 'true' : undefined,
+        myKitchen: (view === 'my' && token) ? 'true' : undefined,
       })
       setDishes(data)
     } catch { setDishes([]) }
     finally { setLoading(false) }
-  }, [q, category, mealTime, activeTags, fridgeMode])
+  }, [q, category, mealTime, activeTags, fridgeMode, view, token])
 
   useEffect(() => {
     const t = setTimeout(load, 300)
@@ -64,6 +72,21 @@ export default function DishesPage() {
       </div>
 
       <div className="page" style={{paddingTop:12}}>
+        {token && (
+          <div style={{display:'flex',gap:8,marginBottom:14}}>
+            <button className={`tag ${view==='my'?'active':''}`}
+              style={{fontSize:13,padding:'6px 14px'}}
+              onClick={() => setView('my')}>
+              🏠 Моя кухня
+            </button>
+            <button className={`tag ${view==='catalog'?'active':''}`}
+              style={{fontSize:13,padding:'6px 14px'}}
+              onClick={() => setView('catalog')}>
+              📚 Шаблоны
+            </button>
+          </div>
+        )}
+
         <div className="input-group" style={{marginBottom:12}}>
           <span className="input-icon">🔍</span>
           <input className="input" placeholder="Поиск блюд..." value={q} onChange={e=>setQ(e.target.value)}/>
@@ -122,11 +145,23 @@ export default function DishesPage() {
             <div className="loader"/>
           </div>
         ) : dishes.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">🔍</div>
-            <h3>Ничего не найдено</h3>
-            <p>Попробуйте изменить фильтры или поисковый запрос</p>
-          </div>
+          view === 'my' && !q && !hasFilters ? (
+            <div className="empty-state">
+              <div className="empty-icon">🍽️</div>
+              <h3>Ваша кухня пока пуста</h3>
+              <p>Добавьте свои блюда или скопируйте из шаблонов</p>
+              <div style={{display:'flex',gap:10,justifyContent:'center',marginTop:16,flexWrap:'wrap'}}>
+                <button className="btn btn-primary" onClick={() => navigate('/my-recipes/new')}>+ Добавить рецепт</button>
+                <button className="btn btn-secondary" onClick={() => setView('catalog')}>Шаблоны →</button>
+              </div>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">🔍</div>
+              <h3>Ничего не найдено</h3>
+              <p>Попробуйте изменить фильтры или поисковый запрос</p>
+            </div>
+          )
         ) : (
           <div className="dishes-grid">
             {dishes.map((d, i) => (
