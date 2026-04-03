@@ -36,38 +36,34 @@ export default function HomePage() {
   const greeting = hour < 12 ? 'Доброе утро' : hour < 17 ? 'Добрый день' : 'Добрый вечер'
 
   return (
-    <div>
-      <div className="top-bar">
-        <span className="top-bar-logo">🍽️ MealBot</span>
-        <div style={{flex:1}}/>
-        {token && (
-          <div className="toggle-wrap" onClick={toggleFridgeMode}>
-            <div className={`toggle ${fridgeMode?'on':''}`}/>
-            <span className="toggle-label" style={{color:fridgeMode?'var(--accent)':'var(--text2)'}}>
-              {fridgeMode ? '🧊 Из холодильника' : '🧊 Холодильник'}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="page">
-        <div style={{marginBottom:20}}>
+    <div className="page">
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20,gap:12}}>
+        <div>
           <h1 style={{fontFamily:'var(--font-serif)',fontSize:26,fontWeight:700,marginBottom:4}}>
             {greeting}! 👋
           </h1>
           <p style={{color:'var(--text2)',fontSize:14}}>Что будем готовить?</p>
         </div>
+        {token && (
+          <div className="toggle-wrap" onClick={toggleFridgeMode} style={{flexShrink:0,marginTop:4}}>
+            <div className={`toggle ${fridgeMode?'on':''}`}/>
+            <span className="toggle-label" style={{color:fridgeMode?'var(--accent)':'var(--text2)',fontSize:12}}>
+              🧊
+            </span>
+          </div>
+        )}
+      </div>
 
-        <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
-          {MEAL_TIMES.map(m => (
-            <button key={m.id}
-              className={`tag ${mealTime===m.id?'active':''}`}
-              onClick={() => setMealTime(m.id)}
-              style={{fontSize:13,padding:'6px 14px'}}>
-              {m.icon} {m.label}
-            </button>
-          ))}
-        </div>
+      <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
+        {MEAL_TIMES.map(m => (
+          <button key={m.id}
+            className={`tag ${mealTime===m.id?'active':''}`}
+            onClick={() => setMealTime(m.id)}
+            style={{fontSize:13,padding:'6px 14px'}}>
+            {m.icon} {m.label}
+          </button>
+        ))}
+      </div>
 
         {fridgeMode && (
           <div style={{background:'rgba(45,212,191,.08)',border:'1px solid rgba(45,212,191,.2)',borderRadius:'var(--radius-sm)',padding:'10px 14px',marginBottom:16,fontSize:13,color:'var(--teal)'}}>
@@ -100,7 +96,6 @@ export default function HomePage() {
             Все блюда →
           </button>
         </div>
-      </div>
     </div>
   )
 }
