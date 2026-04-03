@@ -238,6 +238,20 @@ router.post('/google', async (req, res, next) => {
   }
 })
 
+// POST /api/auth/generate-telegram-link — генерирует ссылку для привязки Telegram к аккаунту
+router.post('/generate-telegram-link', authMiddleware, async (req, res, next) => {
+  try {
+    const { randomBytes } = require('crypto')
+    const token = randomBytes(16).toString('hex')
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { pendingTelegramLink: token },
+    })
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'MealBotRu'
+    res.json({ url: `https://t.me/${botUsername}?start=link_${token}` })
+  } catch (err) { next(err) }
+})
+
 // GET /api/auth/tg?token= — обмен одноразового токена на JWT
 router.get('/tg', async (req, res, next) => {
   try {

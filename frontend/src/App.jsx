@@ -14,6 +14,7 @@ import GroupDetailPage from './pages/GroupDetailPage'
 import GroupFormPage from './pages/GroupFormPage'
 import MealPlanPage from './pages/MealPlanPage'
 import TelegramAuthPage from './pages/TelegramAuthPage'
+import ProfilePage from './pages/ProfilePage'
 
 function RequireAuth({ children }) {
   const token = useStore(s => s.token)
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
           <Route path="groups/:id/edit" element={<RequireAuth><GroupFormPage /></RequireAuth>} />
           <Route path="plan" element={<RequireAuth><MealPlanPage /></RequireAuth>} />
+          <Route path="profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
         </Route>
       </Routes>
     </BrowserRouter>

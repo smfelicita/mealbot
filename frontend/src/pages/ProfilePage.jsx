@@ -1,110 +1,112 @@
-import React from 'react'
-import { useStore } from '../store'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../api'
+import { useStore } from '../store'
 
 export default function ProfilePage() {
-  const { user, logout } = useStore()
+  const logout = useStore(s => s.logout)
   const navigate = useNavigate()
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [tgLink, setTgLink] = useState(null)
+  const [tgLoading, setTgLoading] = useState(false)
 
-  function handleLogout() {
-    logout()
-    navigate('/login')
+  useEffect(() => {
+    api.me()
+      .then(data => { setProfile(data) })
+      .catch(() => navigate('/auth'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  async function connectTelegram() {
+    setTgLoading(true)
+    try {
+      const { url } = await api.generateTelegramLink()
+      setTgLink(url)
+    } catch {}
+    setTgLoading(false)
   }
 
-  return (
-    <div className="page">
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ fontWeight: 800, marginBottom: '.2rem' }}>👤 Профиль</h2>
-        <p style={{ color: 'var(--text2)', fontSize: '.88rem' }}>Настройки аккаунта</p>
-      </div>
+  if (loading) return (
+    <div className="page fade-in" style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}>
+      <span className="loader" style={{ width: 32, height: 32 }} />
+    </div>
+  )
 
-      {/* User info */}
-      <div className="card fade-up" style={{ marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+  const avatar = profile?.name?.[0]?.toUpperCase() || '?'
+
+  return (
+    <div className="page fade-in" style={{ maxWidth: 480 }}>
+      <h2 style={{ fontFamily: 'var(--font-serif)', marginBottom: 24 }}>Профиль</h2>
+
+      {/* Аватар + имя */}
+      <div className="card fade-up" style={{ marginBottom: 16, padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{
-            width: 52, height: 52, borderRadius: '50%',
+            width: 56, height: 56, borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--accent), var(--purple))',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.4rem', flexShrink: 0,
+            fontSize: 22, fontWeight: 800, color: '#fff', flexShrink: 0,
           }}>
-            {user?.name?.[0]?.toUpperCase() || '?'}
+            {avatar}
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '1.05rem' }}>
-              {user?.name || 'Пользователь'}
-            </div>
-            <div style={{ color: 'var(--text2)', fontSize: '.88rem' }}>
-              {user?.email}
+            <div style={{ fontWeight: 800, fontSize: 17 }}>{profile?.name || 'Без имени'}</div>
+            <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
+              {profile?.role === 'ADMIN' ? '🛡 Администратор' : profile?.role === 'PRO' ? '⭐ Pro' : 'Пользователь'}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Telegram connection */}
-      <div className="card fade-up" style={{ marginBottom: '1rem' }}>
-        <div style={{ fontWeight: 700, marginBottom: '.5rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-          <span style={{ fontSize: '1.2rem' }}>✈️</span> Telegram-бот
-        </div>
-        {user?.telegramUsername ? (
-          <div style={{
-            background: 'rgba(52,211,153,.1)', border: '1px solid rgba(52,211,153,.2)',
-            borderRadius: 'var(--radius-sm)', padding: '.7rem',
-            color: 'var(--green)', fontSize: '.9rem',
-          }}>
-            ✅ Подключён: @{user.telegramUsername}
-          </div>
-        ) : (
-          <>
-            <p style={{ color: 'var(--text2)', fontSize: '.88rem', marginBottom: '.75rem', lineHeight: 1.6 }}>
-              Подключите бот чтобы управлять холодильником и получать рекомендации прямо в Telegram.
-            </p>
-            <div style={{
-              background: 'var(--bg3)', borderRadius: 'var(--radius-sm)',
-              padding: '.85rem', fontSize: '.87rem', lineHeight: 1.7,
-              color: 'var(--text2)',
-            }}>
-              <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '.5rem' }}>
-                Как подключить:
-              </div>
-              <ol style={{ paddingLeft: '1.2rem' }}>
-                <li>Найдите бот <strong style={{ color: 'var(--accent)' }}>@MealBotApp</strong> в Telegram</li>
-                <li>Нажмите <strong>/start</strong></li>
-                <li>Отправьте команду <code style={{
-                  background: 'var(--bg)', padding: '1px 5px',
-                  borderRadius: 4, fontSize: '.85em',
-                }}>/connect {user?.id?.slice(0, 8)}</code></li>
-              </ol>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Stats */}
-      <div className="card fade-up" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ fontWeight: 700, marginBottom: '.75rem' }}>📊 Статистика</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
-          <StatBox label="Блюд в базе" value="20+" />
-          <StatBox label="Продуктов" value="37" />
+        <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {profile?.email && <InfoRow label="📧 Email" value={profile.email} note={profile.emailVerified ? '✓ подтверждён' : '⚠ не подтверждён'} />}
+          {profile?.phone && <InfoRow label="📱 Телефон" value={profile.phone} />}
+          <InfoRow
+            label="✈️ Telegram"
+            value={profile?.telegramUsername ? `@${profile.telegramUsername}` : '—'}
+            note={profile?.telegramId ? '✓ подключён' : 'не подключён'}
+          />
         </div>
       </div>
 
-      {/* Logout */}
-      <button className="btn btn-danger w-full" onClick={handleLogout}
-        style={{ padding: '.85rem' }}>
-        Выйти из аккаунта
+      {/* Подключить Telegram */}
+      {!profile?.telegramId && (
+        <div className="card fade-up" style={{ marginBottom: 16, padding: '16px 20px' }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>✈️ Подключить Telegram-бот</div>
+          <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 14, lineHeight: 1.6 }}>
+            После подключения холодильник, план питания и рецепты будут доступны прямо в боте.
+          </p>
+          {!tgLink ? (
+            <button className="btn btn-secondary" style={{ width: '100%' }} onClick={connectTelegram} disabled={tgLoading}>
+              {tgLoading ? <span className="loader" style={{ width: 16, height: 16 }} /> : 'Получить ссылку для подключения'}
+            </button>
+          ) : (
+            <a href={tgLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ width: '100%', display: 'flex' }}>
+              Открыть бота →
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Выйти */}
+      <button
+        className="btn btn-secondary fade-up"
+        style={{ width: '100%', color: '#e74c3c', borderColor: 'rgba(231,76,60,.3)' }}
+        onClick={() => { logout(); navigate('/auth') }}
+      >
+        🚪 Выйти из аккаунта
       </button>
     </div>
   )
 }
 
-function StatBox({ label, value }) {
+function InfoRow({ label, value, note }) {
   return (
-    <div style={{
-      background: 'var(--bg3)', borderRadius: 'var(--radius-sm)',
-      padding: '.75rem', textAlign: 'center',
-    }}>
-      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent)' }}>{value}</div>
-      <div style={{ fontSize: '.8rem', color: 'var(--text2)', marginTop: '2px' }}>{label}</div>
+    <div>
+      <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>{value}
+        {note && <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text3)', fontWeight: 400 }}>{note}</span>}
+      </div>
     </div>
   )
 }

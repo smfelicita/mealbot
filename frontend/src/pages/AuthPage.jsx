@@ -245,19 +245,6 @@ export default function AuthPage() {
                 width="100%"
                 locale="ru"
               />
-              <a
-                href={`https://t.me/${import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'MealBotRu'}?start=getlink`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  width: '100%', padding: '10px 0', borderRadius: 6, border: '1px solid var(--border)',
-                  background: 'var(--bg3)', color: 'var(--text)', fontSize: 14, fontWeight: 600,
-                  textDecoration: 'none', boxSizing: 'border-box',
-                }}
-              >
-                <span style={{ fontSize: 18 }}>✈️</span> Войти через Telegram
-              </a>
             </div>
           </>
         )}

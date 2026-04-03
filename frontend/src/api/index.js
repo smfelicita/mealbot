@@ -39,6 +39,8 @@ export const api = {
     request('/auth/google', { method: 'POST', body: { token } }),
   telegramAuth: (token) =>
     request(`/auth/tg?token=${encodeURIComponent(token)}`),
+  generateTelegramLink: () =>
+    request('/auth/generate-telegram-link', { method: 'POST' }),
 
   // Dishes
   getDishes: (params = {}) => {
