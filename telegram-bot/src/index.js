@@ -8,6 +8,17 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true })
 const prisma = new PrismaClient()
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+// Очистка просроченных токенов при старте (старше 24 часов)
+async function cleanupExpiredTokens() {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  const { count } = await prisma.user.updateMany({
+    where: { pendingTelegramLink: { not: null }, updatedAt: { lt: cutoff } },
+    data: { pendingTelegramLink: null },
+  })
+  if (count > 0) console.log(`[cleanup] Удалено ${count} просроченных pendingTelegramLink`)
+}
+cleanupExpiredTokens().catch(console.error)
+
 const USER_AI_LIMIT = 50
 
 async function checkAiLimit(userId) {
@@ -224,6 +235,23 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
   }
 
   const session = getSession(chatId)
+
+  // Если пользователь в процессе выбора продуктов — спросить перед сбросом
+  if (session.state === 'adding_products' && session.data.selected?.length > 0) {
+    await bot.sendMessage(chatId,
+      `⚠️ Ты сейчас выбираешь продукты (отмечено: ${session.data.selected.length}).\nПрервать выбор?`,
+      {
+        reply_markup: {
+          inline_keyboard: [[
+            { text: '❌ Да, начать сначала', callback_data: 'reset_and_start' },
+            { text: '← Продолжить выбор', callback_data: 'cancel_reset' },
+          ]],
+        },
+      }
+    )
+    return
+  }
+
   session.state = 'idle'
   session.data = {}
 
@@ -746,6 +774,18 @@ bot.on('callback_query', async (query) => {
   const session = getSession(chatId)
 
   await bot.answerCallbackQuery(query.id)
+
+  // Подтверждение сброса сессии при /start во время выбора продуктов
+  if (data === 'reset_and_start') {
+    session.state = 'idle'; session.data = {}
+    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
+    const name = user.name || 'друг'
+    return bot.sendMessage(chatId, `👋 Привет, *${name}*! Выбери из меню:`, { parse_mode: 'Markdown', ...MAIN_MENU })
+  }
+  if (data === 'cancel_reset') {
+    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {})
+    return sendIngredientPage(chatId, session)
+  }
 
   // Включить режим ИИ
   if (data === 'ai_mode') {

@@ -241,6 +241,18 @@ router.post('/google', async (req, res, next) => {
 // POST /api/auth/generate-telegram-link — генерирует ссылку для привязки Telegram к аккаунту
 router.post('/generate-telegram-link', authMiddleware, async (req, res, next) => {
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { telegramId: true, pendingTelegramLink: true, updatedAt: true },
+    })
+
+    if (user.telegramId) return res.status(409).json({ error: 'Telegram уже подключён' })
+
+    // Rate limit: не чаще раза в минуту
+    if (user.pendingTelegramLink && user.updatedAt > new Date(Date.now() - 60_000)) {
+      return res.status(429).json({ error: 'Подождите минуту перед повторным запросом' })
+    }
+
     const { randomBytes } = require('crypto')
     const token = randomBytes(16).toString('hex')
     await prisma.user.update({
