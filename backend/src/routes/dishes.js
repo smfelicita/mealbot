@@ -92,7 +92,7 @@ async function getSearchIds(q) {
 // Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen } = req.query
+    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, favorites } = req.query
 
     const visibilityFilter = (myKitchen === 'true' && req.userId)
       ? await buildMyKitchenFilter(req.userId)
@@ -102,6 +102,14 @@ router.get('/', optionalAuth, async (req, res, next) => {
     if (q) {
       const ids = await getSearchIds(q)
       baseWhere.id = { in: ids }
+    }
+
+    if (favorites === 'true' && req.userId) {
+      const favs = await prisma.favorite.findMany({
+        where: { userId: req.userId },
+        select: { dishId: true },
+      })
+      baseWhere.id = { in: favs.map(f => f.dishId) }
     }
 
     if (fridgeMode === 'true') {

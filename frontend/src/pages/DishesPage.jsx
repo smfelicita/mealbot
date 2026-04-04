@@ -38,6 +38,7 @@ export default function DishesPage() {
         tags: activeTags.length ? activeTags.join(',') : undefined,
         fridgeMode: fridgeMode ? 'true' : undefined,
         myKitchen: (view === 'my' && token) ? 'true' : undefined,
+        favorites: (view === 'favorites' && token) ? 'true' : undefined,
       })
       setDishes(data)
     } catch { setDishes([]) }
@@ -83,6 +84,11 @@ export default function DishesPage() {
               style={{fontSize:13,padding:'6px 14px'}}
               onClick={() => setView('catalog')}>
               📚 Готовые рецепты
+            </button>
+            <button className={`tag ${view==='favorites'?'active':''}`}
+              style={{fontSize:13,padding:'6px 14px'}}
+              onClick={() => setView('favorites')}>
+              ❤️ Избранное
             </button>
           </div>
         )}
@@ -154,6 +160,12 @@ export default function DishesPage() {
                 <button className="btn btn-primary" onClick={() => navigate('/my-recipes/new')}>+ Добавить рецепт</button>
                 <button className="btn btn-secondary" onClick={() => setView('catalog')}>Готовые рецепты →</button>
               </div>
+            </div>
+          ) : view === 'favorites' && !q && !hasFilters ? (
+            <div className="empty-state">
+              <div className="empty-icon">🤍</div>
+              <h3>Избранное пусто</h3>
+              <p>Нажмите ❤️ на странице любого рецепта</p>
             </div>
           ) : (
             <div className="empty-state">

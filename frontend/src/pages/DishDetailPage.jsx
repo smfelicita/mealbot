@@ -43,6 +43,7 @@ export default function DishDetailPage() {
   const [recs, setRecs] = useState(null)
   const [showPlanModal, setShowPlanModal] = useState(false)
   const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
+  const [isFav, setIsFav] = useState(false)
 
   useEffect(() => {
     api.getDish(id).then(setDish).catch(() => navigate('/dishes')).finally(() => setLoading(false))
@@ -51,8 +52,16 @@ export default function DishDetailPage() {
       api.getGroups().then(groups => {
         setHasFamilyGroup(groups.some(g => g.type === 'FAMILY'))
       }).catch(() => {})
+      api.getFavoriteIds().then(({ dishIds }) => setIsFav(dishIds.includes(id))).catch(() => {})
     }
   }, [id])
+
+  async function toggleFav() {
+    try {
+      if (isFav) { await api.removeFavorite(id); setIsFav(false) }
+      else        { await api.addFavorite(id);    setIsFav(true)  }
+    } catch (e) { show(e.message, 'error') }
+  }
 
   async function handleDelete() {
     if (!confirm(`Удалить "${dish.name}"?`)) return
@@ -94,6 +103,9 @@ export default function DishDetailPage() {
                 <>
                   <button className="btn btn-secondary btn-sm"
                     style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
+                    onClick={toggleFav}>{isFav ? '❤️' : '🤍'}</button>
+                  <button className="btn btn-secondary btn-sm"
+                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
                     onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
                   <button className="btn btn-secondary btn-sm"
                     style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
@@ -128,6 +140,7 @@ export default function DishDetailPage() {
               <div style={{ display: 'flex', gap: 8 }}>
                 {user && (
                   <>
+                    <button className="btn btn-secondary btn-sm" onClick={toggleFav}>{isFav ? '❤️' : '🤍'}</button>
                     <button className="btn btn-secondary btn-sm" onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
                     <button className="btn btn-secondary btn-sm"
                       onClick={() => navigate(`/my-recipes/new?copyFrom=${id}`)}>📋 Скопировать</button>

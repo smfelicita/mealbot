@@ -14,6 +14,7 @@ const groupRoutes = require('./routes/groups')
 const mealPlanRoutes = require('./routes/meal-plans')
 // const pushRoutes = require('./routes/push') // отключено — уведомления через Telegram
 const telegramRoutes = require('./routes/telegram')
+const favoriteRoutes = require('./routes/favorites')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -41,6 +42,7 @@ app.use('/api/groups', groupRoutes)
 app.use('/api/meal-plans', mealPlanRoutes)
 // app.use('/api/push', pushRoutes) // отключено — уведомления через Telegram
 app.use('/api/telegram', telegramRoutes)
+app.use('/api/favorites', favoriteRoutes)
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }))

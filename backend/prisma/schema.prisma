@@ -87,6 +87,7 @@ model User {
   groupMembers        GroupMember[]
   mealPlans           MealPlan[]
   pushSubscriptions   PushSubscription[]
+  favorites           Favorite[]
 
   @@map("users")
 }
@@ -190,6 +191,7 @@ model Dish {
 
   ingredients DishIngredient[]
   mealPlans   MealPlan[]
+  favorites   Favorite[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -303,4 +305,18 @@ model ChatMessage {
   createdAt DateTime @default(now())
 
   @@map("chat_messages")
+}
+
+// ─── Избранное ────────────────────────────────────────────────────────────────
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dishId    String
+  dish      Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dishId])
+  @@map("favorites")
 }

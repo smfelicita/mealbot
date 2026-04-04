@@ -113,4 +113,9 @@ export const api = {
   // Telegram linking
   getTelegramLinkToken: () => request('/telegram/link-token', { method: 'POST' }),
   getTelegramLinkStatus: () => request('/telegram/link-status'),
+
+  // Favorites
+  getFavoriteIds: () => request('/favorites'),
+  addFavorite: (dishId) => request(`/favorites/${dishId}`, { method: 'POST' }),
+  removeFavorite: (dishId) => request(`/favorites/${dishId}`, { method: 'DELETE' }),
 }
