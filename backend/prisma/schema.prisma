@@ -75,6 +75,7 @@ model User {
   subscriptionUntil DateTime?
   aiMessagesDay    Int       @default(0)
   aiMessagesDate   DateTime?
+  timezone                 String    @default("Europe/Moscow")
   lastActiveAt             DateTime?
   lastDailySuggestSentAt   DateTime?
   lastFridgeReminderSentAt DateTime?

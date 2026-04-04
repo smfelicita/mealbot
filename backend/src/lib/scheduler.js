@@ -2,12 +2,29 @@ const cron = require('node-cron')
 const prisma = require('./prisma')
 const { sendTelegramMessage } = require('./telegram')
 
-function isSameDay(date, now) {
-  if (!date) return false
-  const d = new Date(date)
-  return d.getFullYear() === now.getFullYear()
-    && d.getMonth() === now.getMonth()
-    && d.getDate() === now.getDate()
+// Получить текущий час в таймзоне пользователя
+function getLocalHour(timezone, date) {
+  try {
+    return parseInt(new Intl.DateTimeFormat('en', {
+      hour: 'numeric', hour12: false, timeZone: timezone,
+    }).format(date), 10)
+  } catch {
+    return parseInt(new Intl.DateTimeFormat('en', {
+      hour: 'numeric', hour12: false, timeZone: 'Europe/Moscow',
+    }).format(date), 10)
+  }
+}
+
+// Сравнить два момента как один и тот же день в таймзоне пользователя
+function isSameDayInTz(date1, date2, timezone) {
+  if (!date1) return false
+  try {
+    const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }) // en-CA → "YYYY-MM-DD"
+    return fmt.format(new Date(date1)) === fmt.format(new Date(date2))
+  } catch {
+    const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' })
+    return fmt.format(new Date(date1)) === fmt.format(new Date(date2))
+  }
 }
 
 function daysAgo(n, now) {
@@ -26,9 +43,8 @@ function shuffle(arr) {
   return a
 }
 
-async function runDailyNotifications() {
+async function runHourlyCheck() {
   const now = new Date()
-  console.log('[scheduler] Running daily notifications at', now.toISOString())
 
   // Получить всех пользователей с telegramId
   const users = await prisma.user.findMany({
@@ -37,6 +53,7 @@ async function runDailyNotifications() {
       id: true,
       telegramId: true,
       name: true,
+      timezone: true,
       lastActiveAt: true,
       lastDailySuggestSentAt: true,
       lastFridgeReminderSentAt: true,
@@ -45,12 +62,17 @@ async function runDailyNotifications() {
 
   for (const user of users) {
     try {
-      // Если пользователь открывал приложение сегодня — не отправляем ничего
-      if (isSameDay(user.lastActiveAt, now)) continue
+      const tz = user.timezone || 'Europe/Moscow'
+
+      // Отправляем только если сейчас 16:xx в таймзоне пользователя
+      if (getLocalHour(tz, now) !== 16) continue
+
+      // Если пользователь открывал приложение сегодня (в его TZ) — пропускаем
+      if (isSameDayInTz(user.lastActiveAt, now, tz)) continue
 
       // ПРИОРИТЕТ 2: Ежедневное предложение
-      if (!isSameDay(user.lastDailySuggestSentAt, now)) {
-        const sent = await tryDailySuggest(user, now)
+      if (!isSameDayInTz(user.lastDailySuggestSentAt, now, tz)) {
+        const sent = await tryDailySuggest(user, now, tz)
         if (sent) continue
       }
 
@@ -65,10 +87,12 @@ async function runDailyNotifications() {
   }
 }
 
-async function tryDailySuggest(user, now) {
-  // Условие: нет плана на сегодня
-  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0)
-  const todayEnd   = new Date(now); todayEnd.setHours(23, 59, 59, 999)
+async function tryDailySuggest(user, now, tz) {
+  // Нет плана на сегодня в TZ пользователя
+  const fmtDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(now) // "YYYY-MM-DD"
+  const todayStart = new Date(`${fmtDate}T00:00:00.000Z`)
+  // Сдвинуть на UTC-offset: проще через начало следующего дня
+  const todayEnd = new Date(`${fmtDate}T23:59:59.999Z`)
 
   const hasPlanToday = await prisma.mealPlan.count({
     where: {
@@ -78,7 +102,7 @@ async function tryDailySuggest(user, now) {
   })
   if (hasPlanToday) return false
 
-  // Условие: ≥5 блюд в личной кухне
+  // ≥5 блюд в личной кухне или публичных
   const myDishes = await prisma.dish.findMany({
     where: {
       OR: [
@@ -90,7 +114,6 @@ async function tryDailySuggest(user, now) {
   })
   if (myDishes.length < 5) return false
 
-  // Выбрать 3 случайных блюда
   const picks = shuffle(myDishes).slice(0, 3)
   const list = picks.map(d => `• ${d.nameRu}`).join('\n')
 
@@ -106,9 +129,8 @@ async function tryDailySuggest(user, now) {
 }
 
 async function tryFridgeReminder(user, now) {
-  const threeDaysAgo = new Date(now); threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
+  const threeDaysAgo = daysAgo(3, now)
 
-  // Проверяем семейную группу
   const familyMembership = await prisma.groupMember.findFirst({
     where: { userId: user.id, group: { type: 'FAMILY' } },
     select: { groupId: true },
@@ -138,9 +160,9 @@ async function tryFridgeReminder(user, now) {
   })
 }
 
-// Запуск: каждый день в 06:00 UTC (9:00 Москва)
-cron.schedule('0 6 * * *', runDailyNotifications, { timezone: 'UTC' })
+// Запуск каждый час — проверяем кому сейчас 16:xx по местному времени
+cron.schedule('0 * * * *', runHourlyCheck, { timezone: 'UTC' })
 
-console.log('[scheduler] Daily notification cron scheduled (06:00 UTC)')
+console.log('[scheduler] Hourly notification cron scheduled (fires at 16:00 user local time)')
 
-module.exports = { runDailyNotifications }
+module.exports = { runHourlyCheck }
