@@ -16,6 +16,9 @@ const mealPlanRoutes = require('./routes/meal-plans')
 const telegramRoutes = require('./routes/telegram')
 const favoriteRoutes = require('./routes/favorites')
 
+// Планировщик уведомлений (запускается сразу при старте)
+require('./lib/scheduler')
+
 const app = express()
 const PORT = process.env.PORT || 3001
 

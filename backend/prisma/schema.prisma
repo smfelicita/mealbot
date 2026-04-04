@@ -75,6 +75,9 @@ model User {
   subscriptionUntil DateTime?
   aiMessagesDay    Int       @default(0)
   aiMessagesDate   DateTime?
+  lastActiveAt             DateTime?
+  lastDailySuggestSentAt   DateTime?
+  lastFridgeReminderSentAt DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

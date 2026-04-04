@@ -326,6 +326,8 @@ router.get('/me', authMiddleware, async (req, res, next) => {
       where: { id: req.userId },
       select: { id: true, email: true, name: true, role: true, telegramId: true, telegramUsername: true, subscriptionUntil: true, phone: true, phoneVerified: true, emailVerified: true },
     })
+    // Обновляем lastActiveAt для сброса дневных триггеров планировщика
+    prisma.user.update({ where: { id: req.userId }, data: { lastActiveAt: new Date() } }).catch(() => {})
     res.json(user)
   } catch (err) { next(err) }
 })

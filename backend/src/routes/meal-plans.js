@@ -3,6 +3,7 @@ const router = express.Router()
 const prisma = require('../lib/prisma')
 const { authMiddleware } = require('../middleware/auth')
 const webpush = require('web-push')
+const { sendTelegramMessage } = require('../lib/telegram')
 
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
@@ -19,6 +20,21 @@ async function getFamilyGroupId(userId) {
     select: { groupId: true },
   })
   return gm?.groupId || null
+}
+
+async function notifyFamilyGroup(groupId, excludeUserId, text) {
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: { _count: { select: { members: true } } },
+  })
+  if (!group || group._count.members <= 1) return
+  const members = await prisma.groupMember.findMany({
+    where: { groupId, userId: { not: excludeUserId } },
+    include: { user: { select: { telegramId: true } } },
+  })
+  for (const m of members) {
+    if (m.user.telegramId) await sendTelegramMessage(m.user.telegramId, text)
+  }
 }
 
 async function sendPushToGroup(groupId, excludeUserId, payload) {
@@ -86,14 +102,20 @@ router.post('/', authMiddleware, async (req, res) => {
       },
     })
 
-    // Push-уведомление остальным участникам семейной группы
-    if (groupId && process.env.VAPID_PUBLIC_KEY) {
-      const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } })
-      sendPushToGroup(groupId, req.userId, {
-        title: 'Новое блюдо в плане',
-        body: `${user?.name || 'Кто-то'} добавил${user?.name ? '' : 'а'} «${dish.nameRu}» в общий план`,
-        url: `/dishes/${dishId}`,
-      })
+    if (groupId) {
+      const initiator = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } })
+      const name = initiator?.name || 'Участник группы'
+      // Push (если настроен)
+      if (process.env.VAPID_PUBLIC_KEY) {
+        sendPushToGroup(groupId, req.userId, {
+          title: 'Новое блюдо в плане',
+          body: `${name} добавил(а) «${dish.nameRu}» в общий план`,
+          url: `/dishes/${dishId}`,
+        })
+      }
+      // Telegram
+      notifyFamilyGroup(groupId, req.userId,
+        `${name} добавил(а) блюдо в план:\n*${dish.nameRu}*`).catch(() => {})
     }
 
     res.status(201).json(plan)
@@ -105,11 +127,22 @@ router.post('/', authMiddleware, async (req, res) => {
 // DELETE /api/meal-plans/:id — удалить запись из плана
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const plan = await prisma.mealPlan.findUnique({ where: { id: req.params.id } })
+    const plan = await prisma.mealPlan.findUnique({
+      where: { id: req.params.id },
+      include: { dish: { select: { nameRu: true } } },
+    })
     if (!plan) return res.status(404).json({ error: 'Не найдено' })
     if (plan.userId !== req.userId) return res.status(403).json({ error: 'Нет доступа' })
 
     await prisma.mealPlan.delete({ where: { id: req.params.id } })
+
+    if (plan.groupId) {
+      const initiator = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } })
+      const name = initiator?.name || 'Участник группы'
+      notifyFamilyGroup(plan.groupId, req.userId,
+        `${name} убрал(а) блюдо из плана:\n*${plan.dish.nameRu}*`).catch(() => {})
+    }
+
     res.json({ ok: true })
   } catch (e) {
     res.status(500).json({ error: e.message })
