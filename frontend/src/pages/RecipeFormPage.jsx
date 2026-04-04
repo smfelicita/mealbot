@@ -61,6 +61,7 @@ export default function RecipeFormPage() {
   const copyFromId = searchParams.get('copyFrom')
   const [sourceDishName, setSourceDishName] = useState('')
 
+  const [mode, setMode] = useState(isEdit ? 'extended' : 'quick')
   const [loading, setLoading] = useState(isEdit)
   const [groups, setGroups] = useState([])
   const [selectedGroupId, setSelectedGroupId] = useState(location.state?.groupId || '')
@@ -83,7 +84,7 @@ export default function RecipeFormPage() {
     nameRu: '', description: '', categories: [],
     mealTime: [], difficulty: '', cookTime: '',
     calories: '', recipe: '', imageUrl: '', videoUrl: '',
-    tags: '', visibility: 'PRIVATE',
+    tags: '', visibility: 'FAMILY',
   })
 
   useEffect(() => {
@@ -139,7 +140,7 @@ export default function RecipeFormPage() {
             imageUrl: '',
             videoUrl: '',
             tags: (dish.tags || []).join(', '),
-            visibility: 'PRIVATE',
+            visibility: 'FAMILY',
           })
           const existingImages = dish.images?.length
             ? dish.images
@@ -283,7 +284,7 @@ export default function RecipeFormPage() {
   async function handleSubmit() {
     const errs = {}
     if (!form.nameRu.trim()) errs.nameRu = 'Укажите название'
-    if (!form.categories.length) errs.categories = 'Выберите хотя бы одну категорию'
+    if (mode === 'extended' && !form.categories.length) errs.categories = 'Выберите хотя бы одну категорию'
     if (Object.keys(errs).length) {
       setErrors(errs)
       setTimeout(() => {
@@ -292,10 +293,17 @@ export default function RecipeFormPage() {
       return
     }
 
+    // В быстром режиме автоматически выводим категории из mealTime
+    const mtToCategory = { breakfast: 'BREAKFAST', lunch: 'LUNCH', dinner: 'DINNER', snack: 'SNACK' }
+    const resolvedCategories = (mode === 'quick' && !form.categories.length && form.mealTime.length)
+      ? form.mealTime.map(mt => mtToCategory[mt]).filter(Boolean)
+      : form.categories
+
     setSaving(true)
     try {
       const data = {
         ...form,
+        categories: resolvedCategories,
         imageUrl: images[0] || null,
         images,
         cuisine: cuisineInput.trim() || null,
@@ -357,6 +365,25 @@ export default function RecipeFormPage() {
             📋 Это копия рецепта «{sourceDishName}». Адаптируйте под себя и сохраните.
           </div>
         )}
+
+        {/* Переключатель режима */}
+        {!isEdit && (
+          <div style={{ display: 'flex', background: 'var(--bg3)', borderRadius: 'var(--radius-sm)', padding: 3, gap: 3, marginBottom: 20 }}>
+            <button type="button"
+              style={{ flex: 1, borderRadius: 6, padding: '7px 0', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
+                background: mode === 'quick' ? 'var(--accent)' : 'transparent',
+                color: mode === 'quick' ? '#fff' : 'var(--text2)',
+              }}
+              onClick={() => setMode('quick')}>⚡ Быстро</button>
+            <button type="button"
+              style={{ flex: 1, borderRadius: 6, padding: '7px 0', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
+                background: mode === 'extended' ? 'var(--accent)' : 'transparent',
+                color: mode === 'extended' ? '#fff' : 'var(--text2)',
+              }}
+              onClick={() => setMode('extended')}>📋 Расширенно</button>
+          </div>
+        )}
+
         {/* Название */}
         <div className="form-group">
           <label>Название *</label>
@@ -366,17 +393,19 @@ export default function RecipeFormPage() {
           {errors.nameRu && <span className="form-error">{errors.nameRu}</span>}
         </div>
 
-        {/* Описание */}
-        <div className="form-group">
-          <label>Описание</label>
-          <textarea className="input" rows={2} placeholder="Краткое описание..."
-            value={form.description} onChange={e => setField('description', e.target.value)}
-            style={{ resize: 'vertical' }} />
-        </div>
+        {/* Описание — только расширенный */}
+        {mode === 'extended' && (
+          <div className="form-group">
+            <label>Описание</label>
+            <textarea className="input" rows={2} placeholder="Краткое описание..."
+              value={form.description} onChange={e => setField('description', e.target.value)}
+              style={{ resize: 'vertical' }} />
+          </div>
+        )}
 
-        {/* Категории (мульти-выбор) */}
+        {/* Категории */}
         <div className="form-group">
-          <label>Категории *</label>
+          <label>Категории{mode === 'extended' ? ' *' : ''}</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {CATEGORIES.map(c => (
               <button key={c.value} type="button"
@@ -389,32 +418,34 @@ export default function RecipeFormPage() {
           {errors.categories && <span className="form-error" style={{ marginTop: 4, display: 'block' }}>{errors.categories}</span>}
         </div>
 
-        {/* Кухня */}
-        <div className="form-group" style={{ position: 'relative' }}>
-          <label>Кухня</label>
-          <input className="input" placeholder="Итальянская, Русская..."
-            value={cuisineInput}
-            onChange={e => { setCuisineInput(e.target.value); setShowCuisineSuggest(true) }}
-            onFocus={() => setShowCuisineSuggest(true)}
-            onBlur={() => setTimeout(() => setShowCuisineSuggest(false), 150)} />
-          {showCuisineSuggest && cuisineSuggestions.length > 0 && (
-            <div style={{
-              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-              background: 'var(--bg2)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', overflow: 'hidden',
-            }}>
-              {cuisineSuggestions.map(c => (
-                <div key={c} style={{
-                  padding: '10px 14px', cursor: 'pointer', fontSize: 14,
-                  borderBottom: '1px solid var(--border)',
-                }}
-                  onMouseDown={() => { setCuisineInput(c); setShowCuisineSuggest(false) }}>
-                  {c}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Кухня — только расширенный */}
+        {mode === 'extended' && (
+          <div className="form-group" style={{ position: 'relative' }}>
+            <label>Кухня</label>
+            <input className="input" placeholder="Итальянская, Русская..."
+              value={cuisineInput}
+              onChange={e => { setCuisineInput(e.target.value); setShowCuisineSuggest(true) }}
+              onFocus={() => setShowCuisineSuggest(true)}
+              onBlur={() => setTimeout(() => setShowCuisineSuggest(false), 150)} />
+            {showCuisineSuggest && cuisineSuggestions.length > 0 && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)', overflow: 'hidden',
+              }}>
+                {cuisineSuggestions.map(c => (
+                  <div key={c} style={{
+                    padding: '10px 14px', cursor: 'pointer', fontSize: 14,
+                    borderBottom: '1px solid var(--border)',
+                  }}
+                    onMouseDown={() => { setCuisineInput(c); setShowCuisineSuggest(false) }}>
+                    {c}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Время приёма пищи */}
         <div className="form-group">
@@ -430,32 +461,37 @@ export default function RecipeFormPage() {
           </div>
         </div>
 
-        {/* Сложность + Время */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div className="form-group">
-            <label>Сложность</label>
-            <select className="input" value={form.difficulty}
-              onChange={e => setField('difficulty', e.target.value)}
-              style={{ appearance: 'auto' }}>
-              <option value="">—</option>
-              {DIFFICULTIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-            </select>
+        {/* Сложность + Время — только расширенный */}
+        {mode === 'extended' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="form-group">
+              <label>Сложность</label>
+              <select className="input" value={form.difficulty}
+                onChange={e => setField('difficulty', e.target.value)}
+                style={{ appearance: 'auto' }}>
+                <option value="">—</option>
+                {DIFFICULTIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Время (мин)</label>
+              <input type="number" className="input" placeholder="30" min="1"
+                value={form.cookTime} onChange={e => setField('cookTime', e.target.value)} />
+            </div>
           </div>
+        )}
+
+        {/* Теги — только расширенный */}
+        {mode === 'extended' && (
           <div className="form-group">
-            <label>Время (мин)</label>
-            <input type="number" className="input" placeholder="30" min="1"
-              value={form.cookTime} onChange={e => setField('cookTime', e.target.value)} />
+            <label>Теги (через запятую)</label>
+            <input className="input" placeholder="вегетарианское, быстро, постное..."
+              value={form.tags} onChange={e => setField('tags', e.target.value)} />
           </div>
-        </div>
+        )}
 
-        {/* Теги */}
-        <div className="form-group">
-          <label>Теги (через запятую)</label>
-          <input className="input" placeholder="вегетарианское, быстро, постное..."
-            value={form.tags} onChange={e => setField('tags', e.target.value)} />
-        </div>
-
-        {/* Фото */}
+        {/* Фото — только расширенный */}
+        {mode === 'extended' && (
         <div className="form-group">
           <label>Фото блюда <span style={{ color: 'var(--text3)', fontSize: 11, fontWeight: 400 }}>до 10 штук</span></label>
           {images.length > 0 && (
@@ -503,30 +539,33 @@ export default function RecipeFormPage() {
             </label>
           )}
         </div>
+        )}
 
-        {/* Видео */}
-        <div className="form-group">
-          <label>Видео (необязательно)</label>
-          {form.videoUrl ? (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              background: 'var(--bg3)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', padding: '10px 14px',
-            }}>
-              <span style={{ flex: 1, fontSize: 13, color: 'var(--teal)' }}>✅ Видео загружено</span>
-              <button type="button" className="btn btn-ghost btn-sm"
-                onClick={() => setField('videoUrl', '')}>Удалить</button>
-            </div>
-          ) : (
-            <label style={{ cursor: 'pointer', display: 'block' }}>
-              <div className="btn btn-secondary" style={{ width: '100%', pointerEvents: 'none' }}>
-                {uploadingVideo ? <span className="loader" style={{ width: 14, height: 14 }} /> : '🎥 Загрузить видео'}
+        {/* Видео — только расширенный */}
+        {mode === 'extended' && (
+          <div className="form-group">
+            <label>Видео (необязательно)</label>
+            {form.videoUrl ? (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: 'var(--bg3)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)', padding: '10px 14px',
+              }}>
+                <span style={{ flex: 1, fontSize: 13, color: 'var(--teal)' }}>✅ Видео загружено</span>
+                <button type="button" className="btn btn-ghost btn-sm"
+                  onClick={() => setField('videoUrl', '')}>Удалить</button>
               </div>
-              <input type="file" accept="video/*" hidden
-                onChange={e => e.target.files[0] && uploadVideo(e.target.files[0])} />
-            </label>
-          )}
-        </div>
+            ) : (
+              <label style={{ cursor: 'pointer', display: 'block' }}>
+                <div className="btn btn-secondary" style={{ width: '100%', pointerEvents: 'none' }}>
+                  {uploadingVideo ? <span className="loader" style={{ width: 14, height: 14 }} /> : '🎥 Загрузить видео'}
+                </div>
+                <input type="file" accept="video/*" hidden
+                  onChange={e => e.target.files[0] && uploadVideo(e.target.files[0])} />
+              </label>
+            )}
+          </div>
+        )}
 
         {/* Ингредиенты */}
         <div className="form-group">
@@ -575,16 +614,18 @@ export default function RecipeFormPage() {
           </button>
         </div>
 
-        {/* Рецепт */}
-        <div className="form-group">
-          <label>Рецепт (шаги приготовления)</label>
-          <textarea className="input" rows={8} placeholder="Опишите шаги приготовления..."
-            value={form.recipe} onChange={e => setField('recipe', e.target.value)}
-            style={{ resize: 'vertical', lineHeight: 1.6 }} />
-        </div>
+        {/* Рецепт — только расширенный */}
+        {mode === 'extended' && (
+          <div className="form-group">
+            <label>Рецепт (шаги приготовления)</label>
+            <textarea className="input" rows={8} placeholder="Опишите шаги приготовления..."
+              value={form.recipe} onChange={e => setField('recipe', e.target.value)}
+              style={{ resize: 'vertical', lineHeight: 1.6 }} />
+          </div>
+        )}
 
-        {/* Группа */}
-        {groups.length > 0 && (
+        {/* Группа — только расширенный */}
+        {mode === 'extended' && groups.length > 0 && (
           <div className="form-group">
             <label>Группа</label>
             <select className="input" value={selectedGroupId}
