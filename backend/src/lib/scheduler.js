@@ -102,12 +102,16 @@ async function tryDailySuggest(user, now, tz) {
   })
   if (hasPlanToday) return false
 
-  // ≥5 блюд в личной кухне или публичных
+  // ≥5 блюд в личной кухне или семейной группе
+  const familyMembership = await prisma.groupMember.findFirst({
+    where: { userId: user.id, group: { type: 'FAMILY' } },
+    select: { groupId: true },
+  })
   const myDishes = await prisma.dish.findMany({
     where: {
       OR: [
         { authorId: user.id },
-        { visibility: 'PUBLIC' },
+        ...(familyMembership ? [{ visibility: 'FAMILY', groupId: familyMembership.groupId }] : []),
       ],
     },
     select: { nameRu: true },
