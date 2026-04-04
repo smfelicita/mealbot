@@ -44,9 +44,21 @@ export default function DishDetailPage() {
   const [showPlanModal, setShowPlanModal] = useState(false)
   const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
   const [isFav, setIsFav] = useState(false)
+  const [comments, setComments] = useState(null) // null = not loaded
+  const [commentText, setCommentText] = useState('')
+  const [sendingComment, setSendingComment] = useState(false)
 
   useEffect(() => {
-    api.getDish(id).then(setDish).catch(() => navigate('/dishes')).finally(() => setLoading(false))
+    api.getDish(id)
+      .then(d => {
+        setDish(d)
+        // Загружаем комментарии если пользователь — автор или участник семейной группы блюда
+        if (user && (d.authorId === user.id || d.visibility === 'FAMILY')) {
+          api.getComments(id).then(setComments).catch(() => {})
+        }
+      })
+      .catch(() => navigate('/dishes'))
+      .finally(() => setLoading(false))
     api.getRecommendations(id).then(setRecs).catch(() => {})
     if (user) {
       api.getGroups().then(groups => {
@@ -60,6 +72,37 @@ export default function DishDetailPage() {
     try {
       if (isFav) { await api.removeFavorite(id); setIsFav(false) }
       else        { await api.addFavorite(id);    setIsFav(true)  }
+    } catch (e) { show(e.message, 'error') }
+  }
+
+  async function handleAddComment() {
+    if (!commentText.trim()) return
+    setSendingComment(true)
+    try {
+      const created = await api.addComment(id, commentText.trim())
+      setComments(prev => [...(prev || []), created])
+      setCommentText('')
+    } catch (e) { show(e.message, 'error') }
+    finally { setSendingComment(false) }
+  }
+
+  async function handleDeleteComment(commentId) {
+    try {
+      await api.deleteComment(commentId)
+      setComments(prev => prev.filter(c => c.id !== commentId))
+    } catch (e) { show(e.message, 'error') }
+  }
+
+  async function handlePinComment(commentId) {
+    try {
+      const updated = await api.pinComment(commentId)
+      setComments(prev => {
+        const next = prev.map(c => c.id === commentId ? updated : c)
+        return [...next].sort((a, b) => {
+          if (a.isPinned !== b.isPinned) return b.isPinned ? 1 : -1
+          return new Date(a.createdAt) - new Date(b.createdAt)
+        })
+      })
     } catch (e) { show(e.message, 'error') }
   }
 
@@ -311,6 +354,68 @@ export default function DishDetailPage() {
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(dish.recipe) }} />
             </div>
           </>
+        )}
+
+        {/* Комментарии (только автор или участники семейной группы) */}
+        {comments !== null && (
+          <div style={{ marginTop: 28 }}>
+            <h2 className="section-title" style={{ fontSize: 18, marginBottom: 14 }}>💬 Комментарии</h2>
+
+            {comments.length === 0 && (
+              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 14 }}>Пока нет комментариев. Будьте первым!</p>
+            )}
+
+            {comments.map(c => (
+              <div key={c.id} style={{
+                background: c.isPinned ? 'rgba(99,102,241,.06)' : 'var(--bg2)',
+                border: `1px solid ${c.isPinned ? 'var(--accent)' : 'var(--border)'}`,
+                borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: 10,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  {c.isPinned && <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 700 }}>📌 Закреплено</span>}
+                  <span style={{ fontWeight: 700, fontSize: 13 }}>{c.user?.name || 'Участник'}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 'auto' }}>
+                    {new Date(c.createdAt).toLocaleString('ru', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <p style={{ fontSize: 14, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>{c.content}</p>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  {dish.authorId === user?.id && (
+                    <button type="button" className="btn btn-ghost btn-sm"
+                      style={{ fontSize: 11, color: c.isPinned ? 'var(--accent)' : 'var(--text2)', padding: '2px 8px' }}
+                      onClick={() => handlePinComment(c.id)}>
+                      {c.isPinned ? '📌 Открепить' : '📌 Закрепить'}
+                    </button>
+                  )}
+                  {c.userId === user?.id && (
+                    <button type="button" className="btn btn-ghost btn-sm"
+                      style={{ fontSize: 11, color: '#f87171', padding: '2px 8px' }}
+                      onClick={() => handleDeleteComment(c.id)}>
+                      Удалить
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <div style={{ marginTop: 12 }}>
+              <textarea
+                className="input"
+                rows={3}
+                placeholder="Напишите комментарий..."
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                style={{ resize: 'vertical', marginBottom: 8 }}
+              />
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={handleAddComment}
+                disabled={sendingComment || !commentText.trim()}
+              >
+                {sendingComment ? <span className="loader" style={{ width: 12, height: 12 }} /> : 'Отправить'}
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

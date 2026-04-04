@@ -92,6 +92,7 @@ model User {
   mealPlans           MealPlan[]
   pushSubscriptions   PushSubscription[]
   favorites           Favorite[]
+  comments            Comment[]
 
   @@map("users")
 }
@@ -196,6 +197,7 @@ model Dish {
   ingredients DishIngredient[]
   mealPlans   MealPlan[]
   favorites   Favorite[]
+  comments    Comment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -323,4 +325,20 @@ model Favorite {
 
   @@unique([userId, dishId])
   @@map("favorites")
+}
+
+// ─── Комментарии ──────────────────────────────────────────────────────────────
+
+model Comment {
+  id        String   @id @default(cuid())
+  dishId    String
+  dish      Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("comments")
 }

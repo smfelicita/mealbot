@@ -118,4 +118,10 @@ export const api = {
   getFavoriteIds: () => request('/favorites'),
   addFavorite: (dishId) => request(`/favorites/${dishId}`, { method: 'POST' }),
   removeFavorite: (dishId) => request(`/favorites/${dishId}`, { method: 'DELETE' }),
+
+  // Comments
+  getComments: (dishId) => request(`/comments?dishId=${dishId}`),
+  addComment: (dishId, content) => request('/comments', { method: 'POST', body: { dishId, content } }),
+  deleteComment: (id) => request(`/comments/${id}`, { method: 'DELETE' }),
+  pinComment: (id) => request(`/comments/${id}/pin`, { method: 'PATCH' }),
 }

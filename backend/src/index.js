@@ -15,6 +15,7 @@ const mealPlanRoutes = require('./routes/meal-plans')
 // const pushRoutes = require('./routes/push') // отключено — уведомления через Telegram
 const telegramRoutes = require('./routes/telegram')
 const favoriteRoutes = require('./routes/favorites')
+const commentRoutes = require('./routes/comments')
 
 // Планировщик уведомлений (запускается сразу при старте)
 require('./lib/scheduler')
@@ -46,6 +47,7 @@ app.use('/api/meal-plans', mealPlanRoutes)
 // app.use('/api/push', pushRoutes) // отключено — уведомления через Telegram
 app.use('/api/telegram', telegramRoutes)
 app.use('/api/favorites', favoriteRoutes)
+app.use('/api/comments', commentRoutes)
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }))
