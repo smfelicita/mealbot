@@ -2,33 +2,20 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
-import { useToast } from '../hooks/useToast.jsx'
-import DishCard from '../components/DishCard'
+import { Button, Loader, useToast } from '../components/ui'
+import {
+  RecipeMeta,
+  IngredientList,
+  RecipeSteps,
+  CommentsSection,
+  RecipeCard,
+} from '../components/domain'
 import AddToPlanModal from '../components/AddToPlanModal'
 
-function renderMarkdown(text) {
-  if (!text) return ''
-  return text
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
-    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hul])/gm, '')
-}
-
-const DIFF = { easy: 'Просто', medium: 'Средне', hard: 'Сложно' }
-const DIFF_CLS = { easy: 'diff-easy', medium: 'diff-medium', hard: 'diff-hard' }
 const CAT_EMOJI = {
   BREAKFAST: '🌅', LUNCH: '☀️', DINNER: '🌙',
   SOUP: '🍲', SALAD: '🥗', SNACK: '🍎',
   DESSERT: '🍰', DRINK: '🥤',
-}
-const CAT_RU = {
-  BREAKFAST: 'Завтрак', LUNCH: 'Обед', DINNER: 'Ужин',
-  SOUP: 'Суп', SALAD: 'Салат', SNACK: 'Перекус',
-  DESSERT: 'Десерт', DRINK: 'Напиток',
 }
 
 export default function DishDetailPage() {
@@ -36,35 +23,37 @@ export default function DishDetailPage() {
   const navigate = useNavigate()
   const user = useStore(s => s.user)
   const { show, Toast } = useToast()
-  const [dish, setDish] = useState(null)
-  const [loading, setLoading] = useState(true)
+
+  const [dish, setDish]                 = useState(null)
+  const [loading, setLoading]           = useState(true)
+  const [activeImage, setActiveImage]   = useState(null)
   const [showNutrition, setShowNutrition] = useState(false)
-  const [activeImage, setActiveImage] = useState(null)
-  const [recs, setRecs] = useState(null)
+  const [recs, setRecs]                 = useState(null)
   const [showPlanModal, setShowPlanModal] = useState(false)
   const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
-  const [isFav, setIsFav] = useState(false)
-  const [comments, setComments] = useState(null) // null = not loaded
-  const [commentText, setCommentText] = useState('')
-  const [sendingComment, setSendingComment] = useState(false)
+  const [isFav, setIsFav]               = useState(false)
+  const [comments, setComments]         = useState(null) // null = not loaded / not accessible
 
   useEffect(() => {
     api.getDish(id)
       .then(d => {
         setDish(d)
-        // Загружаем комментарии если пользователь — автор или участник семейной группы блюда
         if (user && (d.authorId === user.id || d.visibility === 'FAMILY')) {
           api.getComments(id).then(setComments).catch(() => {})
         }
       })
       .catch(() => navigate('/dishes'))
       .finally(() => setLoading(false))
+
     api.getRecommendations(id).then(setRecs).catch(() => {})
+
     if (user) {
-      api.getGroups().then(groups => {
-        setHasFamilyGroup(groups.some(g => g.type === 'FAMILY'))
-      }).catch(() => {})
-      api.getFavoriteIds().then(({ dishIds }) => setIsFav(dishIds.includes(id))).catch(() => {})
+      api.getGroups()
+        .then(groups => setHasFamilyGroup(groups.some(g => g.type === 'FAMILY')))
+        .catch(() => {})
+      api.getFavoriteIds()
+        .then(({ dishIds }) => setIsFav(dishIds.includes(id)))
+        .catch(() => {})
     }
   }, [id])
 
@@ -75,270 +64,179 @@ export default function DishDetailPage() {
     } catch (e) { show(e.message, 'error') }
   }
 
-  async function handleAddComment() {
-    if (!commentText.trim()) return
-    setSendingComment(true)
-    try {
-      const created = await api.addComment(id, commentText.trim())
-      setComments(prev => [...(prev || []), created])
-      setCommentText('')
-    } catch (e) { show(e.message, 'error') }
-    finally { setSendingComment(false) }
-  }
-
-  async function handleDeleteComment(commentId) {
-    try {
-      await api.deleteComment(commentId)
-      setComments(prev => prev.filter(c => c.id !== commentId))
-    } catch (e) { show(e.message, 'error') }
-  }
-
-  async function handlePinComment(commentId) {
-    try {
-      const updated = await api.pinComment(commentId)
-      setComments(prev => {
-        const next = prev.map(c => c.id === commentId ? updated : c)
-        return [...next].sort((a, b) => {
-          if (a.isPinned !== b.isPinned) return b.isPinned ? 1 : -1
-          return new Date(a.createdAt) - new Date(b.createdAt)
-        })
-      })
-    } catch (e) { show(e.message, 'error') }
-  }
-
   async function handleDelete() {
     if (!confirm(`Удалить "${dish.name}"?`)) return
     try {
       await api.deleteDish(id)
-      navigate('/my-recipes', { replace: true })
+      navigate('/dishes', { replace: true })
     } catch (e) { show(e.message, 'error') }
   }
 
-  const isOwner = user && dish?.authorId === user.id
-  const primaryCategory = dish?.categories?.[0] ?? dish?.category
-
-  if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60dvh' }}>
-      <div className="loader" />
-    </div>
-  )
+  if (loading) return <Loader fullPage />
   if (!dish) return null
 
+  const isOwner = user && dish.authorId === user.id
   const dishImages = dish.images?.length ? dish.images : (dish.imageUrl ? [dish.imageUrl] : [])
   const displayImage = activeImage || dishImages[0] || null
+  const primaryCategory = dish.categories?.[0] ?? dish.category
 
   return (
-    <div className="fade-in">
-      <div style={{ background: 'var(--bg2)', borderBottom: '1px solid var(--border)' }}>
-        {displayImage ? (
-          <div style={{ position: 'relative', height: 220, overflow: 'hidden' }}>
-            <img src={displayImage} alt={dish.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(to top, rgba(0,0,0,.75) 0%, transparent 55%)',
-            }} />
-            <div style={{ position: 'absolute', top: 14, left: 16, right: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button className="btn btn-icon" style={{ background: 'rgba(0,0,0,.5)', borderColor: 'transparent', color: '#fff' }}
-                onClick={() => navigate(-1)}>←</button>
-              <div style={{ flex: 1 }} />
+    <div className="fade-in pb-8">
+
+      {/* ─── Hero / Header ─── */}
+      {displayImage ? (
+        <div className="relative h-56 overflow-hidden bg-bg-2">
+          <img src={displayImage} alt={dish.name} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+
+          {/* Top controls */}
+          <div className="absolute top-3 left-3 right-3 flex items-center gap-2">
+            <Button variant="ghost" size="icon"
+              className="bg-black/50 text-white border-white/20 hover:bg-black/70"
+              onClick={() => navigate(-1)}>←</Button>
+            <div className="flex-1" />
+            {user && (
+              <>
+                <Button variant="ghost" size="sm"
+                  className="bg-black/50 text-white border-white/20 hover:bg-black/70"
+                  onClick={toggleFav}>{isFav ? '❤️' : '🤍'}</Button>
+                <Button variant="ghost" size="sm"
+                  className="bg-black/50 text-white border-white/20 hover:bg-black/70"
+                  onClick={() => setShowPlanModal(true)}>📅 Буду готовить</Button>
+                <Button variant="ghost" size="sm"
+                  className="bg-black/50 text-white border-white/20 hover:bg-black/70"
+                  onClick={() => navigate(`/my-recipes/new?copyFrom=${id}`)}>📋 Скопировать</Button>
+              </>
+            )}
+            {isOwner && (
+              <>
+                <Button variant="ghost" size="sm"
+                  className="bg-black/50 text-white border-white/20 hover:bg-black/70"
+                  onClick={() => navigate(`/my-recipes/${id}/edit`)}>Редактировать</Button>
+                <Button variant="danger" size="sm"
+                  className="bg-black/40"
+                  onClick={handleDelete}>Удалить</Button>
+              </>
+            )}
+          </div>
+
+          {/* Bottom title overlay */}
+          <div className="absolute bottom-4 left-4 right-4">
+            <h1 className="font-serif text-[22px] font-extrabold text-white leading-tight mb-1">
+              {dish.name}
+            </h1>
+            {dish.description && (
+              <p className="text-[13px] text-white/75 leading-snug">{dish.description}</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* No image header */
+        <div className="bg-bg-2 border-b border-border px-4 pt-3.5 pb-4">
+          <div className="flex items-center gap-2.5 mb-3.5">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>←</Button>
+            <span className="text-sm text-text-2">Назад</span>
+            <div className="flex-1" />
+            <div className="flex gap-2">
               {user && (
                 <>
-                  <button className="btn btn-secondary btn-sm"
-                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
-                    onClick={toggleFav}>{isFav ? '❤️' : '🤍'}</button>
-                  <button className="btn btn-secondary btn-sm"
-                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
-                    onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
-                  <button className="btn btn-secondary btn-sm"
-                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
-                    onClick={() => navigate(`/my-recipes/new?copyFrom=${id}`)}>📋 Скопировать</button>
+                  <Button variant="ghost" size="sm" onClick={toggleFav}>{isFav ? '❤️' : '🤍'}</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setShowPlanModal(true)}>📅 Буду готовить</Button>
+                  <Button variant="ghost" size="sm"
+                    onClick={() => navigate(`/my-recipes/new?copyFrom=${id}`)}>📋 Скопировать</Button>
                 </>
               )}
               {isOwner && (
                 <>
-                  <button className="btn btn-secondary btn-sm"
-                    style={{ background: 'rgba(0,0,0,.5)', borderColor: 'rgba(255,255,255,.2)', color: 'rgba(255,255,255,.9)' }}
-                    onClick={() => navigate(`/my-recipes/${id}/edit`)}>Редактировать</button>
-                  <button className="btn btn-ghost btn-sm" style={{ color: '#f87171', background: 'rgba(0,0,0,.4)' }}
-                    onClick={handleDelete}>Удалить</button>
+                  <Button variant="ghost" size="sm"
+                    onClick={() => navigate(`/my-recipes/${id}/edit`)}>Редактировать</Button>
+                  <Button variant="danger" size="sm" onClick={handleDelete}>Удалить</Button>
                 </>
               )}
             </div>
-            <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16 }}>
-              <h1 style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-serif)', lineHeight: 1.2, marginBottom: 4 }}>
-                {dish.name}
-              </h1>
+          </div>
+
+          <div className="flex gap-3.5 items-start">
+            <div className="w-[60px] h-[60px] bg-bg-3 rounded-xl flex items-center justify-center text-3xl shrink-0">
+              {CAT_EMOJI[primaryCategory] || '🍳'}
+            </div>
+            <div className="flex-1">
+              <h1 className="font-serif text-[22px] font-extrabold leading-tight mb-1.5">{dish.name}</h1>
               {dish.description && (
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,.75)', lineHeight: 1.4 }}>{dish.description}</p>
+                <p className="text-sm text-text-2 leading-relaxed">{dish.description}</p>
               )}
             </div>
           </div>
-        ) : (
-          <div style={{ padding: '14px 16px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <button className="btn btn-icon" onClick={() => navigate(-1)}>←</button>
-              <span style={{ fontSize: 13, color: 'var(--text2)' }}>Назад</span>
-              <div style={{ flex: 1 }} />
-              <div style={{ display: 'flex', gap: 8 }}>
-                {user && (
-                  <>
-                    <button className="btn btn-secondary btn-sm" onClick={toggleFav}>{isFav ? '❤️' : '🤍'}</button>
-                    <button className="btn btn-secondary btn-sm" onClick={() => setShowPlanModal(true)}>📅 Буду готовить</button>
-                    <button className="btn btn-secondary btn-sm"
-                      onClick={() => navigate(`/my-recipes/new?copyFrom=${id}`)}>📋 Скопировать</button>
-                  </>
-                )}
-                {isOwner && (
-                  <>
-                    <button className="btn btn-secondary btn-sm"
-                      onClick={() => navigate(`/my-recipes/${id}/edit`)}>Редактировать</button>
-                    <button className="btn btn-ghost btn-sm" style={{ color: '#f87171' }}
-                      onClick={handleDelete}>Удалить</button>
-                  </>
-                )}
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 16 }}>
-              <div style={{
-                width: 60, height: 60, background: 'var(--bg3)', borderRadius: 14,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, flexShrink: 0,
-              }}>
-                {CAT_EMOJI[primaryCategory] || '🍳'}
-              </div>
-              <div style={{ flex: 1 }}>
-                <h1 style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-serif)', lineHeight: 1.2, marginBottom: 6 }}>
-                  {dish.name}
-                </h1>
-                <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.5 }}>{dish.description}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
+      )}
 
-        {dishImages.length > 1 && (
-          <div style={{ display: 'flex', gap: 8, padding: '0 16px 12px', overflowX: 'auto' }}>
-            {dishImages.map((url, idx) => (
-              <div key={url} onClick={() => setActiveImage(url)} style={{
-                flexShrink: 0, width: 64, height: 64, borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
-                border: (activeImage || dishImages[0]) === url ? '2.5px solid var(--accent)' : '2px solid var(--border)',
-              }}>
-                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
+      {/* ─── Thumbnail strip (multiple images) ─── */}
+      {dishImages.length > 1 && (
+        <div className="flex gap-2 px-4 py-3 overflow-x-auto bg-bg-2 border-b border-border">
+          {dishImages.map(url => (
+            <button
+              key={url}
+              type="button"
+              onClick={() => setActiveImage(url)}
+              className={[
+                'shrink-0 w-16 h-16 rounded-sm overflow-hidden',
+                (activeImage || dishImages[0]) === url
+                  ? 'ring-2 ring-accent'
+                  : 'ring-1 ring-border',
+              ].join(' ')}
+            >
+              <img src={url} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ─── Meta chips ─── */}
+      <RecipeMeta dish={dish} />
+
+      {/* ─── Content ─── */}
+      <div className="px-4 pt-4">
+
+        {/* Tags */}
+        {dish.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-5">
+            {dish.tags.map(t => (
+              <span key={t}
+                className="text-xs font-semibold bg-bg-3 border border-border rounded-full px-3 py-1 text-text-2">
+                #{t}
+              </span>
             ))}
           </div>
         )}
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px 16px 16px' }}>
-          {dish.categories?.map(cat => (
-            <div key={cat} style={{
-              background: 'var(--bg3)', border: '1px solid var(--border)',
-              borderRadius: 20, padding: '4px 10px',
-              fontSize: 12, color: 'var(--text2)', fontWeight: 700,
-            }}>
-              {CAT_EMOJI[cat]} {CAT_RU[cat] || cat}
-            </div>
-          ))}
-          {dish.cuisine && (
-            <div style={{
-              background: 'rgba(45,212,191,.1)', border: '1px solid var(--teal)',
-              borderRadius: 20, padding: '4px 10px',
-              fontSize: 12, color: 'var(--teal)', fontWeight: 700,
-            }}>
-              🌍 {dish.cuisine}
-            </div>
-          )}
-          {dish.cookTime && (
-            <div style={{
-              background: 'var(--bg3)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', padding: '6px 12px', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 16 }}>⏱</div>
-              <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>{dish.cookTime} мин</div>
-            </div>
-          )}
-          {dish.calories && (
-            <div style={{
-              background: 'var(--bg3)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', padding: '6px 12px', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 16 }}>🔥</div>
-              <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>{dish.calories} ккал</div>
-            </div>
-          )}
-          {dish.difficulty && (
-            <div style={{
-              background: 'var(--bg3)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-sm)', padding: '6px 12px', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 16 }}>👨‍🍳</div>
-              <div className={DIFF_CLS[dish.difficulty]} style={{ fontSize: 11, marginTop: 2, fontWeight: 700 }}>
-                {DIFF[dish.difficulty]}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="page" style={{ paddingTop: 20 }}>
-        {dish.tags?.length > 0 && (
-          <div className="dish-tags" style={{ marginBottom: 20 }}>
-            {dish.tags.map(t => <span key={t} className="tag" style={{ cursor: 'default' }}>{t}</span>)}
-          </div>
-        )}
-
-        {dish.ingredients?.length > 0 && (
-          <>
-            <h2 className="section-title" style={{ fontSize: 18 }}>🛒 Ингредиенты</h2>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-              {dish.ingredients.map(ing => {
-                const amountStr = ing.toTaste ? 'по вкусу'
-                  : ing.amountValue && ing.unit ? `${ing.amountValue} ${ing.unit}`
-                  : ing.amount || null
-                return (
-                  <div key={ing.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '6px 12px', background: 'var(--bg3)',
-                    border: '1px solid var(--border)', borderRadius: 20,
-                    fontSize: 13, fontWeight: 600,
-                  }}>
-                    {ing.emoji && <span>{ing.emoji}</span>}
-                    {ing.name}
-                    {amountStr && <span style={{ color: 'var(--text2)', fontWeight: 400 }}> — {amountStr}</span>}
-                    {ing.optional && <span style={{ color: 'var(--text3)', fontSize: 11 }}> (опц.)</span>}
-                  </div>
-                )
-              })}
-            </div>
-          </>
-        )}
+        {/* Ingredients */}
+        <IngredientList ingredients={dish.ingredients} />
 
         {/* КБЖУ */}
         {dish.nutrition && (
-          <div style={{ marginBottom: 24 }}>
-            <button type="button" style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 14, fontWeight: 700, color: 'var(--text1)', padding: 0, marginBottom: 12,
-            }} onClick={() => setShowNutrition(v => !v)}>
-              🔥 КБЖУ <span style={{ fontSize: 12, color: 'var(--text2)', fontWeight: 400 }}>(на блюдо)</span>
-              <span style={{ marginLeft: 4, fontSize: 12 }}>{showNutrition ? '▲' : '▼'}</span>
+          <div className="mb-6">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 text-[14px] font-bold text-text mb-3"
+              onClick={() => setShowNutrition(v => !v)}
+            >
+              🔥 КБЖУ
+              <span className="text-[12px] text-text-2 font-normal">(на блюдо)</span>
+              <span className="text-[12px] ml-1">{showNutrition ? '▲' : '▼'}</span>
             </button>
             {showNutrition && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              <div className="grid grid-cols-4 gap-2">
                 {[
                   { label: 'Калории', value: `${dish.nutrition.calories} ккал`, icon: '🔥' },
-                  { label: 'Белки', value: `${dish.nutrition.protein} г`, icon: '💪' },
-                  { label: 'Жиры', value: `${dish.nutrition.fat} г`, icon: '🫒' },
-                  { label: 'Углеводы', value: `${dish.nutrition.carbs} г`, icon: '🌾' },
+                  { label: 'Белки',   value: `${dish.nutrition.protein} г`,    icon: '💪' },
+                  { label: 'Жиры',    value: `${dish.nutrition.fat} г`,         icon: '🫒' },
+                  { label: 'Углеводы', value: `${dish.nutrition.carbs} г`,      icon: '🌾' },
                 ].map(item => (
-                  <div key={item.label} style={{
-                    background: 'var(--bg3)', border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-sm)', padding: '10px 8px', textAlign: 'center',
-                  }}>
-                    <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text1)' }}>{item.value}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{item.label}</div>
+                  <div key={item.label}
+                    className="bg-bg-3 border border-border rounded-sm px-2 py-2.5 text-center">
+                    <div className="text-lg mb-1">{item.icon}</div>
+                    <div className="text-[13px] font-bold">{item.value}</div>
+                    <div className="text-[10px] text-text-2 mt-0.5">{item.label}</div>
                   </div>
                 ))}
               </div>
@@ -346,100 +244,36 @@ export default function DishDetailPage() {
           </div>
         )}
 
-        {dish.recipe && (
-          <>
-            <h2 className="section-title" style={{ fontSize: 18 }}>📋 Рецепт</h2>
-            <div className="card" style={{ padding: 16 }}>
-              <div className="recipe-content"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(dish.recipe) }} />
-            </div>
-          </>
-        )}
+        {/* Recipe steps */}
+        <RecipeSteps recipe={dish.recipe} />
 
-        {/* Комментарии (только автор или участники семейной группы) */}
+        {/* Comments */}
         {comments !== null && (
-          <div style={{ marginTop: 28 }}>
-            <h2 className="section-title" style={{ fontSize: 18, marginBottom: 14 }}>💬 Комментарии</h2>
-
-            {comments.length === 0 && (
-              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 14 }}>Пока нет комментариев. Будьте первым!</p>
-            )}
-
-            {comments.map(c => (
-              <div key={c.id} style={{
-                background: c.isPinned ? 'rgba(99,102,241,.06)' : 'var(--bg2)',
-                border: `1px solid ${c.isPinned ? 'var(--accent)' : 'var(--border)'}`,
-                borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: 10,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  {c.isPinned && <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 700 }}>📌 Закреплено</span>}
-                  <span style={{ fontWeight: 700, fontSize: 13 }}>{c.user?.name || 'Участник'}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 'auto' }}>
-                    {new Date(c.createdAt).toLocaleString('ru', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                <p style={{ fontSize: 14, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>{c.content}</p>
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  {dish.authorId === user?.id && (
-                    <button type="button" className="btn btn-ghost btn-sm"
-                      style={{ fontSize: 11, color: c.isPinned ? 'var(--accent)' : 'var(--text2)', padding: '2px 8px' }}
-                      onClick={() => handlePinComment(c.id)}>
-                      {c.isPinned ? '📌 Открепить' : '📌 Закрепить'}
-                    </button>
-                  )}
-                  {c.userId === user?.id && (
-                    <button type="button" className="btn btn-ghost btn-sm"
-                      style={{ fontSize: 11, color: '#f87171', padding: '2px 8px' }}
-                      onClick={() => handleDeleteComment(c.id)}>
-                      Удалить
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            <div style={{ marginTop: 12 }}>
-              <textarea
-                className="input"
-                rows={3}
-                placeholder="Напишите комментарий..."
-                value={commentText}
-                onChange={e => setCommentText(e.target.value)}
-                style={{ resize: 'vertical', marginBottom: 8 }}
-              />
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={handleAddComment}
-                disabled={sendingComment || !commentText.trim()}
-              >
-                {sendingComment ? <span className="loader" style={{ width: 12, height: 12 }} /> : 'Отправить'}
-              </button>
-            </div>
-          </div>
+          <CommentsSection
+            comments={comments}
+            setComments={setComments}
+            dishId={id}
+            currentUser={user}
+            dishAuthorId={dish.authorId}
+          />
         )}
       </div>
 
-      {/* Рекомендации */}
+      {/* ─── Recommendations ─── */}
       {recs && (
-        <div style={{ paddingBottom: 32 }}>
-          {/* Из холодильника */}
+        <div className="mt-4">
           {user && recs.fromFridge?.length > 0 && (
-            <RecSection title="🧊 Из холодильника" dishes={recs.fromFridge} navigate={navigate} />
+            <RecsRow title="🧊 Из холодильника" dishes={recs.fromFridge} navigate={navigate} />
           )}
 
-          {/* Купите ещё */}
           {user && recs.nearMatch?.length > 0 && (
-            <div style={{ padding: '20px 16px 0' }}>
-              <h2 className="section-title" style={{ fontSize: 16, marginBottom: 12 }}>🛒 Купите ещё немного</h2>
-              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+            <div className="px-4 pt-5">
+              <p className="font-serif text-base font-bold mb-3">🛒 Купите ещё немного</p>
+              <div className="flex gap-3 overflow-x-auto pb-1">
                 {recs.nearMatch.map(({ dish: d, missing }) => (
-                  <div key={d.id} style={{ flexShrink: 0, width: 200 }}>
-                    <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
-                    <div style={{
-                      marginTop: 6, padding: '5px 8px',
-                      background: 'var(--bg3)', borderRadius: 'var(--radius-sm)',
-                      fontSize: 11, color: 'var(--text2)',
-                    }}>
+                  <div key={d.id} className="shrink-0 w-48">
+                    <RecipeCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+                    <div className="mt-1.5 px-2 py-1.5 bg-bg-3 rounded-sm text-[11px] text-text-2">
                       Нет: {missing.map(m => `${m.emoji || ''} ${m.name}`.trim()).join(', ')}
                     </div>
                   </div>
@@ -448,13 +282,13 @@ export default function DishDetailPage() {
             </div>
           )}
 
-          {/* Похожие */}
           {recs.similar?.length > 0 && (
-            <RecSection title="🍽 Похожие рецепты" dishes={recs.similar} navigate={navigate} />
+            <RecsRow title="🍽 Похожие рецепты" dishes={recs.similar} navigate={navigate} />
           )}
         </div>
       )}
 
+      {/* ─── Modals ─── */}
       {showPlanModal && dish && (
         <AddToPlanModal
           dish={dish}
@@ -469,14 +303,14 @@ export default function DishDetailPage() {
   )
 }
 
-function RecSection({ title, dishes, navigate }) {
+function RecsRow({ title, dishes, navigate }) {
   return (
-    <div style={{ padding: '20px 16px 0' }}>
-      <h2 className="section-title" style={{ fontSize: 16, marginBottom: 12 }}>{title}</h2>
-      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+    <div className="px-4 pt-5">
+      <p className="font-serif text-base font-bold mb-3">{title}</p>
+      <div className="flex gap-3 overflow-x-auto pb-1">
         {dishes.map(d => (
-          <div key={d.id} style={{ flexShrink: 0, width: 200 }}>
-            <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+          <div key={d.id} className="shrink-0 w-48">
+            <RecipeCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
           </div>
         ))}
       </div>
