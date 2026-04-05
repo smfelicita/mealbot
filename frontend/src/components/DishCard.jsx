@@ -1,6 +1,6 @@
 const DIFFICULTY = { easy: '🟢 Просто', medium: '🟡 Средне', hard: '🔴 Сложно' }
+const VISIBILITY_LABEL = { PRIVATE: '🔒', FAMILY: '👨‍👩‍👧', ALL_GROUPS: '👥' }
 
-// Подсвечивает совпадение в тексте
 function Highlight({ text, query }) {
   if (!query || !text) return text
   const idx = text.toLowerCase().indexOf(query.toLowerCase())
@@ -16,10 +16,14 @@ function Highlight({ text, query }) {
   )
 }
 
-export default function DishCard({ dish, onClick, searchQuery }) {
+export default function DishCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngredientIds }) {
   const primaryCategory = dish.categories?.[0] ?? dish.category
 
-  // Определяем что совпало с поиском
+  // Индикатор холодильника: все ингредиенты есть
+  const allInFridge = fridgeIngredientIds && dish.ingredients?.length > 0 &&
+    dish.ingredients.every(i => i.toTaste || i.isBasic || fridgeIngredientIds.has(i.id))
+
+  // Подсказка совпадения поиска
   let matchHint = null
   if (searchQuery) {
     const q = searchQuery.toLowerCase()
@@ -56,20 +60,67 @@ export default function DishCard({ dish, onClick, searchQuery }) {
           }}>
             {categoryEmoji(primaryCategory)}
           </div>
+          {/* Кнопка избранного */}
+          {onToggleFav && (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onToggleFav(dish.id) }}
+              style={{
+                position: 'absolute', top: 8, left: 8,
+                background: 'rgba(0,0,0,.55)', border: 'none', borderRadius: 8,
+                width: 30, height: 30, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', cursor: 'pointer', fontSize: 15, padding: 0,
+              }}
+            >
+              {isFav ? '❤️' : '🤍'}
+            </button>
+          )}
+          {/* Индикатор холодильника */}
+          {allInFridge && (
+            <div style={{
+              position: 'absolute', bottom: 8, left: 8,
+              background: 'rgba(45,212,191,.85)', borderRadius: 6,
+              padding: '2px 7px', fontSize: 11, fontWeight: 700, color: '#fff',
+            }}>
+              ✓ всё есть
+            </div>
+          )}
         </div>
       ) : (
         <div style={{
-          height: 52, background: 'var(--bg3)',
+          height: 52, background: 'var(--bg3)', position: 'relative',
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
         }}>
           {categoryEmoji(primaryCategory)}
+          {onToggleFav && (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onToggleFav(dish.id) }}
+              style={{
+                position: 'absolute', top: 6, left: 8,
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 15, padding: 0, lineHeight: 1,
+              }}
+            >
+              {isFav ? '❤️' : '🤍'}
+            </button>
+          )}
         </div>
       )}
 
       <div style={{ padding: '12px 14px 14px' }}>
-        <div style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: '.25rem', lineHeight: 1.2 }}>
-          <Highlight text={dish.name} query={searchQuery} />
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: '.25rem' }}>
+          <div style={{ fontWeight: 800, fontSize: '1.05rem', lineHeight: 1.2, flex: 1 }}>
+            <Highlight text={dish.name} query={searchQuery} />
+          </div>
+          {/* Бейдж видимости (только не PUBLIC) */}
+          {dish.visibility && dish.visibility !== 'PUBLIC' && VISIBILITY_LABEL[dish.visibility] && (
+            <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }} title={dish.visibility}>
+              {VISIBILITY_LABEL[dish.visibility]}
+            </span>
+          )}
         </div>
+
         {dish.description && (
           <div style={{
             color: 'var(--text2)', fontSize: '.85rem', marginBottom: '.6rem',

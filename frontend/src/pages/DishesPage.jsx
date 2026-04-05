@@ -18,6 +18,8 @@ export default function DishesPage() {
   const [mealTime, setMealTime] = useState('')
   const [activeTags, setActiveTags] = useState([])
   const [showFilters, setShowFilters] = useState(false)
+  const [favIds, setFavIds] = useState(new Set())
+  const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
   const { fridgeMode, toggleFridgeMode, token } = useStore()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -27,6 +29,25 @@ export default function DishesPage() {
     if (searchParams.get('view') === 'catalog') return 'catalog'
     return token ? 'my' : 'catalog'
   })
+
+  // Загружаем избранное и холодильник один раз
+  useEffect(() => {
+    if (!token) return
+    api.getFavoriteIds().then(({ dishIds }) => setFavIds(new Set(dishIds))).catch(() => {})
+    api.getFridge().then(({ items }) => {
+      setFridgeIngredientIds(new Set(items.map(i => i.ingredientId)))
+    }).catch(() => {})
+  }, [token])
+
+  function handleToggleFav(dishId) {
+    const isFav = favIds.has(dishId)
+    setFavIds(prev => {
+      const next = new Set(prev)
+      isFav ? next.delete(dishId) : next.add(dishId)
+      return next
+    })
+    isFav ? api.removeFavorite(dishId).catch(() => {}) : api.addFavorite(dishId).catch(() => {})
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -178,7 +199,14 @@ export default function DishesPage() {
           <div className="dishes-grid">
             {dishes.map((d, i) => (
               <div key={d.id} className="fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
-                <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} searchQuery={q || undefined} />
+                <DishCard
+                  dish={d}
+                  onClick={() => navigate(`/dishes/${d.id}`)}
+                  searchQuery={q || undefined}
+                  isFav={favIds.has(d.id)}
+                  onToggleFav={token ? handleToggleFav : undefined}
+                  fridgeIngredientIds={fridgeIngredientIds}
+                />
               </div>
             ))}
           </div>
