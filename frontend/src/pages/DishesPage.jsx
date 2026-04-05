@@ -2,29 +2,30 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
-import DishCard from '../components/DishCard'
+import { SearchInput, Tabs, Button, Toggle } from '../components/ui'
+import { MealTypeChips, RecipeList, FilterPanel } from '../components/domain'
 
-const CATEGORIES = ['BREAKFAST','LUNCH','DINNER','SOUP','SALAD','SNACK','DESSERT','DRINK']
-const CAT_RU = { BREAKFAST:'Завтрак',LUNCH:'Обед',DINNER:'Ужин',SOUP:'Суп',SALAD:'Салат',SNACK:'Перекус',DESSERT:'Десерт',DRINK:'Напиток' }
-const MEAL_TIMES = ['breakfast','lunch','dinner','snack']
-const MT_RU = { breakfast:'Завтрак',lunch:'Обед',dinner:'Ужин',snack:'Перекус' }
-const TAGS = ['быстро','вегетарианское','здоровое','сытное','без глютена','традиционное']
+const VIEW_TABS = [
+  { value: 'my',      label: 'Моя кухня',      icon: '🏠' },
+  { value: 'catalog', label: 'Готовые рецепты', icon: '📚' },
+  { value: 'favorites', label: 'Избранное',     icon: '❤️' },
+]
 
 export default function DishesPage() {
-  const [dishes, setDishes]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [q, setQ]             = useState('')
-  const [category, setCategory] = useState('')
-  const [mealTime, setMealTime] = useState('')
-  const [activeTags, setActiveTags] = useState([])
-  const [showFilters, setShowFilters] = useState(false)
-  const [favIds, setFavIds] = useState(new Set())
-  const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
-  const { fridgeMode, toggleFridgeMode, token } = useStore()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { fridgeMode, toggleFridgeMode, token } = useStore()
 
-  // Вкладка: 'my' — моя кухня, 'catalog' — шаблоны/все
+  const [dishes, setDishes]         = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [q, setQ]                   = useState('')
+  const [mealTime, setMealTime]     = useState('')
+  const [category, setCategory]     = useState('')
+  const [activeTags, setActiveTags] = useState([])
+  const [showFilters, setShowFilters] = useState(false)
+  const [favIds, setFavIds]           = useState(new Set())
+  const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
+
   const [view, setView] = useState(() => {
     if (searchParams.get('view') === 'catalog') return 'catalog'
     return token ? 'my' : 'catalog'
@@ -34,10 +35,35 @@ export default function DishesPage() {
   useEffect(() => {
     if (!token) return
     api.getFavoriteIds().then(({ dishIds }) => setFavIds(new Set(dishIds))).catch(() => {})
-    api.getFridge().then(({ items }) => {
+    api.getFridge().then(({ items }) =>
       setFridgeIngredientIds(new Set(items.map(i => i.ingredientId)))
-    }).catch(() => {})
+    ).catch(() => {})
   }, [token])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await api.getDishes({
+        q:         q || undefined,
+        category:  category || undefined,
+        mealTime:  mealTime || undefined,
+        tags:      activeTags.length ? activeTags.join(',') : undefined,
+        fridgeMode: fridgeMode ? 'true' : undefined,
+        myKitchen: (view === 'my' && token) ? 'true' : undefined,
+        favorites:  (view === 'favorites' && token) ? 'true' : undefined,
+      })
+      setDishes(data)
+    } catch {
+      setDishes([])
+    } finally {
+      setLoading(false)
+    }
+  }, [q, category, mealTime, activeTags, fridgeMode, view, token])
+
+  useEffect(() => {
+    const t = setTimeout(load, 300)
+    return () => clearTimeout(t)
+  }, [load])
 
   function handleToggleFav(dishId) {
     const isFav = favIds.has(dishId)
@@ -49,169 +75,138 @@ export default function DishesPage() {
     isFav ? api.removeFavorite(dishId).catch(() => {}) : api.addFavorite(dishId).catch(() => {})
   }
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await api.getDishes({
-        q: q || undefined,
-        category: category || undefined,
-        mealTime: mealTime || undefined,
-        tags: activeTags.length ? activeTags.join(',') : undefined,
-        fridgeMode: fridgeMode ? 'true' : undefined,
-        myKitchen: (view === 'my' && token) ? 'true' : undefined,
-        favorites: (view === 'favorites' && token) ? 'true' : undefined,
-      })
-      setDishes(data)
-    } catch { setDishes([]) }
-    finally { setLoading(false) }
-  }, [q, category, mealTime, activeTags, fridgeMode, view, token])
-
-  useEffect(() => {
-    const t = setTimeout(load, 300)
-    return () => clearTimeout(t)
-  }, [load])
-
-  function toggleTag(t) {
-    setActiveTags(prev => prev.includes(t) ? prev.filter(x=>x!==t) : [...prev, t])
+  function resetFilters() {
+    setCategory('')
+    setActiveTags([])
   }
 
-  const hasFilters = category || mealTime || activeTags.length > 0
+  const hasFilters   = Boolean(category || activeTags.length)
+  const filterCount  = (category ? 1 : 0) + activeTags.length
+  const visibleTabs  = token ? VIEW_TABS : VIEW_TABS.filter(t => t.value === 'catalog')
+
+  // Пустые состояния
+  function emptyProps() {
+    if (view === 'my' && !q && !hasFilters) {
+      return {
+        icon: '🍽️',
+        title: 'Ваша кухня пока пуста',
+        description: 'Добавьте свои блюда или скопируйте из готовых рецептов',
+        action: (
+          <div className="flex gap-2.5 flex-wrap justify-center">
+            <Button onClick={() => navigate('/my-recipes/new')}>+ Добавить рецепт</Button>
+            <Button variant="secondary" onClick={() => setView('catalog')}>Готовые рецепты →</Button>
+          </div>
+        ),
+      }
+    }
+    if (view === 'favorites' && !q && !hasFilters) {
+      return {
+        icon: '🤍',
+        title: 'Избранное пусто',
+        description: 'Нажмите ❤️ на странице любого рецепта',
+      }
+    }
+    return {
+      icon: '🔍',
+      title: 'Ничего не найдено',
+      description: 'Попробуйте изменить фильтры или поисковый запрос',
+    }
+  }
 
   return (
-    <div>
-      <div className="top-bar">
-        <span className="top-bar-logo">Блюда</span>
-        <div style={{flex:1}}/>
-        <button className={`btn btn-icon btn-sm ${showFilters?'active':''}`}
-          style={showFilters?{borderColor:'var(--accent)',color:'var(--accent)'}:{}}
-          onClick={() => setShowFilters(s=>!s)}>
-          🎛 {hasFilters ? `(${(category?1:0)+(mealTime?1:0)+activeTags.length})` : ''}
-        </button>
-        <div className="toggle-wrap" onClick={toggleFridgeMode} style={{marginLeft:8}}>
-          <div className={`toggle ${fridgeMode?'on':''}`} style={{width:32,height:18}}/>
-          <span style={{fontSize:12,fontWeight:700,color:fridgeMode?'var(--accent)':'var(--text3)'}}>🧊</span>
+    <div className="max-w-app w-full mx-auto px-4 py-3 pb-24">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="font-serif text-xl font-bold text-accent">Рецепты</h1>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowFilters(s => !s)}
+            className={[
+              'flex items-center gap-1 px-2.5 py-1.5 rounded-sm border text-xs font-bold transition-colors',
+              'focus:outline-none focus:ring-2 focus:ring-accent/30',
+              showFilters || hasFilters
+                ? 'border-accent text-accent bg-accent/5'
+                : 'border-border text-text-2 bg-bg-3',
+            ].join(' ')}
+          >
+            🎛 {filterCount > 0 ? `(${filterCount})` : 'Фильтры'}
+          </button>
+          <Toggle checked={fridgeMode} onChange={toggleFridgeMode} label="🧊" />
         </div>
       </div>
 
-      <div className="page" style={{paddingTop:12}}>
-        {token && (
-          <div style={{display:'flex',gap:8,marginBottom:14}}>
-            <button className={`tag ${view==='my'?'active':''}`}
-              style={{fontSize:13,padding:'6px 14px'}}
-              onClick={() => setView('my')}>
-              🏠 Моя кухня
-            </button>
-            <button className={`tag ${view==='catalog'?'active':''}`}
-              style={{fontSize:13,padding:'6px 14px'}}
-              onClick={() => setView('catalog')}>
-              📚 Готовые рецепты
-            </button>
-            <button className={`tag ${view==='favorites'?'active':''}`}
-              style={{fontSize:13,padding:'6px 14px'}}
-              onClick={() => setView('favorites')}>
-              ❤️ Избранное
-            </button>
-          </div>
-        )}
-
-        <div className="input-group" style={{marginBottom:12}}>
-          <span className="input-icon">🔍</span>
-          <input className="input" placeholder="Поиск блюд..." value={q} onChange={e=>setQ(e.target.value)}/>
+      {/* Вкладки (только для залогиненных) */}
+      {token && (
+        <div className="mb-3">
+          <Tabs tabs={visibleTabs} active={view} onChange={setView} />
         </div>
+      )}
 
-        {showFilters && (
-          <div className="card fade-up" style={{padding:16,marginBottom:14}}>
-            <div style={{marginBottom:12}}>
-              <p style={{fontSize:12,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:8}}>Категория</p>
-              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                {CATEGORIES.map(c => (
-                  <button key={c} className={`tag ${category===c?'active':''}`}
-                    onClick={() => setCategory(p=>p===c?'':c)}>{CAT_RU[c]}</button>
-                ))}
-              </div>
-            </div>
-            <div style={{marginBottom:12}}>
-              <p style={{fontSize:12,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:8}}>Приём пищи</p>
-              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                {MEAL_TIMES.map(m => (
-                  <button key={m} className={`tag ${mealTime===m?'active':''}`}
-                    onClick={() => setMealTime(p=>p===m?'':m)}>{MT_RU[m]}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p style={{fontSize:12,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:8}}>Теги</p>
-              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                {TAGS.map(t => (
-                  <button key={t} className={`tag ${activeTags.includes(t)?'active':''}`}
-                    onClick={() => toggleTag(t)}>{t}</button>
-                ))}
-              </div>
-            </div>
-            {hasFilters && (
-              <button className="btn btn-ghost btn-sm" style={{marginTop:12,padding:'6px 0'}}
-                onClick={() => { setCategory(''); setMealTime(''); setActiveTags([]) }}>
-                Сбросить фильтры ✕
-              </button>
-            )}
-          </div>
-        )}
+      {/* Поиск */}
+      <SearchInput
+        value={q}
+        onChange={e => setQ(e.target.value)}
+        placeholder="Поиск рецептов..."
+        className="mb-3"
+      />
 
-        {fridgeMode && (
-          <div style={{background:'rgba(45,212,191,.08)',border:'1px solid rgba(45,212,191,.2)',borderRadius:'var(--radius-sm)',padding:'10px 14px',marginBottom:14,fontSize:13,color:'var(--teal)'}}>
-            🧊 Режим холодильника — только блюда из ваших продуктов
-          </div>
-        )}
+      {/* Фильтры */}
+      {showFilters && (
+        <FilterPanel
+          category={category}
+          onCategory={setCategory}
+          activeTags={activeTags}
+          onTags={setActiveTags}
+          onReset={resetFilters}
+        />
+      )}
 
-        <p style={{fontSize:13,color:'var(--text2)',marginBottom:12}}>
-          {loading ? 'Ищем...' : `Найдено: ${dishes.length}`}
+      {/* Фильтр по приёму пищи */}
+      <div className="mb-4">
+        <MealTypeChips active={mealTime} onChange={setMealTime} />
+      </div>
+
+      {/* Баннер режима холодильника */}
+      {fridgeMode && (
+        <div className="flex items-center gap-2 bg-teal/8 border border-teal/20 rounded-sm px-3.5 py-2.5 mb-4 text-sm text-teal">
+          🧊 Режим холодильника — только блюда из ваших продуктов
+        </div>
+      )}
+
+      {/* Счётчик */}
+      {!loading && (
+        <p className="text-xs text-text-2 mb-3">
+          Найдено: {dishes.length}
         </p>
+      )}
 
-        {loading ? (
-          <div style={{display:'flex',justifyContent:'center',padding:40}}>
-            <div className="loader"/>
-          </div>
-        ) : dishes.length === 0 ? (
-          view === 'my' && !q && !hasFilters ? (
-            <div className="empty-state">
-              <div className="empty-icon">🍽️</div>
-              <h3>Ваша кухня пока пуста</h3>
-              <p>Добавьте свои блюда или скопируйте из готовых рецептов</p>
-              <div style={{display:'flex',gap:10,justifyContent:'center',marginTop:16,flexWrap:'wrap'}}>
-                <button className="btn btn-primary" onClick={() => navigate('/my-recipes/new')}>+ Добавить рецепт</button>
-                <button className="btn btn-secondary" onClick={() => setView('catalog')}>Готовые рецепты →</button>
-              </div>
-            </div>
-          ) : view === 'favorites' && !q && !hasFilters ? (
-            <div className="empty-state">
-              <div className="empty-icon">🤍</div>
-              <h3>Избранное пусто</h3>
-              <p>Нажмите ❤️ на странице любого рецепта</p>
-            </div>
-          ) : (
-            <div className="empty-state">
-              <div className="empty-icon">🔍</div>
-              <h3>Ничего не найдено</h3>
-              <p>Попробуйте изменить фильтры или поисковый запрос</p>
-            </div>
-          )
-        ) : (
-          <div className="dishes-grid">
-            {dishes.map((d, i) => (
-              <div key={d.id} className="fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
-                <DishCard
-                  dish={d}
-                  onClick={() => navigate(`/dishes/${d.id}`)}
-                  searchQuery={q || undefined}
-                  isFav={favIds.has(d.id)}
-                  onToggleFav={token ? handleToggleFav : undefined}
-                  fridgeIngredientIds={fridgeIngredientIds}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Список */}
+      <RecipeList
+        dishes={dishes}
+        loading={loading}
+        searchQuery={q || undefined}
+        isFavSet={favIds}
+        onToggleFav={token ? handleToggleFav : undefined}
+        fridgeIngredientIds={fridgeIngredientIds}
+        onDishClick={id => navigate(`/dishes/${id}`)}
+        {...emptyProps()}
+      />
+
+      {/* FAB добавить рецепт */}
+      {token && (
+        <button
+          type="button"
+          onClick={() => navigate('/my-recipes/new')}
+          className="fixed bottom-[68px] right-4 w-12 h-12 bg-accent text-white text-2xl
+            rounded-full shadow-card flex items-center justify-center z-40
+            hover:bg-accent-2 active:scale-95 transition-all
+            focus:outline-none focus:ring-2 focus:ring-accent/50"
+          aria-label="Добавить рецепт"
+        >
+          +
+        </button>
+      )}
     </div>
   )
 }
