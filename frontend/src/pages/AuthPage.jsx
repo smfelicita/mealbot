@@ -3,21 +3,46 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import { api } from '../api'
 import { useStore } from '../store'
+import { Button, TextInput } from '../components/ui'
 
+// ─── Shared input style ───────────────────────────────────────────────────────
+const inputCls = 'w-full bg-bg-3 border border-border rounded-sm text-text text-[15px] px-3.5 py-2.5 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3'
+
+function FieldLabel({ children }) {
+  return <p className="text-xs font-bold text-text-2 uppercase tracking-wider mb-1.5">{children}</p>
+}
+
+function ErrorMsg({ msg }) {
+  if (!msg) return null
+  return <p className="text-red-400 text-[13px] mb-3">⚠️ {msg}</p>
+}
+
+function ResendLine({ countdown, onResend, loading, label = 'Отправить повторно' }) {
+  return (
+    <p className="text-center mt-4 text-[13px] text-text-2">
+      Не получили?{' '}
+      {countdown > 0
+        ? <span className="text-text-3">Повторно через {countdown} с</span>
+        : <button type="button" className="text-accent font-bold" onClick={onResend} disabled={loading}>{label}</button>
+      }
+    </p>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AuthPage() {
   const [searchParams] = useSearchParams()
-  // tab: 'email' | 'phone'
-  const [tab, setTab] = useState('email')
-  // step: 'login' | 'register' | 'verify-email' | 'phone-enter' | 'phone-code'
+  const [tab,  setTab]  = useState('email')
   const [step, setStep] = useState(searchParams.get('mode') === 'register' ? 'register' : 'login')
   const [form, setForm] = useState({ email: '', password: '', name: '', phone: '', code: '' })
   const [pendingEmail, setPendingEmail] = useState('')
   const [pendingPhone, setPendingPhone] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
   const [resendCountdown, setResendCountdown] = useState(0)
   const { setAuth } = useStore()
   const navigate = useNavigate()
+
   const upd = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
   useEffect(() => {
@@ -35,9 +60,7 @@ export default function AuthPage() {
       } else {
         const res = await api.register(form.email, form.password, form.name)
         if (res.requireVerification) {
-          setPendingEmail(res.email)
-          setStep('verify-email')
-          setResendCountdown(60)
+          setPendingEmail(res.email); setStep('verify-email'); setResendCountdown(60)
         } else {
           setAuth(res.user, res.token); navigate('/')
         }
@@ -57,10 +80,8 @@ export default function AuthPage() {
 
   async function resendEmail() {
     setError(''); setLoading(true)
-    try {
-      await api.resendEmailCode(pendingEmail)
-      setResendCountdown(60)
-    } catch (err) { setError(err.message) }
+    try { await api.resendEmailCode(pendingEmail); setResendCountdown(60) }
+    catch (err) { setError(err.message) }
     finally { setLoading(false) }
   }
 
@@ -68,9 +89,7 @@ export default function AuthPage() {
     e.preventDefault(); setError(''); setLoading(true)
     try {
       const res = await api.sendPhoneCode(form.phone)
-      setPendingPhone(res.phone)
-      setStep('phone-code')
-      setResendCountdown(60)
+      setPendingPhone(res.phone); setStep('phone-code'); setResendCountdown(60)
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }
   }
@@ -99,146 +118,158 @@ export default function AuthPage() {
     setForm({ email: '', password: '', name: '', phone: '', code: '' })
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="auth-page fade-in">
-      <div className="auth-logo">🍽️ MealBot</div>
-      <p style={{ color: 'var(--text2)', fontSize: 14, textAlign: 'center' }}>Умный помощник для выбора блюд</p>
+    <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-10 bg-bg fade-in">
+      {/* Logo */}
+      <div className="text-[40px] mb-1">🍽️</div>
+      <h1 className="font-serif text-[26px] font-extrabold mb-1">MealBot</h1>
+      <p className="text-[14px] text-text-2 mb-8">Умный помощник для выбора блюд</p>
 
-      <div className="auth-card fade-up">
-        {/* Шаг: подтверждение email */}
-        {step === 'verify-email' ? (
+      {/* Card */}
+      <div className="w-full max-w-[360px] bg-bg-2 border border-border rounded-DEFAULT p-6 fade-up">
+
+        {/* ── Verify email ── */}
+        {step === 'verify-email' && (
           <>
-            <h2>Подтверди email</h2>
-            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16 }}>
-              Код отправлен на <strong>{pendingEmail}</strong>
-              <br /><span style={{ color: 'var(--accent)', fontSize: 12 }}>Для теста смотри логи сервера</span>
+            <h2 className="font-serif text-[20px] font-extrabold mb-1">Подтверди email</h2>
+            <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
+              Код отправлен на <strong>{pendingEmail}</strong><br />
+              <span className="text-accent text-[12px]">Для теста смотри логи сервера</span>
             </p>
-            <form onSubmit={submitVerifyEmail}>
-              <div className="form-group">
-                <label>Код из письма</label>
-                <input className="input" placeholder="123456" maxLength={6}
+            <form onSubmit={submitVerifyEmail} className="flex flex-col gap-4">
+              <div>
+                <FieldLabel>Код из письма</FieldLabel>
+                <input className={inputCls} placeholder="123456" maxLength={6}
                   value={form.code} onChange={upd('code')} required autoFocus />
               </div>
-              {error && <p className="form-error" style={{ marginBottom: 12 }}>⚠️ {error}</p>}
-              <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-                {loading ? <span className="loader" style={{ width: 16, height: 16 }} /> : 'Подтвердить'}
-              </button>
+              <ErrorMsg msg={error} />
+              <Button type="submit" className="w-full" loading={loading}>
+                {!loading && 'Подтвердить'}
+              </Button>
             </form>
-            <p style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: 'var(--text2)' }}>
-              Не получили код?{' '}
-              {resendCountdown > 0
-                ? <span style={{ color: 'var(--text3)' }}>Повторно через {resendCountdown} с</span>
-                : <button className="btn-ghost" style={{ padding: 0, color: 'var(--accent)', fontWeight: 700, fontSize: 13 }}
-                  onClick={resendEmail} disabled={loading}>Отправить повторно</button>
-              }
-            </p>
+            <ResendLine countdown={resendCountdown} onResend={resendEmail} loading={loading} />
           </>
-        ) : step === 'phone-enter' ? (
+        )}
+
+        {/* ── Phone enter ── */}
+        {step === 'phone-enter' && (
           <>
-            <h2>Вход по телефону</h2>
-            <form onSubmit={submitSendPhone}>
-              <div className="form-group">
-                <label>Номер телефона</label>
-                <input className="input" placeholder="+7 999 000-00-00" type="tel"
+            <h2 className="font-serif text-[20px] font-extrabold mb-4">Вход по телефону</h2>
+            <form onSubmit={submitSendPhone} className="flex flex-col gap-4">
+              <div>
+                <FieldLabel>Номер телефона</FieldLabel>
+                <input className={inputCls} placeholder="+7 999 000-00-00" type="tel"
                   value={form.phone} onChange={upd('phone')} required autoFocus />
               </div>
-              {error && <p className="form-error" style={{ marginBottom: 12 }}>⚠️ {error}</p>}
-              <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-                {loading ? <span className="loader" style={{ width: 16, height: 16 }} /> : 'Получить код'}
-              </button>
+              <ErrorMsg msg={error} />
+              <Button type="submit" className="w-full" loading={loading}>
+                {!loading && 'Получить код'}
+              </Button>
             </form>
           </>
-        ) : step === 'phone-code' ? (
+        )}
+
+        {/* ── Phone code ── */}
+        {step === 'phone-code' && (
           <>
-            <h2>Введи код</h2>
-            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16 }}>
-              Код отправлен на <strong>{pendingPhone}</strong>
-              <br /><span style={{ color: 'var(--accent)', fontSize: 12 }}>Для теста смотри логи сервера</span>
+            <h2 className="font-serif text-[20px] font-extrabold mb-1">Введи код</h2>
+            <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
+              Код отправлен на <strong>{pendingPhone}</strong><br />
+              <span className="text-accent text-[12px]">Для теста смотри логи сервера</span>
             </p>
-            <form onSubmit={submitVerifyPhone}>
-              <div className="form-group">
-                <label>Код из SMS</label>
-                <input className="input" placeholder="123456" maxLength={6}
+            <form onSubmit={submitVerifyPhone} className="flex flex-col gap-4">
+              <div>
+                <FieldLabel>Код из SMS</FieldLabel>
+                <input className={inputCls} placeholder="123456" maxLength={6}
                   value={form.code} onChange={upd('code')} required autoFocus />
               </div>
-              <div className="form-group">
-                <label>Имя <span style={{ color: 'var(--text3)', fontSize: 12 }}>(опционально)</span></label>
-                <input className="input" placeholder="Как тебя зовут?" value={form.name} onChange={upd('name')} />
+              <div>
+                <FieldLabel>Имя <span className="normal-case font-normal text-text-3">(опционально)</span></FieldLabel>
+                <input className={inputCls} placeholder="Как тебя зовут?" value={form.name} onChange={upd('name')} />
               </div>
-              {error && <p className="form-error" style={{ marginBottom: 12 }}>⚠️ {error}</p>}
-              <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-                {loading ? <span className="loader" style={{ width: 16, height: 16 }} /> : 'Войти'}
-              </button>
+              <ErrorMsg msg={error} />
+              <Button type="submit" className="w-full" loading={loading}>
+                {!loading && 'Войти'}
+              </Button>
             </form>
-            <p style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: 'var(--text2)' }}>
+            <p className="text-center mt-4 text-[13px] text-text-2">
               {resendCountdown > 0
-                ? <span style={{ color: 'var(--text3)' }}>Повторно через {resendCountdown} с</span>
-                : <button className="btn-ghost" style={{ padding: 0, color: 'var(--accent)', fontWeight: 700, fontSize: 13 }}
-                  onClick={() => { setStep('phone-enter'); setForm(f => ({ ...f, code: '' })) }}>
-                  Изменить номер
-                </button>
+                ? <span className="text-text-3">Повторно через {resendCountdown} с</span>
+                : <button type="button" className="text-accent font-bold"
+                    onClick={() => { setStep('phone-enter'); setForm(f => ({ ...f, code: '' })) }}>
+                    Изменить номер
+                  </button>
               }
             </p>
           </>
-        ) : (
+        )}
+
+        {/* ── Email login / register ── */}
+        {(step === 'login' || step === 'register') && (
           <>
-            {/* Вкладки Email / Телефон */}
-            <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
+            {/* Tab switcher */}
+            <div className="flex rounded-sm overflow-hidden border border-border mb-5">
               {[['email', '📧 Email'], ['phone', '📱 Телефон']].map(([t, label]) => (
-                <button key={t} onClick={() => switchTab(t)} style={{
-                  flex: 1, padding: '8px 0', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
-                  background: tab === t ? 'var(--accent)' : 'var(--bg3)',
-                  color: tab === t ? '#fff' : 'var(--text2)',
-                  transition: 'background .2s',
-                }}>
-                  {label}
-                </button>
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => switchTab(t)}
+                  className={[
+                    'flex-1 py-2 text-[13px] font-bold transition-colors',
+                    tab === t ? 'bg-accent text-white' : 'bg-bg-3 text-text-2 hover:text-text',
+                  ].join(' ')}
+                >{label}</button>
               ))}
             </div>
 
-            <h2 style={{ marginBottom: 16 }}>{step === 'login' ? 'Войти' : 'Создать аккаунт'}</h2>
+            <h2 className="font-serif text-[20px] font-extrabold mb-4">
+              {step === 'login' ? 'Войти' : 'Создать аккаунт'}
+            </h2>
 
-            <form onSubmit={submitEmailAuth}>
+            <form onSubmit={submitEmailAuth} className="flex flex-col gap-4">
               {step === 'register' && (
-                <div className="form-group">
-                  <label>Имя</label>
-                  <input className="input" placeholder="Как тебя зовут?" value={form.name} onChange={upd('name')} />
+                <div>
+                  <FieldLabel>Имя</FieldLabel>
+                  <input className={inputCls} placeholder="Как тебя зовут?" value={form.name} onChange={upd('name')} />
                 </div>
               )}
-              <div className="form-group">
-                <label>Email</label>
-                <input className="input" type="email" required placeholder="you@example.com"
+              <div>
+                <FieldLabel>Email</FieldLabel>
+                <input className={inputCls} type="email" required placeholder="you@example.com"
                   value={form.email} onChange={upd('email')} />
               </div>
-              <div className="form-group">
-                <label>Пароль</label>
-                <input className="input" type="password" required minLength={6} placeholder="••••••••"
+              <div>
+                <FieldLabel>Пароль</FieldLabel>
+                <input className={inputCls} type="password" required minLength={6} placeholder="••••••••"
                   value={form.password} onChange={upd('password')} />
               </div>
-              {error && <p className="form-error" style={{ marginBottom: 12 }}>⚠️ {error}</p>}
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 4 }} disabled={loading}>
-                {loading ? <span className="loader" style={{ width: 16, height: 16 }} />
-                  : step === 'login' ? 'Войти' : 'Зарегистрироваться'}
-              </button>
+              <ErrorMsg msg={error} />
+              <Button type="submit" className="w-full" loading={loading}>
+                {!loading && (step === 'login' ? 'Войти' : 'Зарегистрироваться')}
+              </Button>
             </form>
 
-            <p style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: 'var(--text2)' }}>
+            <p className="text-center mt-4 text-[13px] text-text-2">
               {step === 'login' ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}
-              <button className="btn-ghost" style={{ padding: 0, color: 'var(--accent)', fontWeight: 700, fontSize: 13 }}
-                onClick={() => { setStep(s => s === 'login' ? 'register' : 'login'); setError('') }}>
+              <button
+                type="button"
+                className="text-accent font-bold"
+                onClick={() => { setStep(s => s === 'login' ? 'register' : 'login'); setError('') }}
+              >
                 {step === 'login' ? 'Зарегистрироваться' : 'Войти'}
               </button>
             </p>
 
-            {/* Google + Telegram */}
-            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-                <span style={{ fontSize: 12, color: 'var(--text3)' }}>или</span>
-                <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-              </div>
+            {/* Divider + Google */}
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[12px] text-text-3">или</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <div className="flex justify-center">
               <GoogleLogin
-                onSuccess={credentialResponse => handleGoogle(credentialResponse.credential)}
+                onSuccess={r => handleGoogle(r.credential)}
                 onError={() => setError('Ошибка Google авторизации')}
                 text="continue_with"
                 shape="rectangular"
@@ -250,12 +281,14 @@ export default function AuthPage() {
         )}
       </div>
 
-      <p style={{ marginTop: 20, fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>
-        <button className="btn-ghost" style={{ padding: 0, fontSize: 13, color: 'var(--text3)' }}
-          onClick={() => navigate('/')}>
-          Продолжить без регистрации →
-        </button>
-      </p>
+      {/* Skip link */}
+      <button
+        type="button"
+        className="mt-6 text-[13px] text-text-3 hover:text-text-2"
+        onClick={() => navigate('/')}
+      >
+        Продолжить без регистрации →
+      </button>
     </div>
   )
 }

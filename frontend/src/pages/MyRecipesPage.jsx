@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
-import { useToast } from '../hooks/useToast.jsx'
+import { Button, Loader, EmptyState, useToast } from '../components/ui'
 
 const CAT_EMOJI = {
   BREAKFAST: '🌅', LUNCH: '☀️', DINNER: '🌙',
@@ -9,11 +9,18 @@ const CAT_EMOJI = {
   DESSERT: '🍰', DRINK: '🥤',
 }
 
+const VIS_LABEL = {
+  PUBLIC: { label: '🌐 Публичный', cls: 'text-teal' },
+  FAMILY: { label: '👨‍👩‍👧 Семья',    cls: 'text-accent' },
+  ALL_GROUPS: { label: '👥 Группы', cls: 'text-accent' },
+  PRIVATE: { label: '🔒 Личный',   cls: 'text-text-3' },
+}
+
 export default function MyRecipesPage() {
   const navigate = useNavigate()
+  const { show, Toast } = useToast()
   const [dishes, setDishes] = useState([])
   const [loading, setLoading] = useState(true)
-  const { show, Toast } = useToast()
 
   useEffect(() => {
     api.getMyDishes().then(setDishes).catch(() => {}).finally(() => setLoading(false))
@@ -32,74 +39,63 @@ export default function MyRecipesPage() {
 
   return (
     <div>
-      <div className="top-bar">
-        <span className="top-bar-logo">📖 Мои рецепты</span>
-        <div style={{ flex: 1 }} />
-        <button className="btn btn-primary btn-sm" onClick={() => navigate('/my-recipes/new')}>
-          + Создать
-        </button>
+      {/* Top bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-bg/95 backdrop-blur-md border-b border-border flex items-center px-3 gap-2 max-w-app mx-auto">
+        <span className="font-serif text-[17px] font-bold flex-1">📖 Мои рецепты</span>
+        <Button size="sm" onClick={() => navigate('/my-recipes/new')}>+ Создать</Button>
       </div>
 
-      <div className="page" style={{ paddingTop: 16 }}>
+      <div className="pt-[68px] pb-8 px-4">
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 48 }}>
-            <div className="loader" />
-          </div>
+          <Loader />
         ) : dishes.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📖</div>
-            <h3>Нет своих рецептов</h3>
-            <p>Создайте свой первый рецепт и поделитесь с группой</p>
-            <button className="btn btn-primary" style={{ marginTop: 16 }}
-              onClick={() => navigate('/my-recipes/new')}>
-              + Создать рецепт
-            </button>
-          </div>
+          <EmptyState
+            icon="📖"
+            title="Нет своих рецептов"
+            description="Создайте первый рецепт и поделитесь с группой"
+            action={<Button onClick={() => navigate('/my-recipes/new')}>+ Создать рецепт</Button>}
+          />
         ) : (
-          <div className="dishes-grid">
-            {dishes.map((dish, i) => (
-              <div key={dish.id} className="card dish-card fade-up"
-                style={{ animationDelay: `${i * 0.04}s` }}>
-                <div className="dish-card-header">
-                  <div className="dish-emoji">{CAT_EMOJI[dish.categories?.[0]] || '🍳'}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="dish-name">{dish.name}</div>
-                    {dish.description && (
-                      <div className="dish-desc" style={{
-                        marginTop: 4, overflow: 'hidden',
-                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                      }}>
-                        {dish.description}
-                      </div>
-                    )}
+          <div className="flex flex-col gap-3">
+            {dishes.map((dish, i) => {
+              const vis = VIS_LABEL[dish.visibility] || VIS_LABEL.PRIVATE
+              return (
+                <div
+                  key={dish.id}
+                  className="bg-bg-2 border border-border rounded-DEFAULT p-4 fade-up"
+                  style={{ animationDelay: `${i * 0.04}s` }}
+                >
+                  <div className="flex gap-3 items-start mb-3">
+                    <div className="w-10 h-10 rounded-sm bg-bg-3 flex items-center justify-center text-xl shrink-0">
+                      {CAT_EMOJI[dish.categories?.[0]] || '🍳'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-[15px] leading-tight">{dish.name}</p>
+                      {dish.description && (
+                        <p className="text-[13px] text-text-2 mt-1 line-clamp-2 leading-snug">
+                          {dish.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-[12px] text-text-3 mb-3">
+                    {dish.cookTime && <span>⏱ {dish.cookTime} мин</span>}
+                    {dish.calories && <span>🔥 {dish.calories} ккал</span>}
+                    <span className={`ml-auto font-semibold ${vis.cls}`}>{vis.label}</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button variant="secondary" size="sm" className="flex-1"
+                      onClick={() => navigate(`/dishes/${dish.id}`)}>Просмотр</Button>
+                    <Button variant="secondary" size="sm" className="flex-1"
+                      onClick={() => navigate(`/my-recipes/${dish.id}/edit`)}>Редактировать</Button>
+                    <Button variant="ghost" size="sm" className="text-red-400"
+                      onClick={() => handleDelete(dish)}>Удалить</Button>
                   </div>
                 </div>
-                <div className="dish-meta">
-                  {dish.cookTime && <span>⏱ {dish.cookTime} мин</span>}
-                  {dish.calories && <span>🔥 {dish.calories} ккал</span>}
-                  <span style={{
-                    marginLeft: 'auto', fontSize: 11,
-                    color: dish.isPublic ? 'var(--teal)' : 'var(--text3)',
-                  }}>
-                    {dish.isPublic ? '🌐 Публичный' : '🔒 Личный'}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-secondary btn-sm" style={{ flex: 1 }}
-                    onClick={() => navigate(`/dishes/${dish.id}`)}>
-                    Просмотр
-                  </button>
-                  <button className="btn btn-secondary btn-sm" style={{ flex: 1 }}
-                    onClick={() => navigate(`/my-recipes/${dish.id}/edit`)}>
-                    Редактировать
-                  </button>
-                  <button className="btn btn-ghost btn-sm" style={{ color: '#f87171' }}
-                    onClick={() => handleDelete(dish)}>
-                    Удалить
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
-import { useToast } from '../hooks/useToast.jsx'
-import DishCard from '../components/DishCard'
+import { Button, Loader, EmptyState, Avatar, useToast } from '../components/ui'
+import { RecipeCard } from '../components/domain'
 
 export default function GroupDetailPage() {
   const { id } = useParams()
@@ -11,9 +11,9 @@ export default function GroupDetailPage() {
   const user = useStore(s => s.user)
   const { show, Toast } = useToast()
 
-  const [group, setGroup] = useState(null)
+  const [group, setGroup]   = useState(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('dishes') // 'dishes' | 'members'
+  const [tab, setTab]       = useState('dishes')
 
   useEffect(() => {
     api.getGroup(id)
@@ -23,7 +23,7 @@ export default function GroupDetailPage() {
   }, [id])
 
   async function handleDelete() {
-    if (!confirm(`Удалить группу "${group.name}"? Все рецепты группы останутся у авторов.`)) return
+    if (!confirm(`Удалить группу "${group.name}"?`)) return
     try {
       await api.deleteGroup(id)
       navigate('/groups', { replace: true })
@@ -39,7 +39,7 @@ export default function GroupDetailPage() {
   }
 
   async function handleKick(memberId, memberName) {
-    if (!confirm(`Исключить ${memberName} из группы?`)) return
+    if (!confirm(`Исключить ${memberName}?`)) return
     try {
       await api.kickMember(id, memberId)
       setGroup(g => ({ ...g, members: g.members.filter(m => m.userId !== memberId) }))
@@ -52,109 +52,102 @@ export default function GroupDetailPage() {
     show('Код скопирован! Поделитесь им с участниками.', 'success')
   }
 
-  if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60dvh' }}>
-      <div className="loader" />
-    </div>
-  )
+  if (loading) return <Loader fullPage />
   if (!group) return null
 
   const isOwner = group.ownerId === user?.id
 
   return (
     <div className="fade-in">
-      {/* Шапка */}
-      <div style={{ background: 'var(--bg2)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ padding: '14px 16px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <button className="btn btn-icon" onClick={() => navigate(-1)}>←</button>
-            <span style={{ fontSize: 13, color: 'var(--text2)' }}>Назад</span>
-            <div style={{ flex: 1 }} />
-            {isOwner ? (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn btn-secondary btn-sm"
-                  onClick={() => navigate(`/groups/${id}/edit`)}>Редактировать</button>
-                <button className="btn btn-ghost btn-sm" style={{ color: '#f87171' }}
-                  onClick={handleDelete}>Удалить</button>
-              </div>
-            ) : (
-              <button className="btn btn-ghost btn-sm" style={{ color: '#f87171' }}
-                onClick={handleLeave}>Выйти</button>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 16 }}>
-            <div style={{
-              width: 60, height: 60, borderRadius: 14, background: 'var(--bg3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 30, flexShrink: 0, overflow: 'hidden',
-            }}>
-              {group.avatarUrl
-                ? <img src={group.avatarUrl} alt={group.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : '👥'}
+      {/* ── Header ── */}
+      <div className="bg-bg-2 border-b border-border">
+        {/* Nav row */}
+        <div className="flex items-center gap-2 px-4 pt-3.5 pb-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>←</Button>
+          <span className="text-[13px] text-text-2">Назад</span>
+          <div className="flex-1" />
+          {isOwner ? (
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm"
+                onClick={() => navigate(`/groups/${id}/edit`)}>Редактировать</Button>
+              <Button variant="danger" size="sm" onClick={handleDelete}>Удалить</Button>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <h1 style={{ fontSize: 20, fontWeight: 800, fontFamily: 'var(--font-serif)', lineHeight: 1.2 }}>
-                  {group.name}
-                </h1>
-                {group.type === 'FAMILY' && (
-                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', background: 'var(--bg3)', padding: '2px 7px', borderRadius: 4 }}>СЕМЬЯ</span>
-                )}
-              </div>
-              {group.description && (
-                <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>{group.description}</p>
+          ) : (
+            <Button variant="ghost" size="sm" className="text-red-400" onClick={handleLeave}>Выйти</Button>
+          )}
+        </div>
+
+        {/* Group info */}
+        <div className="flex gap-3.5 items-start px-4 pb-3">
+          <div className="w-[60px] h-[60px] rounded-xl bg-bg-3 flex items-center justify-center text-3xl shrink-0 overflow-hidden">
+            {group.avatarUrl
+              ? <img src={group.avatarUrl} alt={group.name} className="w-full h-full object-cover" />
+              : '👥'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="font-serif text-[20px] font-extrabold leading-tight">{group.name}</h1>
+              {group.type === 'FAMILY' && (
+                <span className="text-[10px] font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded shrink-0">СЕМЬЯ</span>
               )}
-              <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 12, color: 'var(--text3)', flexWrap: 'wrap' }}>
-                <span>👤 {group.members.length} участников</span>
-                <span>🍽️ {group.dishes.length} рецептов</span>
-                {group.type === 'FAMILY' && <span>🧊 Общий холодильник</span>}
-              </div>
             </div>
-          </div>
-
-          {/* Кнопки action */}
-          <div style={{ display: 'flex', gap: 8, paddingBottom: 14 }}>
-            <button className="btn btn-secondary btn-sm" onClick={copyCode}>
-              🔑 Код приглашения
-            </button>
-            <button className="btn btn-primary btn-sm"
-              onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name } })}>
-              + Рецепт в группу
-            </button>
+            {group.description && (
+              <p className="text-[13px] text-text-2 leading-snug">{group.description}</p>
+            )}
+            <div className="flex gap-3 mt-2 text-[12px] text-text-3 flex-wrap">
+              <span>👤 {group.members.length} участников</span>
+              <span>🍽️ {group.dishes.length} рецептов</span>
+              {group.type === 'FAMILY' && <span>🧊 Общий холодильник</span>}
+            </div>
           </div>
         </div>
 
-        {/* Вкладки */}
-        <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
+        {/* Action buttons */}
+        <div className="flex gap-2 px-4 pb-3.5">
+          <Button variant="secondary" size="sm" onClick={copyCode}>🔑 Код приглашения</Button>
+          <Button size="sm"
+            onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name } })}>
+            + Рецепт в группу
+          </Button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-t border-border">
           {[['dishes', '🍽️ Рецепты'], ['members', '👥 Участники']].map(([key, label]) => (
-            <button key={key} onClick={() => setTab(key)} style={{
-              flex: 1, padding: '10px 0', fontSize: 13, fontWeight: 700,
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: tab === key ? 'var(--accent)' : 'var(--text2)',
-              borderBottom: tab === key ? '2px solid var(--accent)' : '2px solid transparent',
-            }}>{label}</button>
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={[
+                'flex-1 py-2.5 text-[13px] font-bold transition-colors',
+                tab === key
+                  ? 'text-accent border-b-2 border-accent'
+                  : 'text-text-2 border-b-2 border-transparent hover:text-text',
+              ].join(' ')}
+            >{label}</button>
           ))}
         </div>
       </div>
 
-      <div className="page" style={{ paddingTop: 16 }}>
+      {/* ── Content ── */}
+      <div className="px-4 pt-4 pb-8">
         {tab === 'dishes' && (
           group.dishes.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">🍽️</div>
-              <h3>Нет рецептов</h3>
-              <p>Добавьте первый рецепт в группу</p>
-              <button className="btn btn-primary" style={{ marginTop: 16 }}
-                onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name } })}>
-                + Добавить рецепт
-              </button>
-            </div>
+            <EmptyState
+              icon="🍽️"
+              title="Нет рецептов"
+              description="Добавьте первый рецепт в группу"
+              action={
+                <Button onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name } })}>
+                  + Добавить рецепт
+                </Button>
+              }
+            />
           ) : (
-            <div className="dishes-grid">
+            <div className="grid grid-cols-1 gap-3">
               {group.dishes.map((d, i) => (
                 <div key={d.id} className="fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
-                  <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+                  <RecipeCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
                 </div>
               ))}
             </div>
@@ -162,30 +155,34 @@ export default function GroupDetailPage() {
         )}
 
         {tab === 'members' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="flex flex-col gap-2">
             {group.members.map(member => (
-              <div key={member.userId} className="card" style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 20, background: 'var(--bg3)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0,
-                }}>👤</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>{member.name}</div>
-                  <div style={{ fontSize: 12, color: member.role === 'OWNER' ? 'var(--accent)' : 'var(--text3)', marginTop: 2 }}>
+              <div
+                key={member.userId}
+                className="flex items-center gap-3 bg-bg-2 border border-border rounded-sm px-3.5 py-3"
+              >
+                <Avatar name={member.name} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-[14px]">{member.name}</p>
+                  <p className={[
+                    'text-[12px] mt-0.5',
+                    member.role === 'OWNER' ? 'text-accent' : 'text-text-3',
+                  ].join(' ')}>
                     {member.role === 'OWNER' ? '👑 Владелец' : 'Участник'}
-                  </div>
+                  </p>
                 </div>
                 {isOwner && member.userId !== user?.id && (
-                  <button className="btn btn-ghost btn-sm" style={{ color: '#f87171', flexShrink: 0 }}
+                  <Button variant="ghost" size="sm" className="text-red-400 shrink-0"
                     onClick={() => handleKick(member.userId, member.name)}>
                     Исключить
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
           </div>
         )}
       </div>
+
       {Toast}
     </div>
   )

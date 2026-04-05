@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
-import { useToast } from '../hooks/useToast.jsx'
+import { Button, Loader, TextInput, Textarea, useToast } from '../components/ui'
+
+const GROUP_TYPES = [
+  { value: 'FAMILY',  label: '👨‍👩‍👧 Семейная', desc: 'Общий холодильник, общие рецепты. Одна на пользователя.' },
+  { value: 'REGULAR', label: '👥 Обычная',   desc: 'Только общие рецепты. До 2 групп.' },
+]
 
 export default function GroupFormPage() {
   const { id } = useParams()
@@ -9,16 +14,17 @@ export default function GroupFormPage() {
   const isEdit = Boolean(id)
   const { show, Toast } = useToast()
 
-  const [form, setForm] = useState({ name: '', description: '', avatarUrl: '', type: 'REGULAR' })
-  const [loading, setLoading] = useState(isEdit)
-  const [saving, setSaving] = useState(false)
+  const [form, setForm]         = useState({ name: '', description: '', avatarUrl: '', type: 'REGULAR' })
+  const [loading, setLoading]   = useState(isEdit)
+  const [saving, setSaving]     = useState(false)
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (!isEdit) return
-    api.getGroup(id).then(g => {
-      setForm({ name: g.name, description: g.description || '', avatarUrl: g.avatarUrl || '', type: g.type || 'REGULAR' })
-    }).catch(() => navigate('/groups')).finally(() => setLoading(false))
+    api.getGroup(id)
+      .then(g => setForm({ name: g.name, description: g.description || '', avatarUrl: g.avatarUrl || '', type: g.type || 'REGULAR' }))
+      .catch(() => navigate('/groups'))
+      .finally(() => setLoading(false))
   }, [id])
 
   async function handleAvatarUpload(e) {
@@ -28,11 +34,8 @@ export default function GroupFormPage() {
     try {
       const res = await api.uploadFile('image', file)
       setForm(f => ({ ...f, avatarUrl: res.url }))
-    } catch (e) {
-      show(e.message, 'error')
-    } finally {
-      setUploading(false)
-    }
+    } catch (e) { show(e.message, 'error') }
+    finally { setUploading(false) }
   }
 
   async function handleSubmit(e) {
@@ -42,85 +45,73 @@ export default function GroupFormPage() {
     try {
       if (isEdit) {
         await api.updateGroup(id, form)
-        show('Группа обновлена', 'success')
         navigate(`/groups/${id}`)
       } else {
         const group = await api.createGroup(form)
-        show('Группа создана!', 'success')
         navigate(`/groups/${group.id}`)
       }
-    } catch (e) {
-      show(e.message, 'error')
-    } finally {
-      setSaving(false)
-    }
+    } catch (e) { show(e.message, 'error') }
+    finally { setSaving(false) }
   }
 
-  if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60dvh' }}>
-      <div className="loader" />
-    </div>
-  )
+  if (loading) return <Loader fullPage />
 
   return (
     <div>
-      <div className="top-bar">
-        <button className="btn btn-icon" onClick={() => navigate(-1)}>←</button>
-        <span style={{ fontWeight: 700, marginLeft: 8 }}>
+      {/* Top bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-bg/95 backdrop-blur-md border-b border-border flex items-center px-3 gap-2 max-w-app mx-auto">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>←</Button>
+        <span className="font-serif text-[17px] font-bold flex-1 text-center">
           {isEdit ? 'Редактировать группу' : 'Новая группа'}
         </span>
+        <div className="w-9" />
       </div>
 
-      <div className="page" style={{ paddingTop: 20 }}>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Аватар */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: 16, background: 'var(--bg3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 32, flexShrink: 0, overflow: 'hidden',
-            }}>
+      <div className="pt-[68px] pb-10 px-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* Avatar */}
+          <div className="flex items-center gap-4">
+            <div className="w-[72px] h-[72px] rounded-xl bg-bg-3 flex items-center justify-center text-3xl shrink-0 overflow-hidden">
               {form.avatarUrl
-                ? <img src={form.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ? <img src={form.avatarUrl} alt="" className="w-full h-full object-cover" />
                 : '👥'}
             </div>
-            <div>
-              <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
-                {uploading ? 'Загрузка...' : 'Загрузить фото'}
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+            <div className="flex items-center gap-2">
+              <label className="cursor-pointer">
+                <Button variant="secondary" size="sm" className="pointer-events-none" loading={uploading}>
+                  {!uploading && 'Загрузить фото'}
+                </Button>
+                <input type="file" accept="image/*" hidden onChange={handleAvatarUpload} />
               </label>
               {form.avatarUrl && (
-                <button type="button" className="btn btn-ghost btn-sm" style={{ marginLeft: 8, color: '#f87171' }}
-                  onClick={() => setForm(f => ({ ...f, avatarUrl: '' }))}>Удалить</button>
+                <Button variant="ghost" size="sm" className="text-red-400"
+                  onClick={() => setForm(f => ({ ...f, avatarUrl: '' }))}>Удалить</Button>
               )}
             </div>
           </div>
 
-          {/* Тип группы (только при создании) */}
+          {/* Type (create only) */}
           {!isEdit && (
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', display: 'block', marginBottom: 8 }}>
-                Тип группы
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { value: 'FAMILY', label: '👨‍👩‍👧 Семейная', desc: 'Общий холодильник, общие рецепты. Одна на пользователя.' },
-                  { value: 'REGULAR', label: '👥 Обычная', desc: 'Только общие рецепты. До 2 групп.' },
-                ].map(opt => (
-                  <label key={opt.value} style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 10,
-                    padding: '10px 12px', borderRadius: 'var(--radius-sm)',
-                    border: `1.5px solid ${form.type === opt.value ? 'var(--accent)' : 'var(--border)'}`,
-                    background: form.type === opt.value ? 'var(--bg3)' : 'var(--bg2)',
-                    cursor: 'pointer',
-                  }}>
+              <p className="text-xs font-bold text-text-2 uppercase tracking-wider mb-2">Тип группы</p>
+              <div className="flex flex-col gap-2">
+                {GROUP_TYPES.map(opt => (
+                  <label
+                    key={opt.value}
+                    className={[
+                      'flex items-start gap-3 px-3 py-2.5 rounded-sm border-[1.5px] cursor-pointer transition-all',
+                      form.type === opt.value
+                        ? 'border-accent bg-accent/6'
+                        : 'border-border bg-bg-2 hover:border-accent/50',
+                    ].join(' ')}
+                  >
                     <input type="radio" name="groupType" value={opt.value}
                       checked={form.type === opt.value}
                       onChange={() => setForm(f => ({ ...f, type: opt.value }))}
-                      style={{ marginTop: 2, accentColor: 'var(--accent)' }} />
+                      className="mt-0.5 accent-accent" />
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{opt.label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>{opt.desc}</div>
+                      <p className="text-[13px] font-semibold">{opt.label}</p>
+                      <p className="text-[11px] text-text-2 mt-0.5">{opt.desc}</p>
                     </div>
                   </label>
                 ))}
@@ -128,29 +119,25 @@ export default function GroupFormPage() {
             </div>
           )}
 
-          {/* Название */}
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>
-              Название *
-            </label>
-            <input className="input" placeholder="Например: Семья, Друзья, Команда..."
-              value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-          </div>
+          <TextInput
+            label="Название"
+            required
+            placeholder="Например: Семья, Друзья, Команда..."
+            value={form.name}
+            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+          />
 
-          {/* Описание */}
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>
-              Описание
-            </label>
-            <textarea className="input" placeholder="Расскажите о группе..."
-              rows={3} value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              style={{ resize: 'vertical' }} />
-          </div>
+          <Textarea
+            label="Описание"
+            rows={3}
+            placeholder="Расскажите о группе..."
+            value={form.description}
+            onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+          />
 
-          <button type="submit" className="btn btn-primary" disabled={saving} style={{ marginTop: 8 }}>
-            {saving ? 'Сохранение...' : isEdit ? 'Сохранить' : 'Создать группу'}
-          </button>
+          <Button type="submit" className="w-full" loading={saving}>
+            {!saving && (isEdit ? 'Сохранить' : 'Создать группу')}
+          </Button>
         </form>
       </div>
       {Toast}
