@@ -2,18 +2,32 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
+import { Button, Loader, Avatar } from '../components/ui'
+
+function InfoRow({ label, value, note }) {
+  return (
+    <div>
+      <p className="text-[11px] text-text-3 mb-0.5">{label}</p>
+      <p className="text-[14px] font-semibold">
+        {value}
+        {note && <span className="ml-2 text-[11px] text-text-3 font-normal">{note}</span>}
+      </p>
+    </div>
+  )
+}
 
 export default function ProfilePage() {
-  const logout = useStore(s => s.logout)
+  const logout   = useStore(s => s.logout)
   const navigate = useNavigate()
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [tgLink, setTgLink] = useState(null)
+
+  const [profile, setProfile]   = useState(null)
+  const [loading, setLoading]   = useState(true)
+  const [tgLink, setTgLink]     = useState(null)
   const [tgLoading, setTgLoading] = useState(false)
 
   useEffect(() => {
     api.me()
-      .then(data => { setProfile(data) })
+      .then(setProfile)
       .catch(() => navigate('/auth'))
       .finally(() => setLoading(false))
   }, [])
@@ -27,39 +41,35 @@ export default function ProfilePage() {
     setTgLoading(false)
   }
 
-  if (loading) return (
-    <div className="page fade-in" style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}>
-      <span className="loader" style={{ width: 32, height: 32 }} />
-    </div>
-  )
+  if (loading) return <Loader fullPage />
 
-  const avatar = profile?.name?.[0]?.toUpperCase() || '?'
+  const roleLabel =
+    profile?.role === 'ADMIN' ? '🛡 Администратор' :
+    profile?.role === 'PRO'   ? '⭐ Pro' :
+    'Пользователь'
 
   return (
-    <div className="page fade-in" style={{ maxWidth: 480 }}>
-      <h2 style={{ fontFamily: 'var(--font-serif)', marginBottom: 24 }}>Профиль</h2>
+    <div className="px-4 pt-5 pb-10 max-w-[480px] fade-in">
+      <h2 className="font-serif text-[22px] font-extrabold mb-5">Профиль</h2>
 
-      {/* Аватар + имя */}
-      <div className="card fade-up" style={{ marginBottom: 16, padding: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--accent), var(--purple))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22, fontWeight: 800, color: '#fff', flexShrink: 0,
-          }}>
-            {avatar}
-          </div>
+      {/* Avatar + name card */}
+      <div className="bg-bg-2 border border-border rounded-DEFAULT p-5 mb-3 fade-up">
+        <div className="flex items-center gap-4 mb-4">
+          <Avatar name={profile?.name} size="lg" />
           <div>
-            <div style={{ fontWeight: 800, fontSize: 17 }}>{profile?.name || 'Без имени'}</div>
-            <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>
-              {profile?.role === 'ADMIN' ? '🛡 Администратор' : profile?.role === 'PRO' ? '⭐ Pro' : 'Пользователь'}
-            </div>
+            <p className="font-extrabold text-[17px]">{profile?.name || 'Без имени'}</p>
+            <p className="text-[13px] text-text-2 mt-0.5">{roleLabel}</p>
           </div>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--border)', marginTop: 16, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {profile?.email && <InfoRow label="📧 Email" value={profile.email} note={profile.emailVerified ? '✓ подтверждён' : '⚠ не подтверждён'} />}
+        <div className="border-t border-border pt-4 flex flex-col gap-3">
+          {profile?.email && (
+            <InfoRow
+              label="📧 Email"
+              value={profile.email}
+              note={profile.emailVerified ? '✓ подтверждён' : '⚠ не подтверждён'}
+            />
+          )}
           {profile?.phone && <InfoRow label="📱 Телефон" value={profile.phone} />}
           <InfoRow
             label="✈️ Telegram"
@@ -69,44 +79,38 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Подключить Telegram */}
+      {/* Telegram connect */}
       {!profile?.telegramId && (
-        <div className="card fade-up" style={{ marginBottom: 16, padding: '16px 20px' }}>
-          <div style={{ fontWeight: 700, marginBottom: 8 }}>✈️ Подключить Telegram-бот</div>
-          <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 14, lineHeight: 1.6 }}>
+        <div className="bg-bg-2 border border-border rounded-DEFAULT p-5 mb-3 fade-up">
+          <p className="font-bold mb-2">✈️ Подключить Telegram-бот</p>
+          <p className="text-[14px] text-text-2 leading-relaxed mb-4">
             После подключения холодильник, план питания и рецепты будут доступны прямо в боте.
           </p>
           {!tgLink ? (
-            <button className="btn btn-secondary" style={{ width: '100%' }} onClick={connectTelegram} disabled={tgLoading}>
-              {tgLoading ? <span className="loader" style={{ width: 16, height: 16 }} /> : 'Получить ссылку для подключения'}
-            </button>
+            <Button variant="secondary" className="w-full" loading={tgLoading} onClick={connectTelegram}>
+              {!tgLoading && 'Получить ссылку для подключения'}
+            </Button>
           ) : (
-            <a href={tgLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ width: '100%', display: 'flex' }}>
+            <a
+              href={tgLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-full bg-accent text-white font-bold rounded-sm py-2.5 text-[15px]"
+            >
               Открыть бота →
             </a>
           )}
         </div>
       )}
 
-      {/* Выйти */}
-      <button
-        className="btn btn-secondary fade-up"
-        style={{ width: '100%', color: '#e74c3c', borderColor: 'rgba(231,76,60,.3)' }}
+      {/* Logout */}
+      <Button
+        variant="secondary"
+        className="w-full text-red-400 border-red-400/30 hover:bg-red-400/5 fade-up"
         onClick={() => { logout(); navigate('/auth') }}
       >
         🚪 Выйти из аккаунта
-      </button>
-    </div>
-  )
-}
-
-function InfoRow({ label, value, note }) {
-  return (
-    <div>
-      <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 600 }}>{value}
-        {note && <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text3)', fontWeight: 400 }}>{note}</span>}
-      </div>
+      </Button>
     </div>
   )
 }
