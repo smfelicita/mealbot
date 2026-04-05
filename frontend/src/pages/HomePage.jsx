@@ -2,170 +2,141 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
-import DishCard from '../components/DishCard'
+import { Button, EmptyState } from '../components/ui'
+import { MealTypeChips, RecipeList, HomeTitle } from '../components/domain'
 
-const MEAL_TIMES = [
-  { id: 'breakfast', label: 'Завтрак', icon: '🌅' },
-  { id: 'lunch',     label: 'Обед',    icon: '☀️' },
-  { id: 'dinner',    label: 'Ужин',    icon: '🌙' },
-  { id: 'snack',     label: 'Перекус', icon: '🍎' },
-]
+function getDefaultMealTime() {
+  const h = new Date().getHours()
+  if (h < 11) return 'breakfast'
+  if (h < 15) return 'lunch'
+  if (h < 22) return 'dinner'
+  return 'snack'
+}
 
 export default function HomePage() {
-  const [dishes, setDishes] = useState([])
-  const [loading, setLoading] = useState(true)
-  // null = ещё не знаем, true/false — известно
-  const [hasPersonalDishes, setHasPersonalDishes] = useState(null)
-  const [mealTime, setMealTime] = useState(getDefaultMeal())
+  const navigate  = useNavigate()
   const { fridgeMode, token } = useStore()
-  const navigate = useNavigate()
+
+  const [dishes, setDishes]                 = useState([])
+  const [loading, setLoading]               = useState(true)
+  const [hasPersonalDishes, setHasPersonal] = useState(null)
+  const [mealTime, setMealTime]             = useState(getDefaultMealTime())
 
   useEffect(() => { load() }, [mealTime, fridgeMode, token])
 
   async function load() {
     setLoading(true)
     try {
-      let result = []
-
       if (token) {
-        // Проверяем наличие личных блюд БЕЗ фильтра mealTime
         const allMy = await api.getDishes({ myKitchen: 'true' })
         const hasPersonal = allMy.length > 0
-        setHasPersonalDishes(hasPersonal)
+        setHasPersonal(hasPersonal)
 
-        if (!hasPersonal) {
-          setDishes([])
-          return
-        }
+        if (!hasPersonal) { setDishes([]); return }
 
-        // Загружаем с фильтром mealTime
-        result = await api.getDishes({ mealTime, fridgeMode: fridgeMode ? 'true' : undefined, myKitchen: 'true' })
+        let result = await api.getDishes({
+          mealTime,
+          myKitchen: 'true',
+          fridgeMode: fridgeMode ? 'true' : undefined,
+        })
 
-        // Добиваем публичными если меньше 6 и не fridgeMode
+        // Добиваем публичными если мало и не fridgeMode
         if (result.length < 6 && !fridgeMode) {
           const existingIds = new Set(result.map(d => d.id))
-          const publicDishes = await api.getDishes({ mealTime })
-          const extra = publicDishes.filter(d => !existingIds.has(d.id))
-          result = [...result, ...extra].slice(0, 6)
+          const pub = await api.getDishes({ mealTime })
+          result = [...result, ...pub.filter(d => !existingIds.has(d.id))].slice(0, 6)
         }
-      } else {
-        setHasPersonalDishes(false)
-        // Гость: публичные блюда
-        result = await api.getDishes({ mealTime, fridgeMode: fridgeMode ? 'true' : undefined })
-        if (result.length === 0 && !fridgeMode) {
-          result = await api.getDishes({})
-        }
-      }
 
-      setDishes(result.slice(0, 6))
-    } catch { setDishes([]) }
-    finally { setLoading(false) }
+        setDishes(result.slice(0, 6))
+      } else {
+        setHasPersonal(false)
+        let result = await api.getDishes({ mealTime, fridgeMode: fridgeMode ? 'true' : undefined })
+        if (!result.length && !fridgeMode) result = await api.getDishes({})
+        setDishes(result.slice(0, 6))
+      }
+    } catch {
+      setDishes([])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Доброе утро' : hour < 17 ? 'Добрый день' : 'Добрый вечер'
-
-  // Пока не определили состояние — просто лоадер
-  if (loading || hasPersonalDishes === null) {
+  // Пока не знаем есть ли личные блюда — показываем заглушку
+  if (loading && hasPersonalDishes === null) {
     return (
-      <div className="page">
-        <div style={{marginBottom:20}}>
-          <h1 style={{fontFamily:'var(--font-serif)',fontSize:26,fontWeight:700,marginBottom:4}}>
-            {greeting}! 👋
-          </h1>
-        </div>
-        <div style={{display:'flex',justifyContent:'center',padding:40}}>
-          <div className="loader"/>
-        </div>
+      <div className="max-w-app w-full mx-auto px-4 py-5 pb-24">
+        <HomeTitle />
+        <RecipeList loading dishes={[]} />
       </div>
     )
   }
 
-  // Онбординг: пустая личная кухня
-  if (token && !hasPersonalDishes) {
+  // Онбординг: авторизован, но кухня пуста
+  if (token && hasPersonalDishes === false) {
     return (
-      <div className="page">
-        <div style={{marginBottom:20}}>
-          <h1 style={{fontFamily:'var(--font-serif)',fontSize:26,fontWeight:700,marginBottom:4}}>
-            {greeting}! 👋
-          </h1>
-          <p style={{color:'var(--text2)',fontSize:14}}>Что будем готовить?</p>
-        </div>
-        <div className="empty-state" style={{marginTop:40}}>
-          <div className="empty-icon">🍽️</div>
-          <h3>Ваша кухня пока пуста</h3>
-          <p>Добавьте свои блюда или скопируйте из готовых рецептов</p>
-          <div style={{display:'flex',gap:10,justifyContent:'center',marginTop:16,flexWrap:'wrap'}}>
-            <button className="btn btn-primary" onClick={() => navigate('/my-recipes/new')}>
-              + Добавить рецепт
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate('/dishes?view=catalog')}>
-              Готовые рецепты →
-            </button>
-          </div>
-        </div>
+      <div className="max-w-app w-full mx-auto px-4 py-5 pb-24">
+        <HomeTitle subtitle="Добавьте первые блюда, чтобы начать" />
+        <EmptyState
+          icon="🍽️"
+          title="Ваша кухня пока пуста"
+          description="Добавьте свои блюда или скопируйте из готовых рецептов"
+          action={
+            <div className="flex gap-2.5 flex-wrap justify-center">
+              <Button onClick={() => navigate('/my-recipes/new')}>
+                + Добавить рецепт
+              </Button>
+              <Button variant="secondary" onClick={() => navigate('/dishes?view=catalog')}>
+                Готовые рецепты →
+              </Button>
+            </div>
+          }
+        />
       </div>
     )
   }
 
   return (
-    <div className="page">
-      <div style={{marginBottom:20}}>
-        <h1 style={{fontFamily:'var(--font-serif)',fontSize:26,fontWeight:700,marginBottom:4}}>
-          {greeting}! 👋
-        </h1>
-        <p style={{color:'var(--text2)',fontSize:14}}>Что будем готовить?</p>
+    <div className="max-w-app w-full mx-auto px-4 py-5 pb-24">
+      <HomeTitle subtitle="Что будем готовить?" />
+
+      {/* Фильтр по времени дня */}
+      <div className="mb-5">
+        <MealTypeChips active={mealTime} onChange={setMealTime} />
       </div>
 
-      <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
-        {MEAL_TIMES.map(m => (
-          <button key={m.id}
-            className={`tag ${mealTime===m.id?'active':''}`}
-            onClick={() => setMealTime(m.id)}
-            style={{fontSize:13,padding:'6px 14px'}}>
-            {m.icon} {m.label}
-          </button>
-        ))}
-      </div>
-
+      {/* Баннер режима холодильника */}
       {fridgeMode && (
-        <div style={{background:'rgba(45,212,191,.08)',border:'1px solid rgba(45,212,191,.2)',borderRadius:'var(--radius-sm)',padding:'10px 14px',marginBottom:16,fontSize:13,color:'var(--teal)'}}>
+        <div className="flex items-center gap-2 bg-teal/8 border border-teal/20 rounded-sm px-3.5 py-2.5 mb-4 text-sm text-teal">
           🧊 Показываю только блюда из продуктов в вашем холодильнике
         </div>
       )}
 
-      {dishes.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">🥺</div>
-          <h3>Ничего не найдено</h3>
-          <p>{fridgeMode ? 'Пополните холодильник или отключите режим холодильника' : 'Попробуйте другое время дня'}</p>
-        </div>
-      ) : (
-        <div className="dishes-grid">
-          {dishes.map((d, i) => (
-            <div key={d.id} className="fade-up" style={{animationDelay:`${i*0.05}s`}}>
-              <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
-            </div>
-          ))}
+      <RecipeList
+        dishes={dishes}
+        loading={loading}
+        onDishClick={id => navigate(`/dishes/${id}`)}
+        emptyIcon="🥺"
+        emptyTitle="Ничего не найдено"
+        emptyDescription={
+          fridgeMode
+            ? 'Пополните холодильник или отключите режим холодильника'
+            : 'Попробуйте другое время дня'
+        }
+      />
+
+      {!loading && dishes.length > 0 && (
+        <div className="flex gap-2.5 justify-center flex-wrap mt-5">
+          <Button variant="secondary" onClick={() => navigate('/dishes')}>
+            Все рецепты →
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/chat?prompt=' + encodeURIComponent('Предложи что приготовить сегодня'))}
+          >
+            ✨ Предложи что приготовить
+          </Button>
         </div>
       )}
-
-      <div style={{marginTop:20,display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
-        <button className="btn btn-secondary" onClick={() => navigate('/dishes')}>
-          Все блюда →
-        </button>
-        <button className="btn btn-secondary" onClick={() => navigate('/chat?prompt=' + encodeURIComponent('Предложи что приготовить сегодня'))}>
-          ✨ Предложи что приготовить
-        </button>
-      </div>
     </div>
   )
-}
-
-function getDefaultMeal() {
-  const h = new Date().getHours()
-  if (h < 11) return 'breakfast'
-  if (h < 15) return 'lunch'
-  if (h < 22) return 'dinner'
-  return 'snack'
 }

@@ -1,31 +1,24 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, NavLink } from 'react-router-dom'
 import { useStore } from '../store'
 import { api } from '../api'
+import { Avatar, Modal, Toggle } from './ui'
 import InstallPrompt from './InstallPrompt'
 
 const TABS = [
-  { to: '/',       icon: '🏠', label: 'Главная',    auth: false },
-  { to: '/dishes', icon: '🍽️', label: 'Мои блюда',  auth: false },
-  { to: '/fridge', icon: '🧊', label: 'Холодильник', auth: true  },
-  { to: '/plan',   icon: '📅', label: 'План',        auth: true  },
+  { to: '/',       icon: '🏠', label: 'Главная'    },
+  { to: '/dishes', icon: '🍽️', label: 'Рецепты'    },
+  { to: '/fridge', icon: '🧊', label: 'Холодильник' },
+  { to: '/plan',   icon: '📅', label: 'План'        },
 ]
 
-function SectionHeader({ label }) {
-  return (
-    <div style={{ padding: '8px 14px 4px', fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-      {label}
-    </div>
-  )
-}
-
 function ProfileModal({ onClose }) {
-  const user = useStore(s => s.user)
-  const logout = useStore(s => s.logout)
-  const navigate = useNavigate()
-  const [tgLink, setTgLink] = useState(null)
+  const user      = useStore(s => s.user)
+  const logout    = useStore(s => s.logout)
+  const navigate  = useNavigate()
+  const [tgLink, setTgLink]       = useState(null)
   const [tgLoading, setTgLoading] = useState(false)
-  const [tgError, setTgError] = useState('')
+  const [tgError, setTgError]     = useState('')
 
   async function connectTelegram() {
     setTgLoading(true); setTgError('')
@@ -41,126 +34,172 @@ function ProfileModal({ onClose }) {
   function go(path) { navigate(path); onClose() }
   function handleLogout() { logout(); onClose(); navigate('/auth') }
 
-  const item = (onClick, children, style = {}) => (
-    <button
-      className="btn-ghost"
-      onClick={onClick}
-      style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 10, fontSize: 15, width: '100%', ...style }}
-    >
-      {children}
-    </button>
-  )
-
-  const divider = () => <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
-
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 200, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: '60px 12px 0' }}
+      className="fixed inset-0 bg-black/55 z-[200] flex items-start justify-end pt-[60px] px-3 animate-[fadeIn_.15s_ease]"
       onClick={onClose}
     >
       <div
-        style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: '16px 8px', width: 280, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', animation: 'fadeUp .2s ease', maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' }}
+        className="bg-card border border-border rounded-2xl py-4 px-2 w-[280px] shadow-card max-h-[calc(100vh-80px)] overflow-y-auto animate-[fadeUp_.2s_ease]"
         onClick={e => e.stopPropagation()}
       >
         {/* Шапка */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 14px 14px', borderBottom: '1px solid var(--border)', marginBottom: 6 }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, flexShrink: 0 }}>
-            {user?.name?.[0]?.toUpperCase() || '👤'}
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'Пользователь'}</div>
-            <div style={{ fontSize: 12, color: 'var(--text2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div className="flex items-center gap-3 px-3.5 pb-3.5 border-b border-border mb-1.5">
+          <Avatar name={user?.name} size="md" />
+          <div className="min-w-0">
+            <p className="font-bold text-[15px] truncate">{user?.name || 'Пользователь'}</p>
+            <p className="text-xs text-text-2 truncate">
               {user?.email || (user?.telegramUsername ? `@${user.telegramUsername}` : '')}
-            </div>
+            </p>
           </div>
         </div>
 
         {/* Группы */}
-        <SectionHeader label="Группы" />
-        {item(() => go('/groups'), '👥 Мои группы')}
-        {item(() => go('/groups?action=create'), '＋ Создать группу')}
+        <SectionLabel>Группы</SectionLabel>
+        <MenuItem onClick={() => go('/groups')}>👥 Мои группы</MenuItem>
+        <MenuItem onClick={() => go('/groups?action=create')}>＋ Создать группу</MenuItem>
 
-        {divider()}
+        <Divider />
 
         {/* Telegram */}
         {!tgLink ? (
-          item(connectTelegram, tgLoading ? '...' : '🤖 Telegram-бот', { opacity: tgLoading ? 0.5 : 1 })
+          <MenuItem onClick={connectTelegram} disabled={tgLoading}>
+            {tgLoading ? '...' : '🤖 Telegram-бот'}
+          </MenuItem>
         ) : (
           <a
             href={tgLink}
             target="_blank"
             rel="noopener noreferrer"
             onClick={onClose}
-            style={{ display: 'block', padding: '10px 14px', borderRadius: 10, fontSize: 15, background: 'rgba(45,212,191,.1)', color: 'var(--teal)', fontWeight: 600 }}
+            className="block px-3.5 py-2.5 rounded-[10px] text-[15px] bg-teal/10 text-teal font-semibold"
           >
             🤖 Открыть бота →
           </a>
         )}
-        {tgError && <p style={{ fontSize: 12, color: '#e74c3c', padding: '0 14px' }}>{tgError}</p>}
+        {tgError && <p className="text-xs text-red-400 px-3.5 mt-1">{tgError}</p>}
 
-        {divider()}
+        <Divider />
 
         {/* Настройки */}
-        <SectionHeader label="Настройки" />
-        {item(() => go('/profile'), '👤 Профиль')}
-        <button
-          className="btn-ghost"
-          disabled
-          style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 10, fontSize: 15, width: '100%', opacity: 0.4, cursor: 'default' }}
-        >
-          🔔 Уведомления <span style={{ fontSize: 11, color: 'var(--text3)' }}>— скоро</span>
-        </button>
-        {item(() => {}, '❓ Помощь / FAQ')}
-        {item(() => {}, 'ℹ️ О приложении')}
+        <SectionLabel>Настройки</SectionLabel>
+        <MenuItem onClick={() => go('/profile')}>👤 Профиль</MenuItem>
+        <MenuItem disabled>
+          🔔 Уведомления <span className="text-[11px] text-text-3 ml-1">— скоро</span>
+        </MenuItem>
 
-        {divider()}
+        <Divider />
 
-        {item(handleLogout, '🚪 Выйти', { color: '#e74c3c' })}
+        <MenuItem onClick={handleLogout} className="text-red-400">🚪 Выйти</MenuItem>
       </div>
     </div>
   )
 }
 
+function SectionLabel({ children }) {
+  return (
+    <p className="px-3.5 pt-2 pb-1 text-[11px] font-bold text-text-3 uppercase tracking-widest">
+      {children}
+    </p>
+  )
+}
+
+function MenuItem({ children, onClick, disabled, className = '' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={[
+        'w-full text-left px-3.5 py-2.5 rounded-[10px] text-[15px]',
+        'transition-colors duration-150 focus:outline-none',
+        'disabled:opacity-40 disabled:cursor-default',
+        'hover:bg-bg-3',
+        className,
+      ].join(' ')}
+    >
+      {children}
+    </button>
+  )
+}
+
+function Divider() {
+  return <div className="h-px bg-border my-1.5" />
+}
+
 export default function Layout() {
-  const token = useStore(s => s.token)
-  const user = useStore(s => s.user)
-  const fridgeMode = useStore(s => s.fridgeMode)
+  const token          = useStore(s => s.token)
+  const user           = useStore(s => s.user)
+  const fridgeMode     = useStore(s => s.fridgeMode)
   const toggleFridgeMode = useStore(s => s.toggleFridgeMode)
-  const navigate = useNavigate()
-  const tabs = TABS.filter(t => !t.auth || token)
+  const navigate       = useNavigate()
   const [profileOpen, setProfileOpen] = useState(false)
+  const tabs = token ? TABS : TABS.filter(t => t.to === '/' || t.to === '/dishes')
 
   return (
-    <div className="app-layout">
-      <header className="app-header">
-        <div className="app-header-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+    <div className="flex flex-col min-h-dvh bg-bg">
+      {/* App header */}
+      <header className="fixed top-0 left-0 right-0 h-[52px] flex items-center justify-between px-4 bg-bg/95 backdrop-blur-md border-b border-border z-[100]">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="text-[17px] font-extrabold text-text tracking-tight focus:outline-none"
+        >
           🍽️ MealBot
+        </button>
+
+        <div className="flex items-center gap-3">
+          {token && (
+            <Toggle
+              checked={fridgeMode}
+              onChange={toggleFridgeMode}
+              label="🧊"
+            />
+          )}
+          {token ? (
+            <button
+              type="button"
+              onClick={() => setProfileOpen(p => !p)}
+              aria-label="Профиль"
+              className="focus:outline-none focus:ring-2 focus:ring-accent/30 rounded-full"
+            >
+              <Avatar name={user?.name} size="sm" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/auth')}
+              className="bg-accent text-white text-xs font-bold px-3.5 py-1.5 rounded-sm min-h-[36px]
+                hover:bg-accent-2 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/30"
+            >
+              Войти
+            </button>
+          )}
         </div>
-        {token && (
-          <div className="toggle-wrap" onClick={toggleFridgeMode} style={{ marginLeft: 'auto', marginRight: 8 }}>
-            <div className={`toggle ${fridgeMode ? 'on' : ''}`} />
-            <span className="toggle-label" style={{ color: fridgeMode ? 'var(--accent)' : 'var(--text2)', fontSize: 12 }}>🧊</span>
-          </div>
-        )}
-        {token ? (
-          <button className="profile-avatar-btn" onClick={() => setProfileOpen(p => !p)} aria-label="Профиль">
-            {user?.name?.[0]?.toUpperCase() || '👤'}
-          </button>
-        ) : (
-          <button className="btn btn-primary btn-sm" onClick={() => navigate('/auth')}>Войти</button>
-        )}
       </header>
 
-      <div className="main-content">
+      {/* Main content */}
+      <main className="flex-1 flex flex-col pt-[52px] pb-[48px]">
         <Outlet />
-      </div>
+      </main>
 
       <InstallPrompt />
 
-      <nav className="bottom-nav">
+      {/* Bottom tab bar */}
+      <nav className="fixed bottom-0 left-0 right-0 flex bg-bg/95 backdrop-blur-md border-t border-border z-[100] pb-[env(safe-area-inset-bottom,0)]">
         {tabs.map(t => (
-          <NavLink key={t.to} to={t.to} end={t.to === '/'}>
-            <span className="nav-icon">{t.icon}</span>
+          <NavLink
+            key={t.to}
+            to={t.to}
+            end={t.to === '/'}
+            className={({ isActive }) => [
+              'flex-1 flex flex-col items-center gap-0.5 min-h-[48px] pt-2.5 pb-2',
+              'text-[10px] font-bold uppercase tracking-wider transition-colors duration-150',
+              'focus:outline-none',
+              isActive ? 'text-accent' : 'text-text-3',
+            ].join(' ')}
+          >
+            <span className="text-[22px] leading-none">{t.icon}</span>
             {t.label}
           </NavLink>
         ))}
