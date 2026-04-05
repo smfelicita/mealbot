@@ -1,76 +1,11 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
-import { useToast } from '../hooks/useToast.jsx'
 import { UNITS } from '../constants'
+import { Button, EmptyState, Modal, SearchInput, useToast } from '../components/ui'
 
-function TelegramBanner({ onLinked }) {
-  const [status, setStatus] = useState('idle') // idle | loading | polling
-  const pollRef = useRef(null)
-  const timeoutRef = useRef(null)
-
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current)
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    }
-  }, [])
-
-  async function connect() {
-    setStatus('loading')
-    try {
-      const { token, botUsername, already_linked } = await api.getTelegramLinkToken()
-      if (already_linked) { onLinked(); return }
-      if (!botUsername) {
-        alert('Имя бота не настроено на сервере (TELEGRAM_BOT_USERNAME). Спросите администратора.')
-        setStatus('idle')
-        return
-      }
-      window.open(`https://t.me/${botUsername}?start=link_${token}`, '_blank')
-      setStatus('polling')
-
-      pollRef.current = setInterval(async () => {
-        try {
-          const d = await api.getTelegramLinkStatus()
-          if (d.linked) {
-            clearInterval(pollRef.current)
-            onLinked()
-          }
-        } catch {}
-      }, 3000)
-
-      // Остановить поллинг через 3 минуты
-      timeoutRef.current = setTimeout(() => {
-        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; setStatus('idle') }
-      }, 180_000)
-    } catch {
-      setStatus('idle')
-    }
-  }
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      background: 'var(--bg2)', border: '1px solid var(--border)',
-      borderRadius: 12, padding: '12px 14px', marginBottom: 16,
-    }}>
-      <span style={{ fontSize: 22, flexShrink: 0 }}>🤖</span>
-      <span style={{ fontSize: 13, color: 'var(--text2)', flex: 1, lineHeight: 1.4 }}>
-        Подключите бота — управляйте холодильником в Telegram
-      </span>
-      <button
-        className="btn btn-primary btn-sm"
-        style={{ flexShrink: 0, fontSize: 12 }}
-        onClick={connect}
-        disabled={status !== 'idle'}
-      >
-        {status === 'loading' ? '...' : status === 'polling' ? 'Ожидание...' : 'Подключить'}
-      </button>
-    </div>
-  )
-}
-
+// ─── Constants ───────────────────────────────────────────────────────────────
 const CAT_RU = {
   dairy:     '🥛 Молочное',
   protein:   '🥚 Белки',
@@ -86,54 +21,114 @@ const CAT_RU = {
   other:     '📦 Остальное',
 }
 
-// Порядок категорий в пикере (самые нужные вверху)
-const CAT_ORDER = ['meat', 'dairy', 'protein', 'vegetable', 'fruit', 'grain', 'legume', 'pantry', 'oil', 'herb', 'spice', 'other']
+const CAT_ORDER = [
+  'meat', 'dairy', 'protein', 'vegetable', 'fruit',
+  'grain', 'legume', 'pantry', 'oil', 'herb', 'spice', 'other',
+]
 
+// ─── Telegram banner ─────────────────────────────────────────────────────────
+function TelegramBanner({ onLinked }) {
+  const [status, setStatus] = useState('idle') // idle | loading | polling
+  const pollRef    = useRef(null)
+  const timeoutRef = useRef(null)
+
+  useEffect(() => () => {
+    if (pollRef.current)    clearInterval(pollRef.current)
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+  }, [])
+
+  async function connect() {
+    setStatus('loading')
+    try {
+      const { token, botUsername, already_linked } = await api.getTelegramLinkToken()
+      if (already_linked) { onLinked(); return }
+      if (!botUsername) {
+        alert('Имя бота не настроено. Спросите администратора.')
+        setStatus('idle')
+        return
+      }
+      window.open(`https://t.me/${botUsername}?start=link_${token}`, '_blank')
+      setStatus('polling')
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const d = await api.getTelegramLinkStatus()
+          if (d.linked) { clearInterval(pollRef.current); onLinked() }
+        } catch {}
+      }, 3000)
+
+      timeoutRef.current = setTimeout(() => {
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; setStatus('idle') }
+      }, 180_000)
+    } catch {
+      setStatus('idle')
+    }
+  }
+
+  const label = status === 'loading' ? '...' : status === 'polling' ? 'Ожидание...' : 'Подключить'
+
+  return (
+    <div className="flex items-center gap-3 bg-bg-2 border border-border rounded-sm px-3.5 py-3 mb-4">
+      <span className="text-[22px] shrink-0">🤖</span>
+      <span className="text-[13px] text-text-2 flex-1 leading-snug">
+        Подключите бота — управляйте холодильником в Telegram
+      </span>
+      <Button size="sm" onClick={connect} disabled={status !== 'idle'} className="shrink-0 text-[12px]">
+        {label}
+      </Button>
+    </div>
+  )
+}
+
+// ─── Guest block ─────────────────────────────────────────────────────────────
 function GuestFridgeBlock() {
   const navigate = useNavigate()
   return (
     <div>
-      <div className="top-bar">
-        <span className="top-bar-logo">🧊 Холодильник</span>
+      <div className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-bg/95 backdrop-blur-md border-b border-border flex items-center px-4 max-w-app mx-auto">
+        <span className="font-serif text-[17px] font-bold">🧊 Холодильник</span>
       </div>
-      <div className="page" style={{ paddingTop: 40 }}>
-        <div className="empty-state">
-          <div className="empty-icon">🧊</div>
-          <h3>Холодильник для участников</h3>
-          <p style={{ lineHeight: 1.6 }}>
-            Сохраняйте продукты в холодильнике — ИИ-помощник будет предлагать блюда именно из того, что у вас есть дома.
-          </p>
-          <button className="btn btn-primary" style={{ marginTop: 20, width: '100%' }}
-            onClick={() => navigate('/auth?mode=register')}>
-            Зарегистрироваться бесплатно
-          </button>
-          <button className="btn btn-ghost btn-sm" style={{ marginTop: 10, color: 'var(--text2)' }}
-            onClick={() => navigate('/auth')}>
-            Уже есть аккаунт? Войти
-          </button>
-        </div>
+      <div className="pt-[52px]">
+        <EmptyState
+          icon="🧊"
+          title="Холодильник для участников"
+          description="Сохраняйте продукты — ИИ-помощник будет предлагать блюда именно из того, что у вас есть дома."
+          action={
+            <div className="flex flex-col gap-2 w-full px-4">
+              <Button className="w-full" onClick={() => navigate('/auth?mode=register')}>
+                Зарегистрироваться бесплатно
+              </Button>
+              <Button variant="ghost" size="sm" className="text-text-2"
+                onClick={() => navigate('/auth')}>
+                Уже есть аккаунт? Войти
+              </Button>
+            </div>
+          }
+        />
       </div>
     </div>
   )
 }
 
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function FridgePage() {
   const { token } = useStore()
   if (!token) return <GuestFridgeBlock />
 
-  const [allIngredients, setAllIngredients] = useState([])
-  const [search, setSearch]                 = useState('')
-  const [showPicker, setShowPicker]         = useState(false)
-  const [pendingIds, setPendingIds]         = useState(new Set())
-  const [loadingBulk, setLoadingBulk]       = useState(false)
-  const [familyGroupId, setFamilyGroupId]   = useState(null)
-  const [telegramLinked, setTelegramLinked] = useState(null) // null = ещё не проверено (баннер скрыт)
-  const [editingId, setEditingId]           = useState(null) // ingredientId редактируемого item
-  const [editQty, setEditQty]               = useState('')
-  const [editUnit, setEditUnit]             = useState(UNITS[0])
   const { fridge, setFridge, addToFridge, removeFromFridge, updateFridgeItem } = useStore()
   const { show, Toast } = useToast()
   const navigate = useNavigate()
+
+  const [allIngredients, setAllIngredients] = useState([])
+  const [familyGroupId, setFamilyGroupId]   = useState(null)
+  const [telegramLinked, setTelegramLinked] = useState(null)
+  const [showPicker, setShowPicker]         = useState(false)
+  const [search, setSearch]                 = useState('')
+  const [pendingIds, setPendingIds]         = useState(new Set())
+  const [loadingBulk, setLoadingBulk]       = useState(false)
+  const [editingId, setEditingId]           = useState(null)
+  const [editQty, setEditQty]               = useState('')
+  const [editUnit, setEditUnit]             = useState(UNITS[0])
 
   useEffect(() => {
     api.getFridge().then(data => {
@@ -144,23 +139,20 @@ export default function FridgePage() {
     api.getTelegramLinkStatus().then(d => setTelegramLinked(d.linked)).catch(() => setTelegramLinked(false))
   }, [])
 
-  // ID продуктов которые уже в холодильнике
+  // ── Derived ─────────────────────────────────────────────────────────────
   const fridgeIds = useMemo(() => new Set(fridge.map(f => f.ingredientId)), [fridge])
 
-  // Ингредиенты не в холодильнике
   const available = useMemo(
     () => allIngredients.filter(ing => !fridgeIds.has(ing.id)),
     [allIngredients, fridgeIds]
   )
 
-  // Поиск (только когда есть текст)
   const searchResults = useMemo(() => {
     if (!search.trim()) return []
     const q = search.toLowerCase()
     return available.filter(ing => ing.nameRu.toLowerCase().includes(q))
   }, [available, search])
 
-  // Группировка для пикера (без поиска)
   const groupedAvailable = useMemo(() => {
     const groups = {}
     for (const ing of available) {
@@ -173,21 +165,18 @@ export default function FridgePage() {
       .map(cat => ({ cat, items: groups[cat] }))
   }, [available])
 
-  // Группировка холодильника для отображения
-  const grouped = useMemo(() => {
-    return fridge.reduce((acc, item) => {
-      const cat = item.category || 'other'
-      if (!acc[cat]) acc[cat] = []
-      acc[cat].push(item)
-      return acc
-    }, {})
-  }, [fridge])
+  const grouped = useMemo(() => fridge.reduce((acc, item) => {
+    const cat = item.category || 'other'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(item)
+    return acc
+  }, {}), [fridge])
 
+  // ── Handlers ────────────────────────────────────────────────────────────
   function togglePending(id) {
     setPendingIds(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
   }
@@ -206,10 +195,7 @@ export default function FridgePage() {
       await api.bulkAddFridge(ids)
       const added = allIngredients.filter(i => ids.includes(i.id))
       added.forEach(ing => addToFridge({
-        ingredientId: ing.id,
-        name:         ing.nameRu,
-        emoji:        ing.emoji,
-        category:     ing.category,
+        ingredientId: ing.id, name: ing.nameRu, emoji: ing.emoji, category: ing.category,
       }))
       show(`Добавлено: ${added.map(i => i.nameRu).join(', ')}`, 'success')
       closePicker()
@@ -251,98 +237,140 @@ export default function FridgePage() {
     show('Холодильник очищен', 'success')
   }
 
+  function plural(n) {
+    if (n % 10 === 1 && n % 100 !== 11) return 'продукт'
+    if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'продукта'
+    return 'продуктов'
+  }
+
   const pendingCount = pendingIds.size
 
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div>
-      <div className="top-bar">
-        <span className="top-bar-logo">🧊 {familyGroupId ? 'Семейный холодильник' : 'Холодильник'}</span>
-        <div style={{ flex: 1 }} />
+      {/* Top bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-bg/95 backdrop-blur-md border-b border-border flex items-center px-3 gap-2 max-w-app mx-auto">
+        <span className="font-serif text-[17px] font-bold flex-1">
+          🧊 {familyGroupId ? 'Семейный холодильник' : 'Холодильник'}
+        </span>
         {fridge.length > 0 && (
-          <button className="btn btn-ghost btn-sm" onClick={clearAll} style={{ color: 'var(--text3)' }}>Очистить</button>
+          <Button variant="ghost" size="sm" className="text-text-3" onClick={clearAll}>Очистить</Button>
         )}
-        <button className="btn btn-primary btn-sm" onClick={() => setShowPicker(true)}>+ Добавить</button>
+        <Button size="sm" onClick={() => setShowPicker(true)}>+ Добавить</Button>
       </div>
 
-      <div className="page" style={{ paddingTop: 16 }}>
+      <div className="pt-[68px] pb-8 px-4">
+        {/* Telegram banner */}
         {telegramLinked === false && (
           <TelegramBanner onLinked={() => { setTelegramLinked(true); show('Telegram подключён! 🎉', 'success') }} />
         )}
+
         {fridge.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">🧊</div>
-            <h3>Холодильник пустой</h3>
-            <p>Добавьте продукты — ИИ найдёт блюда из того, что есть дома</p>
-            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setShowPicker(true)}>
-              + Добавить продукты
-            </button>
-          </div>
+          <EmptyState
+            icon="🧊"
+            title="Холодильник пустой"
+            description="Добавьте продукты — ИИ найдёт блюда из того, что есть дома"
+            action={
+              <Button onClick={() => setShowPicker(true)}>+ Добавить продукты</Button>
+            }
+          />
         ) : (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-              <p style={{ fontSize: 13, color: 'var(--text2)', margin: 0 }}>
-                {fridge.length} {fridge.length === 1 ? 'продукт' : fridge.length < 5 ? 'продукта' : 'продуктов'}
-                {familyGroupId && <span style={{ marginLeft: 8, color: 'var(--accent)', fontWeight: 600 }}>· Общий с семьёй</span>}
+            {/* Summary row */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <p className="text-[13px] text-text-2">
+                {fridge.length} {plural(fridge.length)}
+                {familyGroupId && (
+                  <span className="ml-2 text-accent font-semibold">· Общий с семьёй</span>
+                )}
               </p>
-              <button
-                className="btn btn-secondary btn-sm"
-                style={{ marginLeft: 'auto' }}
+              <Button
+                variant="secondary" size="sm" className="ml-auto"
                 onClick={() => navigate('/chat?prompt=' + encodeURIComponent('Что можно приготовить из продуктов в моём холодильнике?'))}
               >
                 ✨ Что приготовить?
-              </button>
+              </Button>
             </div>
+
+            {/* Basic ingredients hint */}
             {fridge.some(i => i.isBasic) && (
-              <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16, lineHeight: 1.5, padding: '8px 12px', background: 'var(--bg2)', borderRadius: 8 }}>
-                🧂 Продукты с меткой <b>базовый</b> всегда считаются доступными при подборе блюд — даже если их нет в холодильнике.
-              </p>
+              <div className="bg-bg-2 border border-border rounded-sm px-3 py-2 mb-4 text-[12px] text-text-3 leading-relaxed">
+                🧂 Продукты с меткой <strong>базовый</strong> всегда считаются доступными при подборе блюд.
+              </div>
             )}
+
+            {/* Fridge items grouped by category */}
             {CAT_ORDER.filter(cat => grouped[cat]).map(cat => (
-              <div key={cat} style={{ marginBottom: 20 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+              <div key={cat} className="mb-5">
+                <p className="text-[11px] font-bold text-text-2 uppercase tracking-widest mb-2.5">
                   {CAT_RU[cat] || cat}
                 </p>
-                <div className="fridge-grid">
+                <div className="grid grid-cols-2 gap-2">
                   {grouped[cat].map(item => (
-                    <div key={item.ingredientId} className={`fridge-item${item.isBasic ? ' fridge-item-basic' : ''}`} style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {item.emoji && <span>{item.emoji}</span>}
-                        <span
-                          style={{ flex: 1, cursor: 'pointer' }}
+                    <div
+                      key={item.ingredientId}
+                      className={[
+                        'flex flex-col bg-bg-2 border rounded-sm px-3 py-2.5',
+                        item.isBasic ? 'border-accent/40 bg-accent/4' : 'border-border',
+                      ].join(' ')}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {item.emoji && <span className="shrink-0">{item.emoji}</span>}
+                        <button
+                          type="button"
+                          className="flex-1 text-left text-[13px] font-semibold truncate"
                           onClick={() => editingId === item.ingredientId ? setEditingId(null) : startEdit(item)}
                         >
                           {item.name}
-                          {item.isBasic && <span style={{ marginLeft: 5, fontSize: 10, color: 'var(--text3)', background: 'var(--bg3)', borderRadius: 4, padding: '1px 5px', verticalAlign: 'middle' }}>базовый</span>}
-                          {item.quantityValue != null && (
-                            <span style={{ color: 'var(--text3)', fontSize: 12, marginLeft: 4 }}>
-                              · {item.quantityValue} {item.quantityUnit}
-                            </span>
-                          )}
-                        </span>
-                        <button className="remove-btn" onClick={() => removeItem(item.ingredientId, item.name)}>×</button>
+                        </button>
+                        <button
+                          type="button"
+                          className="text-text-3 hover:text-red-400 text-base leading-none shrink-0"
+                          onClick={() => removeItem(item.ingredientId, item.name)}
+                        >×</button>
                       </div>
+
+                      {/* Badges row */}
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        {item.isBasic && (
+                          <span className="text-[10px] text-text-3 bg-bg-3 rounded px-1.5 py-0.5">базовый</span>
+                        )}
+                        {item.quantityValue != null && (
+                          <span className="text-[11px] text-text-3">
+                            {item.quantityValue} {item.quantityUnit}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Inline quantity editor */}
                       {editingId === item.ingredientId && (
-                        <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                        <div className="flex gap-1.5 mt-2">
                           <input
                             type="number"
                             min="0"
-                            className="input"
-                            style={{ flex: 1, padding: '4px 8px', fontSize: 13 }}
                             placeholder="Кол-во"
                             value={editQty}
                             onChange={e => setEditQty(e.target.value)}
                             autoFocus
+                            className="flex-1 min-w-0 text-[12px] bg-bg-3 border border-border rounded-sm px-2 py-1 outline-none focus:border-accent"
                           />
                           <select
-                            className="input"
-                            style={{ width: 80, padding: '4px 6px', fontSize: 12, appearance: 'auto' }}
                             value={editUnit}
                             onChange={e => setEditUnit(e.target.value)}
+                            className="w-16 text-[12px] bg-bg-3 border border-border rounded-sm px-1 py-1 outline-none focus:border-accent"
                           >
                             {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                           </select>
-                          <button className="btn btn-primary btn-sm" style={{ padding: '4px 10px' }} onClick={() => saveEdit(item.ingredientId)}>✓</button>
-                          <button className="btn btn-ghost btn-sm" style={{ padding: '4px 10px' }} onClick={() => setEditingId(null)}>✕</button>
+                          <button
+                            type="button"
+                            className="px-2 py-1 bg-accent text-white text-[12px] rounded-sm font-bold"
+                            onClick={() => saveEdit(item.ingredientId)}
+                          >✓</button>
+                          <button
+                            type="button"
+                            className="px-2 py-1 text-text-3 text-[12px] rounded-sm"
+                            onClick={() => setEditingId(null)}
+                          >✕</button>
                         </div>
                       )}
                     </div>
@@ -354,103 +382,95 @@ export default function FridgePage() {
         )}
       </div>
 
+      {/* ─── Picker modal ─── */}
       {showPicker && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closePicker()}>
-          <div className="modal-sheet">
-            <div className="modal-handle" />
-            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 14 }}>Что у вас есть?</h3>
+        <Modal title="Что у вас есть?" onClose={closePicker}>
+          <SearchInput
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Найти продукт..."
+            className="mb-3"
+          />
 
-            {/* Поиск */}
-            <div className="input-group" style={{ marginBottom: 4 }}>
-              <span className="input-icon">🔍</span>
-              <input
-                className="input"
-                placeholder="Найти продукт..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                autoFocus
-              />
+          {search.trim() ? (
+            /* Search results */
+            <div className="max-h-72 overflow-y-auto flex flex-col divide-y divide-border">
+              {searchResults.length === 0 ? (
+                <p className="py-5 text-center text-[13px] text-text-2">Ничего не найдено</p>
+              ) : searchResults.map(ing => {
+                const sel = pendingIds.has(ing.id)
+                return (
+                  <button
+                    key={ing.id}
+                    type="button"
+                    onClick={() => togglePending(ing.id)}
+                    className={[
+                      'flex items-center gap-2.5 px-2 py-2.5 text-left transition-colors',
+                      sel ? 'bg-accent/8' : 'hover:bg-bg-3',
+                    ].join(' ')}
+                  >
+                    {ing.emoji && <span className="text-lg shrink-0">{ing.emoji}</span>}
+                    <span className="flex-1 text-[14px]">{ing.nameRu}</span>
+                    <span className={['text-lg font-bold', sel ? 'text-accent' : 'text-text-3'].join(' ')}>
+                      {sel ? '✓' : '+'}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
-
-            {search.trim() ? (
-              /* Результаты поиска */
-              <div style={{ marginTop: 12 }}>
-                {searchResults.length === 0 ? (
-                  <div style={{ padding: 20, textAlign: 'center', color: 'var(--text2)', fontSize: 13 }}>Ничего не найдено</div>
-                ) : (
-                  <div className="ing-picker-list">
-                    {searchResults.map(ing => {
+          ) : (
+            /* Grouped chips */
+            <div className="max-h-[60dvh] overflow-y-auto">
+              {groupedAvailable.length === 0 ? (
+                <p className="py-5 text-center text-[13px] text-text-2">
+                  Все продукты уже в холодильнике 🎉
+                </p>
+              ) : groupedAvailable.map(({ cat, items }) => (
+                <div key={cat} className="mb-3">
+                  <p className="text-[10px] font-bold text-text-2 uppercase tracking-widest mb-2">
+                    {CAT_RU[cat] || cat}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {items.map(ing => {
                       const sel = pendingIds.has(ing.id)
                       return (
-                        <div
+                        <button
                           key={ing.id}
-                          className={`ing-picker-item${sel ? ' selected' : ''}`}
+                          type="button"
                           onClick={() => togglePending(ing.id)}
+                          className={[
+                            'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[12px] font-semibold border transition-all',
+                            sel
+                              ? 'bg-accent/15 border-accent text-accent'
+                              : 'bg-bg-3 border-border text-text-2 hover:border-accent',
+                          ].join(' ')}
                         >
-                          {ing.emoji && <span style={{ fontSize: 18 }}>{ing.emoji}</span>}
-                          <span style={{ flex: 1 }}>{ing.nameRu}</span>
-                          <span style={{ fontSize: 18, color: sel ? 'var(--accent)' : 'var(--text3)', fontWeight: 700 }}>
-                            {sel ? '✓' : '+'}
-                          </span>
-                        </div>
+                          {ing.emoji && <span>{ing.emoji}</span>}
+                          {ing.nameRu}
+                        </button>
                       )
                     })}
                   </div>
-                )}
-              </div>
-            ) : (
-              /* Чипы по категориям */
-              <div style={{ marginTop: 8 }}>
-                {groupedAvailable.length === 0 ? (
-                  <p style={{ color: 'var(--text2)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
-                    Все продукты уже в холодильнике 🎉
-                  </p>
-                ) : groupedAvailable.map(({ cat, items }) => (
-                  <div key={cat}>
-                    <div className="picker-cat-label">{CAT_RU[cat] || cat}</div>
-                    <div className="picker-chips">
-                      {items.map(ing => {
-                        const sel = pendingIds.has(ing.id)
-                        return (
-                          <button
-                            key={ing.id}
-                            className={`picker-chip${sel ? ' selected' : ''}`}
-                            onClick={() => togglePending(ing.id)}
-                          >
-                            {ing.emoji && <span className="picker-chip-emoji">{ing.emoji}</span>}
-                            {ing.nameRu}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Кнопка добавить */}
-            <div className="picker-add-bar">
-              {pendingCount > 0 ? (
-                <button
-                  className="btn btn-primary"
-                  style={{ width: '100%' }}
-                  onClick={addPending}
-                  disabled={loadingBulk}
-                >
-                  {loadingBulk
-                    ? <span className="loader" style={{ width: 18, height: 18, borderWidth: 2 }} />
-                    : `Добавить ${pendingCount} ${pendingCount === 1 ? 'продукт' : pendingCount < 5 ? 'продукта' : 'продуктов'}`
-                  }
-                </button>
-              ) : (
-                <button className="btn btn-secondary" style={{ width: '100%' }} onClick={closePicker}>
-                  Готово
-                </button>
-              )}
+                </div>
+              ))}
             </div>
+          )}
+
+          {/* Action button */}
+          <div className="mt-4 pt-3 border-t border-border">
+            {pendingCount > 0 ? (
+              <Button className="w-full" loading={loadingBulk} onClick={addPending}>
+                {!loadingBulk && `Добавить ${pendingCount} ${plural(pendingCount)}`}
+              </Button>
+            ) : (
+              <Button variant="secondary" className="w-full" onClick={closePicker}>
+                Готово
+              </Button>
+            )}
           </div>
-        </div>
+        </Modal>
       )}
+
       {Toast}
     </div>
   )
