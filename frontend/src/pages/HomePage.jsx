@@ -63,10 +63,10 @@ export default function HomePage() {
       if (!hasAll) return false
     }
     return true
-  }).slice(0, 15)
+  }).slice(0, 7)
 
   return (
-    <div className="flex flex-col px-5 pt-6 pb-6 gap-6" style={{ background: '#F5F3EF', minHeight: '100%' }}>
+    <div className="flex flex-col px-5 pt-6 pb-6 gap-6" style={{ background: '#F5F3EF' }}>
 
       {/* Heading */}
       <h1 className="text-[26px] font-semibold leading-[1.35]" style={{ color: '#1a1a1a' }}>
