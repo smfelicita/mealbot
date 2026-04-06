@@ -1,30 +1,35 @@
 @import "tailwindcss";
 
-/* ── Тема ─────────────────────────────────────────────────── */
+/* ── Тема ────────────────────────────────────────────────────── */
 @theme {
-  --color-bg: #faf7f2;
-  --color-bg-2: #f2ede4;
-  --color-bg-3: #e8e0d4;
-  --color-card: #ffffff;
-  --color-border: rgba(0,0,0,0.09);
-  --color-accent: #b5813a;
-  --color-accent-2: #d4a855;
-  --color-accent-muted: rgba(181,129,58,0.1);
-  --color-teal: #5a9e8a;
-  --color-purple: #9a7ec8;
-  --color-text: #2a2018;
-  --color-text-2: #7a6a54;
-  --color-text-3: #a89880;
+  --color-bg:           #EDE8DF;
+  --color-bg-2:         #FFFFFF;
+  --color-bg-3:         #F5EFE6;
+  --color-card:         #FFFFFF;
+  --color-border:       #E5D8C8;
 
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-full: 9999px;
+  --color-accent:       #C4704A;
+  --color-accent-2:     #D4855C;
+  --color-accent-muted: rgba(196,112,74,0.1);
 
-  --font-sans: 'Nunito', sans-serif;
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.12);
+  --color-sage:         #4A6B47;
+  --color-teal:         #4A6B47;
+  --color-text:         #1C1917;
+  --color-text-2:       #78716C;
+  --color-text-3:       #A8A29E;
+
+  --radius-DEFAULT:     16px;
+  --radius-sm:          12px;
+  --radius-full:        9999px;
+
+  --font-sans:          'Inter', system-ui, sans-serif;
+  --font-serif:         'Georgia', serif;
+
+  --shadow-card:        0 2px 16px rgba(0,0,0,0.08);
+  --shadow-sm:          0 1px 6px rgba(0,0,0,0.06);
 }
 
-/* ── Base ─────────────────────────────────────────────────── */
+/* ── Base ──────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; }
 body {
@@ -39,24 +44,25 @@ a { color: inherit; text-decoration: none; }
 button { font-family: var(--font-sans); cursor: pointer; }
 input, textarea, select { font-family: var(--font-sans); }
 
-/* ── Scrollbar ────────────────────────────────────────────── */
+/* ── Scrollbar ─────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
 
-/* ── Animations ───────────────────────────────────────────── */
-@keyframes fadeUp   { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: translateY(0) } }
-@keyframes fadeIn   { from { opacity: 0 } to { opacity: 1 } }
-@keyframes pulse    { 0%,100% { opacity: 1 } 50% { opacity: .5 } }
-@keyframes spin     { to { transform: rotate(360deg) } }
-@keyframes slideUp  { from { transform: translateY(100%) } to { transform: translateY(0) } }
+/* ── Animations ────────────────────────────────────────────────── */
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+@keyframes spin    { to { transform: rotate(360deg) } }
+@keyframes bounce  { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
 
-.fade-up  { animation: fadeUp .3s ease both; }
-.fade-in  { animation: fadeIn .2s ease both; }
+.fade-up { animation: fadeUp .3s ease both; }
+.fade-in { animation: fadeIn .2s ease both; }
 
-/* ── Recipe content (markdown) ────────────────────────────── */
+/* ── Recipe markdown ────────────────────────────────────────────── */
 .recipe-content { line-height: 1.7; }
 .recipe-content h2 { font-size: 16px; font-weight: 800; margin: 16px 0 8px; color: var(--color-accent); }
 .recipe-content ul, .recipe-content ol { padding-left: 20px; }
 .recipe-content li { margin-bottom: 4px; font-size: 14px; }
-.recipe-content strong { font-weight: 800; }
-.recipe-content p { font-size: 14px; margin-bottom: 8px; }
+
+/* ── Safe area ──────────────────────────────────────────────────── */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }

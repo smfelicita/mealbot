@@ -1,42 +1,46 @@
-import Chip from '../ui/Chip'
+const ALL_OPTION = { value: '', label: 'Все' }
 
 const MEAL_TIMES = [
-  { value: 'breakfast', label: 'Завтрак', icon: '🌅' },
-  { value: 'lunch',     label: 'Обед',    icon: '☀️' },
-  { value: 'dinner',    label: 'Ужин',    icon: '🌙' },
-  { value: 'snack',     label: 'Перекус', icon: '🍎' },
+  { value: 'breakfast', label: 'Завтрак' },
+  { value: 'lunch',     label: 'Обед'    },
+  { value: 'dinner',    label: 'Ужин'    },
+  { value: 'snack',     label: 'Перекус' },
 ]
 
-export default function MealTypeChips({ active, onChange, multi = false }) {
+export default function MealTypeChips({ active, onChange, multi = false, showAll = false }) {
+  const options = showAll ? [ALL_OPTION, ...MEAL_TIMES] : MEAL_TIMES
+
   function handleClick(value) {
     if (multi) {
-      // active — массив
       const current = active || []
-      onChange(
-        current.includes(value)
-          ? current.filter(v => v !== value)
-          : [...current, value]
-      )
+      onChange(current.includes(value) ? current.filter(v => v !== value) : [...current, value])
     } else {
-      // active — строка, повторный клик снимает
       onChange(active === value ? '' : value)
     }
   }
 
   return (
-    <div className="flex gap-2 flex-wrap">
-      {MEAL_TIMES.map(mt => {
+    <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
+      {options.map(mt => {
         const isActive = multi
           ? (active || []).includes(mt.value)
-          : active === mt.value
+          : active === mt.value || (mt.value === '' && !active)
+
         return (
-          <Chip
+          <button
             key={mt.value}
-            active={isActive}
+            type="button"
             onClick={() => handleClick(mt.value)}
+            className={[
+              'shrink-0 px-4 py-2 rounded-full text-[14px] font-medium transition-all',
+              'focus:outline-none whitespace-nowrap',
+              isActive
+                ? 'bg-sage text-white shadow-sm'
+                : 'bg-white text-text-2 shadow-sm',
+            ].join(' ')}
           >
-            {mt.icon} {mt.label}
-          </Chip>
+            {mt.label}
+          </button>
         )
       })}
     </div>
