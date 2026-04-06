@@ -1,3 +1,5 @@
+import { forwardRef } from 'react'
+
 const CAT_EMOJI = {
   BREAKFAST: '🍳', LUNCH: '🍱', DINNER: '🌙',
   SOUP: '🍲', SALAD: '🥗', DESSERT: '🍰',
@@ -32,17 +34,18 @@ function Highlight({ text, query }) {
 }
 
 // ─── Horizontal row card (Home screen) ───────────────────────────────────────
-function RowCard({ dish, onClick, isFav, onToggleFav }) {
+const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav }, ref) {
   const img   = dish.images?.[0] || dish.imageUrl
   const cat   = dish.categories?.[0] ?? dish.category
   const emoji = CAT_EMOJI[cat] || '🍽️'
 
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onClick}
       className="w-full flex items-center justify-between bg-white rounded-2xl p-4 text-left
-        active:scale-[0.98] transition-transform"
+        active:scale-[0.98] transition-transform shrink-0"
       style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}
     >
       {/* Left */}
@@ -72,7 +75,7 @@ function RowCard({ dish, onClick, isFav, onToggleFav }) {
       )}
     </button>
   )
-}
+})
 
 // ─── Vertical grid card (Dishes / Search) ────────────────────────────────────
 function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngredientIds }) {
@@ -172,7 +175,8 @@ function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngred
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
-export default function RecipeCard({ variant = 'grid', ...props }) {
-  if (variant === 'row') return <RowCard {...props} />
+const RecipeCard = forwardRef(function RecipeCard({ variant = 'grid', ...props }, ref) {
+  if (variant === 'row') return <RowCard ref={ref} {...props} />
   return <GridCard {...props} />
-}
+})
+export default RecipeCard
