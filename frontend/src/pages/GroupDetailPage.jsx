@@ -107,13 +107,13 @@ export default function GroupDetailPage() {
           <Button variant="secondary" size="sm" onClick={copyCode}>🔑 Код приглашения</Button>
           <Button size="sm"
             onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name } })}>
-            + Рецепт в группу
+            + Блюдо в группу
           </Button>
         </div>
 
         {/* Tabs */}
         <div className="flex border-t border-border">
-          {[['dishes', '🍽️ Рецепты'], ['members', '👥 Участники']].map(([key, label]) => (
+          {[['dishes', 'Блюда'], ['members', 'Участники']].map(([key, label]) => (
             <button
               key={key}
               type="button"

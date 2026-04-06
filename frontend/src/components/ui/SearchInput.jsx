@@ -1,8 +1,10 @@
 export default function SearchInput({ value, onChange, placeholder = 'Поиск...', className = '' }) {
   return (
     <div className={`relative ${className}`}>
-      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base pointer-events-none">
-        🔍
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-3">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+        </svg>
       </span>
       <input
         type="search"

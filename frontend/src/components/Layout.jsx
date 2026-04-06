@@ -46,7 +46,7 @@ const IconPlan = () => (
 // ─── Tab config ───────────────────────────────────────────────────────────────
 const TABS = [
   { to: '/',       Icon: IconHome,    label: 'Главная'     },
-  { to: '/dishes', Icon: IconRecipes, label: 'Рецепты'     },
+  { to: '/dishes', Icon: IconRecipes, label: 'Блюда'       },
   { to: '/fridge', Icon: IconFridge,  label: 'Холодильник' },
   { to: '/plan',   Icon: IconPlan,    label: 'План'         },
 ]
@@ -92,39 +92,47 @@ function ProfileModal({ onClose }) {
           </div>
         </div>
 
-        <MenuItem onClick={() => go('/groups')}>👥 Мои группы</MenuItem>
-        <MenuItem onClick={() => go('/groups?action=create')}>＋ Создать группу</MenuItem>
+        <MenuItem onClick={() => go('/groups')} icon={<IcoGroups />}>Мои группы</MenuItem>
+        <MenuItem onClick={() => go('/groups?action=create')} icon={<IcoPlus />}>Создать группу</MenuItem>
         <Divider />
 
         {!tgLink ? (
-          <MenuItem onClick={connectTelegram} disabled={tgLoading}>
-            {tgLoading ? '...' : '🤖 Telegram-бот'}
+          <MenuItem onClick={connectTelegram} disabled={tgLoading} icon={<IcoTelegram />}>
+            {tgLoading ? '...' : 'Telegram-бот'}
           </MenuItem>
         ) : (
           <a href={tgLink} target="_blank" rel="noopener noreferrer" onClick={onClose}
-            className="block px-3 py-2.5 rounded-xl text-[14px] bg-sage/10 text-sage font-semibold">
-            🤖 Открыть бота →
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] bg-sage/10 text-sage font-semibold">
+            <IcoTelegram /><span>Открыть бота →</span>
           </a>
         )}
         {tgError && <p className="text-xs text-red-400 px-3 mt-1">{tgError}</p>}
 
         <Divider />
-        <MenuItem onClick={() => go('/profile')}>👤 Профиль</MenuItem>
+        <MenuItem onClick={() => go('/profile')} icon={<IcoUser />}>Профиль</MenuItem>
         <Divider />
-        <MenuItem onClick={handleLogout} className="text-red-400">🚪 Выйти</MenuItem>
+        <MenuItem onClick={handleLogout} className="text-red-400" icon={<IcoLogout />}>Выйти</MenuItem>
       </div>
     </div>
   )
 }
 
-function MenuItem({ children, onClick, disabled, className = '' }) {
+// ─── Profile menu SVG icons ──────────────────────────────────────────────────
+const IcoGroups   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a5 5 0 0 1 5-5h2"/><circle cx="17" cy="9" r="3"/><path d="M21 21v-2a5 5 0 0 0-5-5h-1"/></svg>
+const IcoPlus     = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+const IcoTelegram = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+const IcoUser     = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+const IcoLogout   = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+
+function MenuItem({ children, onClick, disabled, className = '', icon }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled}
       className={[
-        'w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium',
+        'w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium',
         'transition-colors hover:bg-bg-3 disabled:opacity-40',
         className,
       ].join(' ')}>
+      {icon && <span className="shrink-0 text-text-2">{icon}</span>}
       {children}
     </button>
   )

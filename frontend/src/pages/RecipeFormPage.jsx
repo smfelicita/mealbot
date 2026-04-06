@@ -8,14 +8,14 @@ import {
 } from '../components/ui'
 
 const CATEGORIES = [
-  { value: 'BREAKFAST', label: '🍳 Завтрак' },
-  { value: 'LUNCH',     label: '🍱 Обед'    },
-  { value: 'DINNER',    label: '🌙 Ужин'    },
-  { value: 'SNACK',     label: '🥨 Перекус' },
-  { value: 'SOUP',      label: '🍲 Суп'     },
-  { value: 'SALAD',     label: '🥗 Салат'   },
-  { value: 'DESSERT',   label: '🍰 Десерт'  },
-  { value: 'DRINK',     label: '🥤 Напиток' },
+  { value: 'BREAKFAST', label: 'Завтрак' },
+  { value: 'LUNCH',     label: 'Обед'    },
+  { value: 'DINNER',    label: 'Ужин'    },
+  { value: 'SNACK',     label: 'Перекус' },
+  { value: 'SOUP',      label: 'Суп'     },
+  { value: 'SALAD',     label: 'Салат'   },
+  { value: 'DESSERT',   label: 'Десерт'  },
+  { value: 'DRINK',     label: 'Напиток' },
 ]
 
 const MEAL_TIMES = [
@@ -58,10 +58,10 @@ const ING_CATEGORIES = [
 ]
 
 const VISIBILITY_OPTIONS = [
-  { value: 'PRIVATE',    label: '🔒 Личный',           desc: 'Только вы'                         },
-  { value: 'PUBLIC',     label: '🌍 Публичный',         desc: 'Все пользователи'                   },
-  { value: 'FAMILY',     label: '👨‍👩‍👧 Семья',           desc: 'Только участники семейной группы'  },
-  { value: 'ALL_GROUPS', label: '👥 Все мои группы',    desc: 'Участники всех ваших групп'         },
+  { value: 'PRIVATE',    label: 'Личный',        desc: 'Только вы'                        },
+  { value: 'PUBLIC',     label: 'Публичный',     desc: 'Все пользователи'                  },
+  { value: 'FAMILY',     label: 'Семья',         desc: 'Только участники семейной группы' },
+  { value: 'ALL_GROUPS', label: 'Все мои группы', desc: 'Участники всех ваших групп'      },
 ]
 
 // ─── Field label helper ─────────────────────────────────────────────────────
@@ -223,7 +223,7 @@ export default function RecipeFormPage() {
       addIngredient(created)
       setNewIng({ nameRu: '', category: '' })
       setShowAddIng(false)
-      show(`✏️ "${created.nameRu}" добавлен`, 'success')
+      show(`"${created.nameRu}" добавлен`, 'success')
     } catch (e) {
       show(e.message, 'error')
     } finally {
@@ -351,7 +351,7 @@ export default function RecipeFormPage() {
         {/* Copy notice */}
         {copyFromId && sourceDishName && (
           <div className="bg-teal/8 border border-teal/30 rounded-sm px-3.5 py-2.5 text-sm text-teal">
-            📋 Это копия рецепта «{sourceDishName}». Адаптируйте под себя.
+            Это копия рецепта «{sourceDishName}». Адаптируйте под себя.
           </div>
         )}
 
@@ -359,8 +359,8 @@ export default function RecipeFormPage() {
         {!isEdit && (
           <div className="flex bg-bg-3 rounded-sm p-1 gap-1">
             {[
-              { val: 'quick',    label: '⚡ Быстро'       },
-              { val: 'extended', label: '📋 Расширенно'   },
+              { val: 'quick',    label: 'Быстро'     },
+              { val: 'extended', label: 'Расширенно' },
             ].map(m => (
               <button
                 key={m.val}
@@ -533,7 +533,7 @@ export default function RecipeFormPage() {
             {images.length < 10 && (
               <label className="cursor-pointer block">
                 <Button variant="secondary" className="w-full pointer-events-none" loading={uploadingImage}>
-                  {!uploadingImage && (images.length === 0 ? '📷 Загрузить фото' : '📷 Добавить ещё')}
+                  {!uploadingImage && (images.length === 0 ? 'Загрузить фото' : 'Добавить ещё')}
                 </Button>
                 <input type="file" accept="image/*" multiple hidden
                   onChange={e => e.target.files?.length && uploadImages(e.target.files)} />
@@ -554,7 +554,7 @@ export default function RecipeFormPage() {
             ) : (
               <label className="cursor-pointer block">
                 <Button variant="secondary" className="w-full pointer-events-none" loading={uploadingVideo}>
-                  {!uploadingVideo && '🎥 Загрузить видео'}
+                  {!uploadingVideo && 'Загрузить видео'}
                 </Button>
                 <input type="file" accept="video/*" hidden
                   onChange={e => e.target.files[0] && uploadVideo(e.target.files[0])} />
@@ -690,7 +690,7 @@ export default function RecipeFormPage() {
 
         {/* Submit */}
         <Button className="w-full" loading={saving} onClick={handleSubmit}>
-          {isEdit ? '💾 Сохранить изменения' : '✨ Создать рецепт'}
+          {isEdit ? 'Сохранить изменения' : 'Создать блюдо'}
         </Button>
       </div>
 
