@@ -65,14 +65,14 @@ export default function HomePage() {
     return () => ro.disconnect()
   }, [recalcCount])
 
-  // Recalculate when first card renders (after loading finishes)
+  // Recalculate after loading finishes or when any filter changes
+  // (container size doesn't change, but we need fresh card measurement)
   useEffect(() => {
     if (!loading) {
-      // Wait one frame for the card to paint
       const raf = requestAnimationFrame(recalcCount)
       return () => cancelAnimationFrame(raf)
     }
-  }, [loading, recalcCount])
+  }, [loading, mealTime, favOnly, fridgeOnly, recalcCount])
 
   useEffect(() => {
     api.getDishes({ limit: 50 })
@@ -105,7 +105,7 @@ export default function HomePage() {
   const visible = filtered.slice(0, visibleCount)
 
   return (
-    <div className="flex flex-col px-5 pt-6 pb-6 gap-5" style={{ background: '#F5F3EF', height: '100%' }}>
+    <div className="flex flex-col flex-1 min-h-0 px-5 pt-6 pb-6 gap-5" style={{ background: '#F5F3EF' }}>
 
       {/* Heading */}
       <h1 className="text-[26px] font-semibold leading-[1.35] shrink-0" style={{ color: '#1a1a1a' }}>
