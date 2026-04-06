@@ -27,30 +27,26 @@ function isMobile() {
 }
 
 export default function InstallPrompt() {
-  const [showAndroid, setShowAndroid]       = useState(false)
-  const [showIOS, setShowIOS]               = useState(false)
+  const [showAndroid, setShowAndroid]           = useState(false)
+  const [showIOS, setShowIOS]                   = useState(false)
   const [showIOSNotSafari, setShowIOSNotSafari] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [deferredPrompt, setDeferredPrompt]     = useState(null)
 
   useEffect(() => {
-    // Уже установлено, не мобильный, или уже закрыли — не показывать
     if (isInStandaloneMode()) return
     if (!isMobile()) return
     if (isDismissedToday()) return
 
     if (isIOS()) {
       if (isIOSSafari()) {
-        // Safari на iOS: показываем инструкцию через 3 секунды
         const t = setTimeout(() => setShowIOS(true), 3000)
         return () => clearTimeout(t)
       } else {
-        // Chrome/Firefox/Яндекс на iOS: предлагаем открыть в Safari
         const t = setTimeout(() => setShowIOSNotSafari(true), 3000)
         return () => clearTimeout(t)
       }
     }
 
-    // Android/Chrome: ловим браузерный промпт
     const handler = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
@@ -80,47 +76,59 @@ export default function InstallPrompt() {
 
   if (showAndroid) {
     return (
-      <div className="install-prompt">
-        <div className="install-prompt__icon">📲</div>
-        <div className="install-prompt__text">
-          <strong>Установить MealBot</strong>
-          <span>Добавьте на экран — работает как приложение</span>
+      <div className="mx-5 mb-1 flex items-center gap-3 rounded-2xl px-4 py-3"
+        style={{ background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+        <span className="text-[22px] shrink-0">📲</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-[14px]" style={{ color: '#1a1a1a' }}>Установить приложение</p>
+          <p className="text-[12px] truncate" style={{ color: '#9e9e9e' }}>Работает без браузера</p>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={installAndroid}>Установить</button>
-        <button className="install-prompt__close" onClick={dismiss} aria-label="Закрыть">✕</button>
+        <button
+          onClick={installAndroid}
+          className="shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold text-white"
+          style={{ background: '#C4704A' }}>
+          Установить
+        </button>
+        <button onClick={dismiss} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-[16px]"
+          style={{ color: '#9e9e9e' }}>
+          ✕
+        </button>
       </div>
     )
   }
 
   if (showIOS) {
     return (
-      <div className="install-prompt install-prompt--ios">
-        <button className="install-prompt__close" onClick={dismiss} aria-label="Закрыть">✕</button>
-        <div className="install-prompt__ios-content">
-          <div className="install-prompt__icon">📲</div>
-          <div className="install-prompt__text">
-            <strong>Установить MealBot на iPhone</strong>
-            <span>
-              Нажмите <span className="install-prompt__share">⎙</span> внизу браузера,
-              затем «На экран "Домой"»
-            </span>
-          </div>
+      <div className="mx-5 mb-1 flex items-start gap-3 rounded-2xl px-4 py-3"
+        style={{ background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+        <span className="text-[22px] shrink-0">📲</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-[14px]" style={{ color: '#1a1a1a' }}>Установить на iPhone</p>
+          <p className="text-[12px]" style={{ color: '#9e9e9e' }}>
+            Нажмите ⎙ внизу браузера → «На экран "Домой"»
+          </p>
         </div>
+        <button onClick={dismiss} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-[16px]"
+          style={{ color: '#9e9e9e' }}>
+          ✕
+        </button>
       </div>
     )
   }
 
   if (showIOSNotSafari) {
     return (
-      <div className="install-prompt install-prompt--ios">
-        <button className="install-prompt__close" onClick={dismiss} aria-label="Закрыть">✕</button>
-        <div className="install-prompt__ios-content">
-          <div className="install-prompt__icon">🧭</div>
-          <div className="install-prompt__text">
-            <strong>Установить MealBot</strong>
-            <span>Для установки на экран откройте сайт в <strong>Safari</strong></span>
-          </div>
+      <div className="mx-5 mb-1 flex items-center gap-3 rounded-2xl px-4 py-3"
+        style={{ background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+        <span className="text-[22px] shrink-0">🧭</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-[14px]" style={{ color: '#1a1a1a' }}>Установить приложение</p>
+          <p className="text-[12px]" style={{ color: '#9e9e9e' }}>Откройте сайт в Safari для установки</p>
         </div>
+        <button onClick={dismiss} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-[16px]"
+          style={{ color: '#9e9e9e' }}>
+          ✕
+        </button>
       </div>
     )
   }

@@ -178,12 +178,12 @@ export default function Layout() {
         </div>
       </header>
 
+      <InstallPrompt />
+
       {/* ── Page content ── */}
       <main className="flex-1 flex flex-col pb-[64px]">
         <Outlet />
       </main>
-
-      <InstallPrompt />
 
       {/* ── Bottom tab bar (fixed) ── */}
       <nav className="fixed bottom-0 left-0 right-0 max-w-app mx-auto

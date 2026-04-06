@@ -63,13 +63,13 @@ export default function HomePage() {
       if (!hasAll) return false
     }
     return true
-  }).slice(0, 5)
+  }).slice(0, 15)
 
   return (
-    <div className="flex flex-col gap-5 px-4 pt-2 pb-4">
+    <div className="flex flex-col px-5 pt-6 pb-6 gap-6" style={{ background: '#F5F3EF', minHeight: '100%' }}>
 
       {/* Heading */}
-      <h1 className="text-[28px] font-bold text-text leading-tight">
+      <h1 className="text-[26px] font-semibold leading-[1.35]" style={{ color: '#1a1a1a' }}>
         Что приготовить<br />сегодня?
       </h1>
 
@@ -81,12 +81,12 @@ export default function HomePage() {
       />
 
       {/* Recipe list */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3">
         {loading ? (
           [1,2,3,4].map(i => <SkeletonCard key={i} />)
         ) : filtered.length === 0 ? (
-          <div className="bg-white shadow-sm rounded-2xl p-6 text-center">
-            <p className="text-text-2 text-[15px]">Нет подходящих блюд</p>
+          <div className="bg-white rounded-2xl p-6 text-center" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+            <p className="text-[15px]" style={{ color: '#9e9e9e' }}>Нет подходящих блюд</p>
           </div>
         ) : filtered.map(dish => (
           <RecipeCard
@@ -105,31 +105,34 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => { setFavOnly(f => !f); setFridgeOnly(false); setMealTime('') }}
-            className={[
-              'flex-1 flex items-center gap-3 rounded-2xl p-4 transition-all shadow-sm',
-              favOnly ? 'bg-accent text-white' : 'bg-sage text-white',
-            ].join(' ')}
+            className="flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all"
+            style={{
+              background: favOnly ? '#C4704A' : '#5C7A59',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+            }}
           >
-            <span className="text-[22px] leading-none shrink-0">❤️</span>
-            <div className="text-left">
-              <p className="font-semibold text-[14px] leading-tight">Избранное</p>
-              <p className="text-[12px] opacity-80">Ваши любимые</p>
-            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21C12 21 3 14.5 3 8.5C3 5.46 5.46 3 8.5 3C10.24 3 11.91 3.81 13 5.08C14.09 3.81 15.76 3 17.5 3C20.54 3 23 5.46 23 8.5C23 14.5 12 21 12 21Z" fill="rgba(255,255,255,0.9)" stroke="none"/>
+            </svg>
+            <span className="font-semibold text-[14px] text-white">Избранное</span>
           </button>
 
           <button
             type="button"
             onClick={() => { setFridgeOnly(f => !f); setFavOnly(false); setMealTime('') }}
-            className={[
-              'flex-1 flex items-center gap-3 rounded-2xl p-4 transition-all shadow-sm',
-              fridgeOnly ? 'bg-accent text-white' : 'bg-sage text-white',
-            ].join(' ')}
+            className="flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all"
+            style={{
+              background: fridgeOnly ? '#C4704A' : '#5C7A59',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+            }}
           >
-            <span className="text-[22px] leading-none shrink-0">🧊</span>
-            <div className="text-left">
-              <p className="font-semibold text-[14px] leading-tight">Из холодильника</p>
-              <p className="text-[12px] opacity-80">Есть ингредиенты</p>
-            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="3" width="12" height="18" rx="2" stroke="rgba(255,255,255,0.9)" strokeWidth="2" fill="none"/>
+              <line x1="6" y1="10" x2="18" y2="10" stroke="rgba(255,255,255,0.9)" strokeWidth="2"/>
+              <circle cx="10" cy="7" r="1.2" fill="rgba(255,255,255,0.9)"/>
+              <circle cx="10" cy="15" r="1.2" fill="rgba(255,255,255,0.9)"/>
+            </svg>
+            <span className="font-semibold text-[14px] text-white">Холодильник</span>
           </button>
         </div>
       )}
