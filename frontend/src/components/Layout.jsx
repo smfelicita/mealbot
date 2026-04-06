@@ -5,12 +5,50 @@ import { api } from '../api'
 import { Avatar, Modal } from './ui'
 import InstallPrompt from './InstallPrompt'
 
+// ─── Tab icons ────────────────────────────────────────────────────────────────
+const IconHome = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 9L12 2L21 9V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V9Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
+    <path d="M9 21V13H15V21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+const IconRecipes = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 19V5C4 3.89543 4.89543 3 6 3H18C19.1046 3 20 3.89543 20 5V19C20 20.1046 19.1046 21 18 21H6C4.89543 21 4 20.1046 4 19Z" stroke="currentColor" strokeWidth="1.8"/>
+    <path d="M8 7H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    <path d="M8 11H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    <path d="M8 15H12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+  </svg>
+)
+
+const IconFridge = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="6" y="3" width="12" height="18" rx="2" stroke="currentColor" strokeWidth="1.8"/>
+    <line x1="6" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="1.8"/>
+    <circle cx="10" cy="7" r="1" fill="currentColor"/>
+    <circle cx="10" cy="16" r="1" fill="currentColor"/>
+  </svg>
+)
+
+const IconPlan = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.8"/>
+    <path d="M16 3V7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    <path d="M8 3V7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    <path d="M4 10H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    <circle cx="9" cy="14" r="1" fill="currentColor"/>
+    <circle cx="15" cy="14" r="1" fill="currentColor"/>
+    <circle cx="9" cy="18" r="1" fill="currentColor"/>
+  </svg>
+)
+
 // ─── Tab config ───────────────────────────────────────────────────────────────
 const TABS = [
-  { to: '/',       icon: '⊞',  label: 'Главная'     },
-  { to: '/dishes', icon: '📖', label: 'Рецепты'     },
-  { to: '/fridge', icon: '🧊', label: 'Холодильник' },
-  { to: '/plan',   icon: '📅', label: 'План'         },
+  { to: '/',       Icon: IconHome,    label: 'Главная'     },
+  { to: '/dishes', Icon: IconRecipes, label: 'Рецепты'     },
+  { to: '/fridge', Icon: IconFridge,  label: 'Холодильник' },
+  { to: '/plan',   Icon: IconPlan,    label: 'План'         },
 ]
 
 // ─── Profile dropdown ─────────────────────────────────────────────────────────
@@ -155,13 +193,17 @@ export default function Layout() {
             to={t.to}
             end={t.to === '/'}
             className={({ isActive }) => [
-              'flex-1 flex flex-col items-center justify-center gap-1 py-3',
+              'flex-1 flex flex-col items-center justify-center gap-1 py-2.5',
               'text-[10px] font-semibold tracking-wide focus:outline-none transition-colors',
               isActive ? 'text-accent' : 'text-text-3',
             ].join(' ')}
           >
-            <span className="text-[22px] leading-none">{t.icon}</span>
-            {t.label}
+            {({ isActive }) => (
+              <>
+                <t.Icon isActive={isActive} />
+                {t.label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
