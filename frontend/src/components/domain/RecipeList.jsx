@@ -14,6 +14,7 @@ export default function RecipeList({
   onToggleFav,
   fridgeIngredientIds,
   onDishClick,
+  variant = 'grid',
 }) {
   if (loading) {
     return <Loader fullPage />
@@ -31,7 +32,7 @@ export default function RecipeList({
   }
 
   return (
-    <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
+    <div className={variant === 'row' ? 'flex flex-col gap-3' : 'grid grid-cols-1 xs:grid-cols-2 gap-3'}>
       {dishes.map((dish, i) => (
         <div
           key={dish.id}
@@ -39,6 +40,7 @@ export default function RecipeList({
           style={{ animationDelay: `${i * 0.04}s` }}
         >
           <RecipeCard
+            variant={variant}
             dish={dish}
             onClick={() => onDishClick(dish.id)}
             searchQuery={searchQuery}

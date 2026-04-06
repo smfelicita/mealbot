@@ -232,6 +232,7 @@ export default function DishesPage() {
           />
         ) : (
           <RecipeList
+            variant="row"
             dishes={dishes}
             loading={false}
             searchQuery={q || undefined}
