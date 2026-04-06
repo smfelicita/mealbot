@@ -41,15 +41,16 @@ function RowCard({ dish, onClick, isFav, onToggleFav }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-between bg-white shadow-sm rounded-2xl p-4 text-left
+      className="w-full flex items-center justify-between bg-white rounded-2xl p-4 text-left
         active:scale-[0.98] transition-transform"
+      style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}
     >
       {/* Left */}
       <div className="flex-1 min-w-0 pr-3">
-        <p className="font-semibold text-[15px] leading-snug truncate text-text">
+        <p className="font-semibold text-[15px] leading-snug truncate" style={{ color: '#1a1a1a' }}>
           {dish.name}
         </p>
-        <div className="flex items-center gap-2 mt-1 text-[13px] text-text-2">
+        <div className="flex items-center gap-1.5 mt-1 text-[13px]" style={{ color: '#9e9e9e' }}>
           {dish.cookTime && <span>{dish.cookTime} мин</span>}
           {dish.cookTime && dish.categories?.[0] && <span>·</span>}
           {dish.categories?.[0] && <span>{CAT_RU[cat] || cat}</span>}
@@ -64,7 +65,8 @@ function RowCard({ dish, onClick, isFav, onToggleFav }) {
           className="w-16 h-16 rounded-xl object-cover shrink-0"
         />
       ) : (
-        <div className="w-16 h-16 rounded-xl bg-bg-3 flex items-center justify-center text-2xl shrink-0">
+        <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl shrink-0"
+          style={{ background: '#F5EFE6' }}>
           {emoji}
         </div>
       )}

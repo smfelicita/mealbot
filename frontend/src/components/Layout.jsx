@@ -144,21 +144,22 @@ export default function Layout() {
     <div className="flex flex-col min-h-dvh bg-bg max-w-app mx-auto">
 
       {/* ── Top bar (non-fixed, part of flow) ── */}
-      <header className="flex items-center justify-between px-5 py-3.5 bg-bg shrink-0">
+      <header className="flex items-center justify-between px-5 py-3 bg-bg shrink-0">
         {/* Logo + name */}
         <button type="button" onClick={() => navigate('/')}
           className="flex items-center gap-2 focus:outline-none">
-          <span className="text-accent text-[22px]">🍽️</span>
-          <span className="font-bold text-[17px] text-text">Моя кухня</span>
+          <span className="text-[20px]">🍽️</span>
+          <span className="font-bold text-[16px] text-text tracking-[-0.2px]">Моя кухня</span>
         </button>
 
         {/* Right actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {token ? (
             <>
               {/* Bell */}
               <button type="button"
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-bg-3 text-text-2 focus:outline-none">
+                className="w-8 h-8 flex items-center justify-center rounded-full focus:outline-none text-[16px]"
+                style={{ color: '#9e9e9e' }}>
                 🔔
               </button>
               {/* Avatar */}
@@ -170,7 +171,7 @@ export default function Layout() {
             </>
           ) : (
             <button type="button" onClick={() => navigate('/auth')}
-              className="bg-accent text-white text-[13px] font-bold px-4 py-2 rounded-full">
+              className="bg-accent text-white text-[13px] font-semibold px-4 py-1.5 rounded-full">
               Войти
             </button>
           )}

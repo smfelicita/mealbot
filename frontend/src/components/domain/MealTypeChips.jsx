@@ -32,12 +32,16 @@ export default function MealTypeChips({ active, onChange, multi = false, showAll
             type="button"
             onClick={() => handleClick(mt.value)}
             className={[
-              'shrink-0 px-4 py-2 rounded-full text-[14px] font-medium transition-all',
+              'shrink-0 px-4 py-1.5 rounded-full text-[13px] font-medium transition-all',
               'focus:outline-none whitespace-nowrap',
               isActive
-                ? 'bg-sage text-white shadow-sm'
-                : 'bg-white text-text-2 shadow-sm',
+                ? 'text-white'
+                : 'bg-white text-text-2',
             ].join(' ')}
+            style={isActive
+              ? { background: '#5C7A59', boxShadow: '0 1px 6px rgba(92,122,89,0.25)' }
+              : { boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
+            }
           >
             {mt.label}
           </button>
