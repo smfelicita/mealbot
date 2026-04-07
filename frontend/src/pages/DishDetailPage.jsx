@@ -300,24 +300,24 @@ export default function DishDetailPage() {
         {/* ── RecipeMeta ── */}
         <RecipeMeta dish={dish} />
 
+        {/* ── Tags ── */}
+        {dish.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-4 pb-2">
+            {dish.tags.map(t => (
+              <span key={t}
+                className="text-[12px] text-text-2 bg-white rounded-full px-3 py-1"
+                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* ── Content ── */}
         <div className="px-4 pt-4">
           <IngredientList ingredients={dish.ingredients} />
           <RecipeSteps recipe={dish.recipe} />
           <NutritionBlock nutrition={dish.nutrition} />
-
-          {/* ── Tags (after nutrition) ── */}
-          {dish.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {dish.tags.map(t => (
-                <span key={t}
-                  className="text-[12px] text-text-2 bg-white rounded-full px-3 py-1"
-                  style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                  #{t}
-                </span>
-              ))}
-            </div>
-          )}
 
           {comments !== null && (
             <CommentsSection
