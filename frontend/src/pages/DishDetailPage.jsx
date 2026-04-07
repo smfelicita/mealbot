@@ -359,11 +359,11 @@ export default function DishDetailPage() {
       </div>
 
       {/* ── Bottom action bar (fixed inside overlay) ── */}
-      <div className="shrink-0 bg-white border-t border-border">
+      <div className="shrink-0 bg-white border-t border-border px-4 py-3 pb-safe">
         <button
           type="button"
           onClick={() => setShowPlanModal(true)}
-          className="w-full flex items-center justify-center gap-2 py-4 pb-safe text-[15px] font-semibold text-white bg-accent"
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[15px] font-semibold text-white bg-accent"
         >
           <IcoPlan />
           <span>Буду готовить</span>

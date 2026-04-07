@@ -28,7 +28,10 @@ export default function IngredientList({ ingredients }) {
         >
           <h2 className="font-semibold text-[16px] text-text flex-1">🛒 Ингредиенты</h2>
           <span className="text-[13px] text-text-3">{ingredients.length} шт.</span>
-          <span className="text-text-3"><IcoChevron open={expanded} /></span>
+          <span className="flex items-center gap-1 text-[13px] text-text-3">
+            {expanded ? 'Скрыть' : 'Показать все'}
+            <IcoChevron open={expanded} />
+          </span>
         </button>
       ) : (
         <div className="flex items-center justify-between mb-3">
