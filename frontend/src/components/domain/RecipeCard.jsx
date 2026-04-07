@@ -34,51 +34,57 @@ function Highlight({ text, query }) {
 }
 
 // ─── Horizontal row card (Home screen) ───────────────────────────────────────
-const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav }, ref) {
+const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav, hint }, ref) {
   const img   = dish.images?.[0] || dish.imageUrl
   const cat   = dish.categories?.[0] ?? dish.category
   const emoji = CAT_EMOJI[cat] || '🍽️'
 
   return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={onClick}
-      className="w-full flex items-center justify-between bg-white rounded-2xl p-4 text-left
-        active:scale-[0.98] transition-transform shrink-0"
-      style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}
-    >
-      {/* Left */}
-      <div className="flex-1 min-w-0 pr-3">
-        <p className="font-semibold text-[15px] leading-snug truncate" style={{ color: '#1a1a1a' }}>
-          {dish.name}
-        </p>
-        <div className="flex items-center gap-1.5 mt-1 text-[13px]" style={{ color: '#9e9e9e' }}>
-          {dish.cookTime && <span>{dish.cookTime} мин</span>}
-          {dish.cookTime && dish.categories?.[0] && <span>·</span>}
-          {dish.categories?.[0] && <span>{CAT_RU[cat] || cat}</span>}
+    <div className="flex flex-col">
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        className="w-full flex items-center justify-between bg-white rounded-2xl p-4 text-left
+          active:scale-[0.98] transition-transform shrink-0"
+        style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}
+      >
+        {/* Left */}
+        <div className="flex-1 min-w-0 pr-3">
+          <p className="font-semibold text-[15px] leading-snug truncate" style={{ color: '#1a1a1a' }}>
+            {dish.name}
+          </p>
+          <div className="flex items-center gap-1.5 mt-1 text-[13px]" style={{ color: '#9e9e9e' }}>
+            {dish.cookTime && <span>{dish.cookTime} мин</span>}
+            {dish.cookTime && dish.categories?.[0] && <span>·</span>}
+            {dish.categories?.[0] && <span>{CAT_RU[cat] || cat}</span>}
+          </div>
         </div>
-      </div>
 
-      {/* Right: image */}
-      {img ? (
-        <img
-          src={img}
-          alt={dish.name}
-          className="w-16 h-16 rounded-xl object-cover shrink-0"
-        />
-      ) : (
-        <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl shrink-0"
-          style={{ background: '#F5EFE6' }}>
-          {emoji}
-        </div>
+        {/* Right: image */}
+        {img ? (
+          <img
+            src={img}
+            alt={dish.name}
+            className="w-16 h-16 rounded-xl object-cover shrink-0"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl shrink-0"
+            style={{ background: '#F5EFE6' }}>
+            {emoji}
+          </div>
+        )}
+      </button>
+
+      {hint && (
+        <p className="text-[12px] px-1 pt-1.5" style={{ color: '#b0b0b0' }}>{hint}</p>
       )}
-    </button>
+    </div>
   )
 })
 
 // ─── Vertical grid card (Dishes / Search) ────────────────────────────────────
-function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngredientIds, hint }) {
+function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngredientIds }) {
   const img   = dish.images?.[0] || dish.imageUrl
   const cat   = dish.categories?.[0] ?? dish.category
   const emoji = CAT_EMOJI[cat] || '🍽️'
@@ -171,12 +177,6 @@ function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngred
         </div>
       </div>
 
-      {/* Optional secondary hint (e.g. missing ingredients) */}
-      {hint && (
-        <div className="px-3 pb-3 -mt-1">
-          <p className="text-[12px] text-text-3 leading-snug">{hint}</p>
-        </div>
-      )}
     </button>
   )
 }

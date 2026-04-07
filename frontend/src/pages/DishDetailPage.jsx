@@ -339,15 +339,15 @@ export default function DishDetailPage() {
             {user && recs.nearMatch?.length > 0 && (
               <div className="px-4 pt-5">
                 <p className="font-semibold text-[15px] mb-3 text-text">Купите ещё немного</p>
-                <div className="flex gap-3 overflow-x-auto pb-1">
+                <div className="flex flex-col gap-3">
                   {recs.nearMatch.map(({ dish: d, missing }) => (
-                    <div key={d.id} className="shrink-0 w-48">
-                      <RecipeCard
-                        dish={d}
-                        onClick={() => navigate(`/dishes/${d.id}`)}
-                        hint={`Докупить: ${missing.map(m => m.name).join(', ')}`}
-                      />
-                    </div>
+                    <RecipeCard
+                      key={d.id}
+                      variant="row"
+                      dish={d}
+                      onClick={() => navigate(`/dishes/${d.id}`)}
+                      hint={`Докупить: ${missing.map(m => m.name).join(', ')}`}
+                    />
                   ))}
                 </div>
               </div>
