@@ -19,7 +19,7 @@ function CommentItem({ comment, isOwner, isDishOwner, onDelete, onPin }) {
     ].join(' ')}>
       <div className="flex items-center gap-2 mb-1.5">
         {comment.isPinned && (
-          <span className="text-xs text-accent font-bold">Закреплено</span>
+          <span className="text-xs text-accent font-bold">📌 Закреплено</span>
         )}
         <span className="font-bold text-sm">{comment.user?.name || 'Участник'}</span>
         <span className="text-[11px] text-text-3 ml-auto">{formatDate(comment.createdAt)}</span>
@@ -36,7 +36,7 @@ function CommentItem({ comment, isOwner, isDishOwner, onDelete, onPin }) {
                 comment.isPinned ? 'text-accent' : 'text-text-2',
               ].join(' ')}
             >
-              {comment.isPinned ? 'Открепить' : 'Закрепить'}
+              {comment.isPinned ? '📌 Открепить' : '📌 Закрепить'}
             </button>
           )}
           {isOwner && (
@@ -88,7 +88,7 @@ export default function CommentsSection({ comments, setComments, dishId, current
 
   return (
     <div className="mb-6">
-      <SectionTitle>Комментарии</SectionTitle>
+      <SectionTitle>💬 Комментарии</SectionTitle>
 
       {comments.length === 0 && (
         <p className="text-sm text-text-2 mb-3">Пока нет комментариев. Будьте первым!</p>

@@ -21,7 +21,7 @@ export default function IngredientList({ ingredients }) {
     <div className="mb-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold text-[16px] text-text">Ингредиенты</h2>
+        <h2 className="font-semibold text-[16px] text-text">🛒 Ингредиенты</h2>
         <span className="text-[13px] text-text-3">{ingredients.length} шт.</span>
       </div>
 

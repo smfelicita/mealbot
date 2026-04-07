@@ -18,7 +18,7 @@ export default function RecipeSteps({ recipe }) {
 
   return (
     <div className="mb-6">
-      <SectionTitle>Приготовление</SectionTitle>
+      <SectionTitle>📋 Приготовление</SectionTitle>
       <Card>
         <div
           className="p-4 recipe-content"
