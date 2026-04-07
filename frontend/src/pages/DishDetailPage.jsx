@@ -24,7 +24,7 @@ const IcoChevron = ({ open }) => <svg width="14" height="14" viewBox="0 0 24 24"
 
 // ─── NutritionBlock ───────────────────────────────────────────────────────────
 function NutritionBlock({ nutrition }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   if (!nutrition) return null
 
   const items = [
@@ -339,15 +339,16 @@ export default function DishDetailPage() {
             {user && recs.nearMatch?.length > 0 && (
               <div className="px-4 pt-5">
                 <p className="font-semibold text-[15px] mb-3 text-text">Купите ещё немного</p>
-                <div className="flex flex-col gap-3">
+                <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
                   {recs.nearMatch.map(({ dish: d, missing }) => (
-                    <RecipeCard
-                      key={d.id}
-                      variant="row"
-                      dish={d}
-                      onClick={() => navigate(`/dishes/${d.id}`)}
-                      hint={`Докупить: ${missing.map(m => m.name).join(', ')}`}
-                    />
+                    <div key={d.id} className="shrink-0 w-[85vw] max-w-sm" style={{ scrollSnapAlign: 'start' }}>
+                      <RecipeCard
+                        variant="row"
+                        dish={d}
+                        onClick={() => navigate(`/dishes/${d.id}`)}
+                        hint={`Докупить: ${missing.map(m => m.name).join(', ')}`}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -358,11 +359,11 @@ export default function DishDetailPage() {
       </div>
 
       {/* ── Bottom action bar (fixed inside overlay) ── */}
-      <div className="shrink-0 bg-white border-t border-border px-4 py-3 flex items-center gap-3 pb-safe">
+      <div className="shrink-0 border-t border-border">
         <button
           type="button"
           onClick={() => setShowPlanModal(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[14px] font-semibold text-white bg-accent"
+          className="w-full flex items-center justify-center gap-2 py-4 text-[15px] font-semibold text-white bg-accent pb-safe"
         >
           <IcoPlan />
           <span>Буду готовить</span>
