@@ -78,7 +78,7 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav 
 })
 
 // ─── Vertical grid card (Dishes / Search) ────────────────────────────────────
-function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngredientIds }) {
+function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngredientIds, hint }) {
   const img   = dish.images?.[0] || dish.imageUrl
   const cat   = dish.categories?.[0] ?? dish.category
   const emoji = CAT_EMOJI[cat] || '🍽️'
@@ -170,6 +170,13 @@ function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngred
           )}
         </div>
       </div>
+
+      {/* Optional secondary hint (e.g. missing ingredients) */}
+      {hint && (
+        <div className="px-3 pb-3 -mt-1">
+          <p className="text-[12px] text-text-3 leading-snug">{hint}</p>
+        </div>
+      )}
     </button>
   )
 }

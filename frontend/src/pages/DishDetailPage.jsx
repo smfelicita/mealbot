@@ -342,19 +342,17 @@ export default function DishDetailPage() {
                 <div className="flex gap-3 overflow-x-auto pb-1">
                   {recs.nearMatch.map(({ dish: d, missing }) => (
                     <div key={d.id} className="shrink-0 w-48">
-                      <RecipeCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
-                      <div className="mt-1.5 px-2 py-1.5 bg-white rounded-xl text-[11px] text-text-2"
-                        style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                        Нет: {missing.map(m => m.name).join(', ')}
-                      </div>
+                      <RecipeCard
+                        dish={d}
+                        onClick={() => navigate(`/dishes/${d.id}`)}
+                        hint={`Докупить: ${missing.map(m => m.name).join(', ')}`}
+                      />
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            {recs.similar?.length > 0 && (
-              <RecsRow title="Похожие блюда" dishes={recs.similar} navigate={navigate} />
-            )}
+            {/* Похожие блюда временно отключены */}
           </div>
         )}
       </div>
