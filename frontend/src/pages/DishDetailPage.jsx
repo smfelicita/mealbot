@@ -41,7 +41,7 @@ function NutritionBlock({ nutrition }) {
         className="flex items-center gap-2 w-full text-left mb-3 focus:outline-none"
         onClick={() => setOpen(v => !v)}
       >
-        <span className="text-[17px] font-semibold text-text flex-1">Пищевая ценность</span>
+        <span className="text-[14px] font-medium text-text-2 flex-1">Пищевая ценность</span>
         <span className="text-text-3"><IcoChevron open={open} /></span>
       </button>
 

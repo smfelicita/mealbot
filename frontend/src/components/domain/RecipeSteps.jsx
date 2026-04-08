@@ -1,3 +1,6 @@
+import SectionTitle from '../ui/SectionTitle'
+import Card from '../ui/Card'
+
 function renderMarkdown(text) {
   if (!text) return ''
   return text
@@ -15,11 +18,13 @@ export default function RecipeSteps({ recipe }) {
 
   return (
     <div className="mb-0">
-      <h2 className="text-[17px] font-semibold text-text mb-4">Приготовление</h2>
-      <div
-        className="recipe-content"
-        dangerouslySetInnerHTML={{ __html: renderMarkdown(recipe) }}
-      />
+      <SectionTitle>Приготовление</SectionTitle>
+      <Card>
+        <div
+          className="p-4 recipe-content"
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(recipe) }}
+        />
+      </Card>
     </div>
   )
 }

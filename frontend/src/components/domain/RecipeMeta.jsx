@@ -27,7 +27,6 @@ export default function RecipeMeta({ dish }) {
           key={i}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-medium bg-white text-text-2 border border-border/60"
         >
-          <span className="text-[14px] leading-none">{c.emoji}</span>
           {c.label}
         </span>
       ))}
