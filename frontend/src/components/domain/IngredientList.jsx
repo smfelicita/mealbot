@@ -15,34 +15,27 @@ export default function IngredientList({ ingredients }) {
 
   const hasMore   = ingredients.length > COLLAPSED_COUNT
   const visible   = expanded || !hasMore ? ingredients : ingredients.slice(0, COLLAPSED_COUNT)
-  const hiddenCnt = ingredients.length - COLLAPSED_COUNT
 
   return (
-    <div className="mb-6">
-      {/* Header — кликабельный если есть скрытые */}
-      {hasMore ? (
-        <button
-          type="button"
-          onClick={() => setExpanded(v => !v)}
-          className="flex items-center gap-2 w-full text-left mb-3 focus:outline-none"
-        >
-          <h2 className="font-semibold text-[16px] text-text flex-1">🛒 Ингредиенты</h2>
-          <span className="text-[13px] text-text-3">{ingredients.length} шт.</span>
-          <span className="flex items-center gap-1 text-[13px] text-text-3">
+    <div className="mb-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[17px] font-semibold text-text">Ингредиенты</h2>
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => setExpanded(v => !v)}
+            className="flex items-center gap-1 text-[13px] text-text-3 focus:outline-none"
+          >
             {expanded ? 'Скрыть' : 'Показать все'}
             <IcoChevron open={expanded} />
-          </span>
-        </button>
-      ) : (
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-[16px] text-text">🛒 Ингредиенты</h2>
-          <span className="text-[13px] text-text-3">{ingredients.length} шт.</span>
-        </div>
-      )}
+          </button>
+        )}
+      </div>
 
-      {/* List */}
-      <div className="flex flex-col">
-        {visible.map((ing, idx) => {
+      {/* Rows */}
+      <div className="flex flex-col divide-y divide-border">
+        {visible.map(ing => {
           const amountStr = ing.toTaste
             ? 'по вкусу'
             : ing.amountValue && ing.unit
@@ -50,27 +43,20 @@ export default function IngredientList({ ingredients }) {
               : ing.amount || null
 
           return (
-            <div
-              key={ing.id}
-              className={[
-                'flex items-center justify-between py-2.5',
-                idx < visible.length - 1 ? 'border-b border-border' : '',
-              ].join(' ')}
-            >
-              <span className="text-[14px] text-text">
+            <div key={ing.id} className="flex items-center justify-between py-3">
+              <span className="text-[15px] text-text leading-snug">
                 {ing.name}
                 {ing.optional && (
-                  <span className="text-text-3 text-[12px] ml-1">(необязательно)</span>
+                  <span className="text-text-3 text-[12px] ml-1.5">необязательно</span>
                 )}
               </span>
               {amountStr && (
-                <span className="text-[13px] text-text-2 shrink-0 ml-3">{amountStr}</span>
+                <span className="text-[14px] text-text-2 shrink-0 ml-4 tabular-nums">{amountStr}</span>
               )}
             </div>
           )
         })}
       </div>
-
     </div>
   )
 }

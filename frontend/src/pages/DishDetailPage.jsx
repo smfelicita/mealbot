@@ -35,13 +35,13 @@ function NutritionBlock({ nutrition }) {
   ]
 
   return (
-    <div className="mb-6">
+    <div className="mb-8">
       <button
         type="button"
         className="flex items-center gap-2 w-full text-left mb-3 focus:outline-none"
         onClick={() => setOpen(v => !v)}
       >
-        <span className="text-[14px] font-medium text-text-2 flex-1">Пищевая ценность</span>
+        <span className="text-[17px] font-semibold text-text flex-1">Пищевая ценность</span>
         <span className="text-text-3"><IcoChevron open={open} /></span>
       </button>
 
@@ -49,11 +49,10 @@ function NutritionBlock({ nutrition }) {
         <div className="grid grid-cols-4 gap-2">
           {items.map(item => (
             <div key={item.label}
-              className="rounded-2xl px-2 py-3 text-center bg-white"
-              style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
-              <div className="text-[15px] font-semibold text-text">{item.value}</div>
-              <div className="text-[10px] text-text-3 mt-0.5">{item.unit}</div>
-              <div className="text-[10px] text-text-2 mt-0.5">{item.label}</div>
+              className="rounded-xl px-2 py-2.5 text-center bg-white border border-border/50">
+              <div className="text-[14px] font-semibold text-text tabular-nums">{item.value}</div>
+              <div className="text-[11px] text-text-3 leading-tight mt-0.5">{item.unit}</div>
+              <div className="text-[11px] text-text-2 leading-tight mt-0.5">{item.label}</div>
             </div>
           ))}
         </div>
@@ -314,19 +313,21 @@ export default function DishDetailPage() {
         )}
 
         {/* ── Content ── */}
-        <div className="px-4 pt-4">
-          <IngredientList ingredients={dish.ingredients} />
-          <RecipeSteps recipe={dish.recipe} />
-          <NutritionBlock nutrition={dish.nutrition} />
+        <div className="px-4 pt-5 flex flex-col divide-y divide-border/60">
+          <div className="pb-2"><IngredientList ingredients={dish.ingredients} /></div>
+          <div className="pt-6 pb-2"><RecipeSteps recipe={dish.recipe} /></div>
+          <div className="pt-6 pb-2"><NutritionBlock nutrition={dish.nutrition} /></div>
 
           {comments !== null && (
-            <CommentsSection
-              comments={comments}
-              setComments={setComments}
-              dishId={id}
-              currentUser={user}
-              dishAuthorId={dish.authorId}
-            />
+            <div className="pt-6">
+              <CommentsSection
+                comments={comments}
+                setComments={setComments}
+                dishId={id}
+                currentUser={user}
+                dishAuthorId={dish.authorId}
+              />
+            </div>
           )}
         </div>
 
@@ -337,11 +338,11 @@ export default function DishDetailPage() {
               <RecsRow title="Из холодильника" dishes={recs.fromFridge} navigate={navigate} />
             )}
             {user && recs.nearMatch?.length > 0 && (
-              <div className="px-4 pt-5">
-                <p className="font-semibold text-[15px] mb-3 text-text">Купите ещё немного</p>
-                <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+              <div className="pt-6">
+                <p className="text-[17px] font-semibold text-text px-4 mb-3">Осталось докупить</p>
+                <div className="flex overflow-x-auto px-4 gap-3 pb-1" style={{ scrollSnapType: 'x mandatory', scrollPaddingLeft: '1rem' }}>
                   {recs.nearMatch.map(({ dish: d, missing }) => (
-                    <div key={d.id} className="shrink-0 w-[85vw] max-w-sm" style={{ scrollSnapAlign: 'start' }}>
+                    <div key={d.id} className="shrink-0 w-full" style={{ scrollSnapAlign: 'start' }}>
                       <RecipeCard
                         variant="row"
                         dish={d}
@@ -359,11 +360,11 @@ export default function DishDetailPage() {
       </div>
 
       {/* ── Bottom action bar (fixed inside overlay) ── */}
-      <div className="shrink-0 bg-white border-t border-border px-4 py-3 pb-safe">
+      <div className="shrink-0 bg-white border-t border-border px-4 py-4 pb-safe">
         <button
           type="button"
           onClick={() => setShowPlanModal(true)}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[15px] font-semibold text-white bg-accent"
+          className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl text-[16px] font-semibold tracking-[-0.1px] text-white bg-accent active:opacity-90 transition-opacity"
         >
           <IcoPlan />
           <span>Буду готовить</span>

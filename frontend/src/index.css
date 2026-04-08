@@ -2,7 +2,7 @@
 
 /* ── Тема ────────────────────────────────────────────────────── */
 @theme {
-  --color-bg:           #EDE8DF;
+  --color-bg:           #F6F4EF;
   --color-bg-2:         #FFFFFF;
   --color-bg-3:         #F5EFE6;
   --color-card:         #FFFFFF;
@@ -61,10 +61,13 @@
 .fade-in { animation: fadeIn .2s ease both; }
 
 /* ── Recipe markdown ────────────────────────────────────────────── */
-.recipe-content { line-height: 1.7; }
-.recipe-content h2 { font-size: 16px; font-weight: 800; margin: 16px 0 8px; color: var(--color-accent); }
-.recipe-content ul, .recipe-content ol { padding-left: 20px; }
-.recipe-content li { margin-bottom: 4px; font-size: 14px; }
+.recipe-content { line-height: 1.75; font-size: 15px; color: var(--color-text); }
+.recipe-content h2 { font-size: 15px; font-weight: 700; margin: 20px 0 10px; color: var(--color-text); }
+.recipe-content ul { list-style: none; padding-left: 0; }
+.recipe-content ol { padding-left: 0; list-style: none; }
+.recipe-content li { margin-bottom: 10px; font-size: 15px; padding-left: 20px; position: relative; }
+.recipe-content ul li::before { content: '·'; position: absolute; left: 4px; color: var(--color-text-3); font-size: 18px; line-height: 1.4; }
+.recipe-content p { margin-bottom: 8px; }
 
 /* ── Safe area ──────────────────────────────────────────────────── */
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
