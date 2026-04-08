@@ -3,6 +3,7 @@ const Anthropic = require('@anthropic-ai/sdk')
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
 const { checkAiLimit } = require('../lib/aiLimit')
+const { checkMessageRelevance } = require('../lib/messageFilter')
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -86,6 +87,12 @@ router.post('/', optionalAuth, async (req, res, next) => {
   try {
     const { message, platform = 'web' } = req.body
     if (!message?.trim()) return res.status(400).json({ error: 'Сообщение не может быть пустым' })
+
+    // Проверка релевантности запроса — до обращения к API и списания лимита
+    const relevance = checkMessageRelevance(message)
+    if (!relevance.allowed) {
+      return res.status(400).json({ error: relevance.reason, offTopic: true })
+    }
 
     const isGuest = !req.userId
     const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress
