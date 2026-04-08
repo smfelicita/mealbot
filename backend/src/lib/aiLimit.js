@@ -1,6 +1,6 @@
 const prisma = require('./prisma')
 
-const USER_LIMIT = 50
+const USER_LIMIT = 10
 
 /**
  * Проверяет и увеличивает счётчик ИИ-сообщений для авторизованного пользователя.

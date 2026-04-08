@@ -8,7 +8,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 // Счётчик сообщений для гостей: { ip -> { count, date } }
 const guestCounters = new Map()
-const GUEST_LIMIT = 5
+const GUEST_LIMIT = 2
 
 function getGuestCount(ip) {
   const today = new Date().toDateString()
