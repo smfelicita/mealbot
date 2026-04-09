@@ -278,6 +278,49 @@ router.post('/', auth, async (req, res, next) => {
   }
 })
 
+// POST /api/dishes/bulk — быстрое добавление нескольких блюд по названию
+router.post('/bulk', auth, async (req, res, next) => {
+  try {
+    const { names } = req.body
+    if (!Array.isArray(names) || !names.length) {
+      return res.status(400).json({ error: 'Укажите названия блюд' })
+    }
+
+    const validNames = names.map(n => n?.trim()).filter(Boolean)
+    if (!validNames.length) return res.status(400).json({ error: 'Названия не могут быть пустыми' })
+
+    // Определяем видимость: FAMILY если есть семейная группа, иначе PRIVATE
+    const familyGroups = await prisma.groupMember.findMany({
+      where: { userId: req.userId, group: { type: 'FAMILY' } },
+      select: { groupId: true },
+    })
+    const familyGroupId = familyGroups[0]?.groupId || null
+    const visibility = familyGroupId ? 'FAMILY' : 'PRIVATE'
+
+    const created = await Promise.all(
+      validNames.map(nameRu =>
+        prisma.dish.create({
+          data: {
+            name: nameRu,
+            nameRu,
+            categories: [],
+            mealTime: [],
+            tags: [],
+            images: [],
+            visibility,
+            authorId: req.userId,
+            groupId: familyGroupId,
+          },
+        })
+      )
+    )
+
+    res.status(201).json({ created: created.map(d => ({ id: d.id, name: d.nameRu })) })
+  } catch (err) {
+    next(err)
+  }
+})
+
 // PUT /api/dishes/:id
 router.put('/:id', auth, async (req, res, next) => {
   try {
@@ -443,9 +486,20 @@ router.get('/:id/recommendations', optionalAuth, async (req, res, next) => {
   }
 })
 
+const VALID_MEALTYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'ANYTIME']
+const MEALTIME_STRING_MAP = { breakfast: 'BREAKFAST', lunch: 'LUNCH', dinner: 'DINNER', snack: 'SNACK', anytime: 'ANYTIME' }
+
+function normalizeMealTime(mt) {
+  if (!mt) return null
+  return VALID_MEALTYPES.includes(mt) ? mt : (MEALTIME_STRING_MAP[mt.toLowerCase()] || null)
+}
+
 function buildBaseFilter({ mealTime, category, tags, cuisine }) {
   const where = {}
-  if (mealTime) where.mealTime = { has: mealTime }
+  if (mealTime) {
+    const mt = normalizeMealTime(mealTime)
+    if (mt) where.mealTime = { has: mt }
+  }
   if (category) where.categories = { has: category }
   if (cuisine) where.cuisine = { contains: cuisine, mode: 'insensitive' }
   if (tags) {

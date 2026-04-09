@@ -98,10 +98,10 @@ const MAIN_MENU = {
   reply_markup: {
     keyboard: [
       [{ text: '🧊 Мой холодильник' }, { text: '➕ Добавить продукты' }],
-      [{ text: '📅 Буду готовить' },   { text: '🤖 Спросить ИИ' }],
+      [{ text: '📅 Буду готовить' },   { text: '🎲 Случайное блюдо' }],
       [{ text: '🌅 Завтрак' }, { text: '☀️ Обед' }],
       [{ text: '🌙 Ужин' },    { text: '🍎 Перекус' }],
-      [{ text: '🎲 Случайное блюдо' }, { text: '🌐 Открыть приложение' }],
+      [{ text: '🌐 Открыть приложение' }],
     ],
     resize_keyboard: true,
   },
@@ -652,7 +652,6 @@ async function handleFridgeCommand(chatId, userId, text) {
           reply_markup: {
             inline_keyboard: [
               [{ text: '📋 Выбрать из списка', callback_data: 'add_products' }],
-              [{ text: '🤖 Режим ИИ', callback_data: 'ai_mode' }],
             ],
           },
         }
@@ -748,13 +747,9 @@ bot.on('message', async (msg) => {
     })
   }
 
-  if (text === '🤖 Спросить ИИ') {
-    session.state = 'ai_chat'
-    return bot.sendMessage(chatId,
-      '✨ Режим ИИ включён! Задавай вопросы про еду и рецепты.\n\n_Для выхода — /start_',
-      { parse_mode: 'Markdown' }
-    )
-  }
+  // AI chat — временно скрыт
+  // if (text === '🤖 Спросить ИИ') { ... }
+
 
   if (text === '🌐 Открыть приложение') {
     const token = await generateWebLoginToken(user.id)
@@ -785,22 +780,8 @@ bot.on('message', async (msg) => {
     return bot.sendMessage(chatId, `🔍 Не нашёл *«${text}»*. Попробуй другое написание.`, { parse_mode: 'Markdown' })
   }
 
-  // AI chat
-  if (session.state === 'ai_chat') {
-    const { allowed, left } = await checkAiLimit(user.id)
-    if (!allowed) {
-      session.state = 'idle'
-      return bot.sendMessage(chatId, `⚠️ Дневной лимит ИИ-сообщений исчерпан (${USER_AI_LIMIT}/день). Возвращайся завтра!`)
-    }
-    await bot.sendChatAction(chatId, 'typing')
-    try {
-      const reply = await handleAiChat(chatId, user.id, text)
-      const footer = left <= 5 ? `\n\n_Осталось запросов сегодня: ${left}_` : ''
-      return bot.sendMessage(chatId, reply + footer, { parse_mode: 'Markdown' })
-    } catch (e) {
-      return bot.sendMessage(chatId, '⚠️ Ошибка ИИ, попробуй позже')
-    }
-  }
+  // AI chat — временно скрыт
+  // if (session.state === 'ai_chat') { ... }
 
   // Команды холодильника: + продукт / - продукт
   if (text.startsWith('+') || text.startsWith('-')) {
@@ -828,10 +809,10 @@ bot.on('message', async (msg) => {
 
   // Неизвестная команда — подсказка
   return bot.sendMessage(chatId,
-    `Не понял 🤔\n\n*Команды холодильника:*\n+ молоко — добавить\n- яйца — убрать\n\nИли выбери из меню ниже, либо включи режим ИИ:`,
+    `Не понял 🤔\n\n*Команды холодильника:*\n+ молоко — добавить\n- яйца — убрать\n\nИли выбери из меню ниже:`,
     {
       parse_mode: 'Markdown',
-      reply_markup: AI_MODE_BUTTON,
+      ...MAIN_MENU,
     }
   )
 })
@@ -858,14 +839,8 @@ bot.on('callback_query', async (query) => {
     return sendCategoryList(chatId, session)
   }
 
-  // Включить режим ИИ
-  if (data === 'ai_mode') {
-    session.state = 'ai_chat'
-    return bot.sendMessage(chatId,
-      '✨ Режим ИИ включён! Задавай вопросы про еду и рецепты.\n\n_Для выхода — /start_',
-      { parse_mode: 'Markdown' }
-    )
-  }
+  // Режим ИИ — временно скрыт
+  // if (data === 'ai_mode') { ... }
 
   // Отмена удаления продукта из холодильника
   if (data.startsWith('undo_remove_')) {

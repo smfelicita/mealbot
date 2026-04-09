@@ -71,6 +71,7 @@ export const api = {
   // My Dishes
   getMyDishes: () => request('/dishes/my'),
   createDish: (data) => request('/dishes', { method: 'POST', body: data }),
+  bulkCreateDishes: (names) => request('/dishes/bulk', { method: 'POST', body: { names } }),
   updateDish: (id, data) => request(`/dishes/${id}`, { method: 'PUT', body: data }),
   deleteDish: (id) => request(`/dishes/${id}`, { method: 'DELETE' }),
 

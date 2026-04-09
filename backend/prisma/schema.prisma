@@ -37,14 +37,14 @@ enum DishVisibility {
 }
 
 enum MealCategory {
-  BREAKFAST
-  LUNCH
-  DINNER
-  SNACK
   SOUP
   SALAD
+  MAIN
+  SIDE
   DESSERT
   DRINK
+  BAKERY
+  SAUCE
 }
 
 enum MealType {
@@ -173,7 +173,7 @@ model Dish {
   description String?
   categories  MealCategory[]
   cuisine     String?
-  mealTime    String[]
+  mealTime    MealType[]
   tags        String[]
   cookTime    Int?
   difficulty  String?

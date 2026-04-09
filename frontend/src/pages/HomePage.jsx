@@ -89,9 +89,8 @@ export default function HomePage() {
 
   const filtered = dishes.filter(dish => {
     if (mealTime) {
-      const mtToCategory = { breakfast: 'BREAKFAST', lunch: 'LUNCH', dinner: 'DINNER', snack: 'SNACK' }
-      const cat = mtToCategory[mealTime]
-      if (cat && dish.categories?.length && !dish.categories.includes(cat)) return false
+      const mt = mealTime.toUpperCase()
+      if (dish.mealTime?.length && !dish.mealTime.includes(mt)) return false
     }
     if (favOnly && !favIds.has(dish.id)) return false
     if (fridgeOnly) {

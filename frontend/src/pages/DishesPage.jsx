@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
@@ -130,6 +130,70 @@ function RecipesHeader({ fridgeMode, onToggleFridge }) {
   )
 }
 
+// ─── BulkAddModal ─────────────────────────────────────────────────────────────
+function BulkAddModal({ onClose, onDone }) {
+  const [value, setValue] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const taRef = useRef(null)
+
+  useEffect(() => { taRef.current?.focus() }, [])
+
+  async function handleSubmit() {
+    const names = value.split(',').map(s => s.trim()).filter(Boolean)
+    if (!names.length) { setError('Введите хотя бы одно название'); return }
+    setSaving(true)
+    setError('')
+    try {
+      await api.bulkCreateDishes(names)
+      onDone()
+    } catch (e) {
+      setError(e.message || 'Ошибка при создании')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-end justify-center"
+      style={{ background: 'rgba(0,0,0,0.35)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="w-full max-w-lg bg-white rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-4"
+        style={{ boxShadow: '0 -4px 32px rgba(0,0,0,0.12)' }}>
+        {/* Handle */}
+        <div className="w-10 h-1 rounded-full bg-border mx-auto -mt-1" />
+
+        <h2 className="text-[18px] font-semibold">Добавить несколько блюд</h2>
+        <p className="text-[13px] text-text-2 -mt-2">
+          Введите названия через запятую
+        </p>
+
+        <textarea
+          ref={taRef}
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder="Блины, борщ, паста, омлет…"
+          rows={4}
+          className="w-full rounded-2xl border border-border px-4 py-3 text-[15px] resize-none focus:outline-none focus:border-[#C4704A] transition-colors"
+        />
+
+        {error && <p className="text-red-500 text-[13px] -mt-2">{error}</p>}
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={saving}
+          className="w-full rounded-2xl py-3.5 text-[15px] font-semibold text-white transition-opacity disabled:opacity-50"
+          style={{ background: '#C4704A' }}
+        >
+          {saving ? 'Добавляю…' : 'Добавить'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DishesPage() {
   const navigate = useNavigate()
@@ -142,6 +206,7 @@ export default function DishesPage() {
   const [filter, setFilter]       = useState('all')   // 'all' | 'favorites'
   const [favIds, setFavIds]       = useState(new Set())
   const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
+  const [showBulkAdd, setShowBulkAdd] = useState(false)
 
   useEffect(() => {
     if (!token) return
@@ -213,6 +278,19 @@ export default function DishesPage() {
         <MealTypeChips active={mealTime} onChange={setMealTime} />
       </div>
 
+      {/* Быстрое добавление */}
+      {token && (
+        <div className="px-4 mt-3">
+          <button
+            type="button"
+            onClick={() => setShowBulkAdd(true)}
+            className="text-[13px] font-medium text-text-2 hover:text-text transition-colors"
+          >
+            Добавить несколько блюд →
+          </button>
+        </div>
+      )}
+
       {/* RecipeList */}
       <div className="px-4 mt-4">
         {loading ? (
@@ -246,6 +324,14 @@ export default function DishesPage() {
 
       {/* AddRecipeButton (FAB) */}
       {token && <AddRecipeButton onClick={() => navigate('/my-recipes/new')} />}
+
+      {/* BulkAddModal */}
+      {showBulkAdd && (
+        <BulkAddModal
+          onClose={() => setShowBulkAdd(false)}
+          onDone={() => { setShowBulkAdd(false); load() }}
+        />
+      )}
     </div>
   )
 }

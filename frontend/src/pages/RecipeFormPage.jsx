@@ -8,21 +8,22 @@ import {
 } from '../components/ui'
 
 const CATEGORIES = [
-  { value: 'BREAKFAST', label: 'Завтрак' },
-  { value: 'LUNCH',     label: 'Обед'    },
-  { value: 'DINNER',    label: 'Ужин'    },
-  { value: 'SNACK',     label: 'Перекус' },
-  { value: 'SOUP',      label: 'Суп'     },
-  { value: 'SALAD',     label: 'Салат'   },
-  { value: 'DESSERT',   label: 'Десерт'  },
-  { value: 'DRINK',     label: 'Напиток' },
+  { value: 'SOUP',    label: 'Суп'         },
+  { value: 'SALAD',   label: 'Салат'       },
+  { value: 'MAIN',    label: 'Основное'    },
+  { value: 'SIDE',    label: 'Гарнир'      },
+  { value: 'DESSERT', label: 'Десерт'      },
+  { value: 'DRINK',   label: 'Напиток'     },
+  { value: 'BAKERY',  label: 'Выпечка'     },
+  { value: 'SAUCE',   label: 'Соус'        },
 ]
 
 const MEAL_TIMES = [
-  { value: 'breakfast', label: 'Утро'     },
-  { value: 'lunch',     label: 'Обед'     },
-  { value: 'dinner',    label: 'Вечер'    },
-  { value: 'snack',     label: 'Перекус'  },
+  { value: 'BREAKFAST', label: 'Утро'     },
+  { value: 'LUNCH',     label: 'Обед'     },
+  { value: 'DINNER',    label: 'Вечер'    },
+  { value: 'SNACK',     label: 'Перекус'  },
+  { value: 'ANYTIME',   label: 'Любое'    },
 ]
 
 const DIFFICULTIES = [
@@ -283,10 +284,7 @@ export default function RecipeFormPage() {
     if (mode === 'extended' && !form.categories.length) errs.categories = 'Выберите хотя бы одну категорию'
     if (Object.keys(errs).length) { setErrors(errs); return }
 
-    const mtToCategory = { breakfast: 'BREAKFAST', lunch: 'LUNCH', dinner: 'DINNER', snack: 'SNACK' }
-    const resolvedCategories = (mode === 'quick' && !form.categories.length && form.mealTime.length)
-      ? form.mealTime.map(mt => mtToCategory[mt]).filter(Boolean)
-      : form.categories
+    const resolvedCategories = form.categories
 
     setSaving(true)
     try {
