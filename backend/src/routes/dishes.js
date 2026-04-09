@@ -216,17 +216,17 @@ router.post('/', auth, async (req, res, next) => {
     const {
       nameRu, description, categories, cuisine, mealTime, tags,
       cookTime, difficulty, calories, imageUrl, images, videoUrl,
-      recipe, ingredients, visibility = 'PRIVATE', groupId,
+      recipe, ingredients, visibility = 'PRIVATE',
     } = req.body
 
     if (!nameRu?.trim()) return res.status(400).json({ error: 'Укажите название' })
     if (!categories?.length) return res.status(400).json({ error: 'Укажите категорию' })
+    if (!mealTime?.length) return res.status(400).json({ error: 'Укажите время приёма пищи' })
 
-    // Проверить членство в группе если groupId указан
-    if (groupId) {
-      const memberGroupIds = await getMemberGroupIds(req.userId)
-      if (!memberGroupIds.includes(groupId)) return res.status(403).json({ error: 'Вы не являетесь участником этой группы' })
-    }
+    // Автоопределение groupId: FAMILY → семейная группа автора
+    const resolvedGroupId = visibility === 'FAMILY'
+      ? ((await getFamilyGroupIds(req.userId))[0] || null)
+      : null
 
     const dish = await prisma.dish.create({
       data: {
@@ -246,7 +246,7 @@ router.post('/', auth, async (req, res, next) => {
         recipe: recipe || null,
         visibility,
         authorId: req.userId,
-        groupId: groupId || null,
+        groupId: resolvedGroupId,
         ...(ingredients?.length ? {
           ingredients: {
             create: ingredients.map(ing => ({
@@ -304,7 +304,7 @@ router.post('/bulk', auth, async (req, res, next) => {
             name: nameRu,
             nameRu,
             categories: [],
-            mealTime: [],
+            mealTime: ['ANYTIME'],
             tags: [],
             images: [],
             visibility,
@@ -331,12 +331,15 @@ router.put('/:id', auth, async (req, res, next) => {
     const {
       nameRu, description, categories, cuisine, mealTime, tags,
       cookTime, difficulty, calories, imageUrl, images, videoUrl,
-      recipe, ingredients, visibility, groupId,
+      recipe, ingredients, visibility,
     } = req.body
 
-    if (groupId !== undefined && groupId) {
-      const memberGroupIds = await getMemberGroupIds(req.userId)
-      if (!memberGroupIds.includes(groupId)) return res.status(403).json({ error: 'Вы не являетесь участником этой группы' })
+    // Если меняется visibility — пересчитываем groupId
+    let resolvedGroupId = undefined
+    if (visibility !== undefined) {
+      resolvedGroupId = visibility === 'FAMILY'
+        ? ((await getFamilyGroupIds(req.userId))[0] || null)
+        : null
     }
 
     if (ingredients !== undefined) {
@@ -360,7 +363,7 @@ router.put('/:id', auth, async (req, res, next) => {
         ...(videoUrl !== undefined && { videoUrl: videoUrl || null }),
         ...(recipe !== undefined && { recipe: recipe || null }),
         ...(visibility !== undefined && { visibility }),
-        ...(groupId !== undefined && { groupId: groupId || null }),
+        ...(resolvedGroupId !== undefined && { groupId: resolvedGroupId }),
         ...(ingredients?.length ? {
           ingredients: {
             create: ingredients.map(ing => ({

@@ -84,7 +84,6 @@ model User {
 
   fridge              FridgeItem[]
   chatHistory         ChatMessage[]
-  preferences         UserPreferences?
   dishes              Dish[]
   customIngredients   Ingredient[]
   ownedGroups         Group[]
@@ -95,19 +94,6 @@ model User {
   comments            Comment[]
 
   @@map("users")
-}
-
-model UserPreferences {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dietaryTags         String[]
-  dislikedIngredients String[]
-  preferredMealTimes  String[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  @@map("user_preferences")
 }
 
 // ─── Ингредиенты и холодильник ───────────────────────────────────────────────

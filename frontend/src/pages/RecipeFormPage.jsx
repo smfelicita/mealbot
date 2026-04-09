@@ -88,8 +88,6 @@ export default function RecipeFormPage() {
   const [mode, setMode]                       = useState(isEdit ? 'extended' : 'quick')
   const [loading, setLoading]                 = useState(isEdit)
   const [saving, setSaving]                   = useState(false)
-  const [groups, setGroups]                   = useState([])
-  const [selectedGroupId, setSelectedGroupId] = useState(location.state?.groupId || '')
   const [images, setImages]                   = useState([])
   const [uploadingImage, setUploadingImage]   = useState(false)
   const [uploadingVideo, setUploadingVideo]   = useState(false)
@@ -115,7 +113,6 @@ export default function RecipeFormPage() {
   // ── Load data ────────────────────────────────────────────────────────────
   useEffect(() => {
     api.getIngredients().then(setAllIngredients).catch(() => {})
-    api.getGroups().then(setGroups).catch(() => {})
 
     function applyDish(dish, resetImages = true) {
       setForm({
@@ -137,7 +134,6 @@ export default function RecipeFormPage() {
         setImages(imgs)
       }
       setCuisineInput(dish.cuisine || '')
-      setSelectedGroupId(dish.groupId || '')
       setIngredients(dish.ingredients.map(ing => ({
         id: ing.id, name: ing.name, emoji: ing.emoji,
         amountValue: ing.amountValue || '',
@@ -281,6 +277,7 @@ export default function RecipeFormPage() {
   async function handleSubmit() {
     const errs = {}
     if (!form.nameRu.trim()) errs.nameRu = 'Укажите название'
+    if (!form.mealTime.length) errs.mealTime = 'Выберите время приёма пищи'
     if (mode === 'extended' && !form.categories.length) errs.categories = 'Выберите хотя бы одну категорию'
     if (Object.keys(errs).length) { setErrors(errs); return }
 
@@ -305,7 +302,6 @@ export default function RecipeFormPage() {
           toTaste: i.toTaste || false,
           optional: i.optional || false,
         })),
-        groupId: selectedGroupId || null,
         visibility: form.visibility,
       }
       if (isEdit) {
@@ -458,6 +454,7 @@ export default function RecipeFormPage() {
               </Chip>
             ))}
           </div>
+          {errors.mealTime && <p className="text-red-400 text-xs mt-1.5">{errors.mealTime}</p>}
         </div>
 
         {/* Сложность + Время — extended only */}
@@ -639,25 +636,9 @@ export default function RecipeFormPage() {
           />
         )}
 
-        {/* Группа — extended only */}
-        {mode === 'extended' && groups.length > 0 && (
-          <div>
-            <Label>Группа</Label>
-            <select
-              className="w-full bg-bg-3 border border-border rounded-sm text-text text-[15px] px-3.5 py-2.5 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-              value={selectedGroupId}
-              onChange={e => setSelectedGroupId(e.target.value)}
-            >
-              <option value="">Личный рецепт</option>
-              {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-            <p className="text-[12px] text-text-2 mt-1.5">Рецепт в группе виден всем участникам</p>
-          </div>
-        )}
-
-        {/* Видимость */}
+        {/* Доступ */}
         <div>
-          <Label>Видимость</Label>
+          <Label>Доступ</Label>
           <div className="flex flex-col gap-2">
             {VISIBILITY_OPTIONS.map(opt => (
               <label
