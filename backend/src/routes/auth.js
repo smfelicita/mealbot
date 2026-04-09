@@ -2,9 +2,20 @@ const router = require('express').Router()
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { z } = require('zod')
+const rateLimit = require('express-rate-limit')
 const prisma = require('../lib/prisma')
 const { Resend } = require('resend')
 const { authMiddleware } = require('../middleware/auth')
+
+// Строгий rate limit для verify-эндпоинтов: 5 попыток за 15 минут по target (email/phone)
+const verifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => req.body.email || req.body.phone || req.ip,
+  message: { error: 'Слишком много попыток. Подождите 15 минут.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.RESEND_FROM || 'MealBot <noreply@smarussya.ru>'
@@ -105,7 +116,7 @@ router.post('/register', async (req, res, next) => {
 })
 
 // POST /api/auth/verify-email
-router.post('/verify-email', async (req, res, next) => {
+router.post('/verify-email', verifyLimiter, async (req, res, next) => {
   try {
     const { email, code } = req.body
     if (!email || !code) return res.status(400).json({ error: 'Укажи email и код' })
@@ -162,6 +173,8 @@ router.post('/login', async (req, res, next) => {
     const ok = await bcrypt.compare(password, user.passwordHash)
     if (!ok) return res.status(401).json({ error: 'Неверный email или пароль' })
 
+    if (!user.emailVerified) return res.status(403).json({ error: 'Подтвердите email перед входом', requireVerification: true, email })
+
     await addDefaultFridgeItems(user.id)
 
     res.json({
@@ -198,7 +211,7 @@ router.post('/send-phone-code', async (req, res, next) => {
 })
 
 // POST /api/auth/verify-phone
-router.post('/verify-phone', async (req, res, next) => {
+router.post('/verify-phone', verifyLimiter, async (req, res, next) => {
   try {
     const { phone, code, name } = req.body
     if (!phone || !code) return res.status(400).json({ error: 'Укажи телефон и код' })
@@ -243,14 +256,10 @@ router.post('/google', async (req, res, next) => {
     const { sub: googleId, email, name } = ticket.getPayload()
 
     let user = await prisma.user.findUnique({ where: { googleId } })
-    if (!user && email) {
-      user = await prisma.user.findUnique({ where: { email } })
-      if (user) {
-        user = await prisma.user.update({ where: { id: user.id }, data: { googleId } })
-      }
-    }
     const isNew = !user
     if (!user) {
+      // Не линкуем автоматически к существующему email — это риск захвата аккаунта.
+      // Создаём нового пользователя. Связывание с email-аккаунтом — отдельный flow.
       user = await prisma.user.create({ data: { googleId, email: email || null, name: name || null, emailVerified: !!email } })
     }
 
@@ -286,7 +295,10 @@ router.post('/generate-telegram-link', authMiddleware, async (req, res, next) =>
     const token = randomBytes(16).toString('hex')
     await prisma.user.update({
       where: { id: req.userId },
-      data: { pendingTelegramLink: token },
+      data: {
+        pendingTelegramLink: token,
+        pendingTelegramLinkExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 часа
+      },
     })
     const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'MealBotRu'
     res.json({ url: `https://t.me/${botUsername}?start=link_${token}` })

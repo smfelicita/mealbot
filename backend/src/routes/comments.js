@@ -8,11 +8,15 @@ const { authMiddleware } = require('../middleware/auth')
 // - ИЛИ участник семейной группы блюда (visibility=FAMILY)
 async function canComment(userId, dish) {
   if (dish.authorId === userId) return true
-  if (dish.visibility !== 'FAMILY' || !dish.groupId) return false
-  const member = await prisma.groupMember.findUnique({
-    where: { groupId_userId: { groupId: dish.groupId, userId } },
-  })
-  return Boolean(member)
+  // FAMILY с groupId — проверяем членство
+  if (dish.visibility === 'FAMILY' && dish.groupId) {
+    const member = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: dish.groupId, userId } },
+    })
+    return Boolean(member)
+  }
+  // PRIVATE / FAMILY без groupId / ALL_GROUPS / PUBLIC — только автор (уже проверен выше)
+  return false
 }
 
 // GET /api/comments?dishId=xxx — список комментариев

@@ -10,10 +10,9 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 // Очистка просроченных токенов при старте (старше 24 часов)
 async function cleanupExpiredTokens() {
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
   const { count } = await prisma.user.updateMany({
-    where: { pendingTelegramLink: { not: null }, updatedAt: { lt: cutoff } },
-    data: { pendingTelegramLink: null },
+    where: { pendingTelegramLink: { not: null }, pendingTelegramLinkExpiresAt: { lt: new Date() } },
+    data: { pendingTelegramLink: null, pendingTelegramLinkExpiresAt: null },
   })
   if (count > 0) console.log(`[cleanup] Удалено ${count} просроченных pendingTelegramLink`)
 }
@@ -166,53 +165,59 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
       await bot.sendMessage(chatId, '❌ Ссылка недействительна или уже использована. Получите новую в приложении.')
       return
     }
+    if (webUser.pendingTelegramLinkExpiresAt && webUser.pendingTelegramLinkExpiresAt < new Date()) {
+      await prisma.user.update({ where: { id: webUser.id }, data: { pendingTelegramLink: null, pendingTelegramLinkExpiresAt: null } })
+      await bot.sendMessage(chatId, '❌ Ссылка устарела (действует 24 часа). Получите новую в приложении.')
+      return
+    }
 
     const tgIdStr = String(msg.from.id)
 
     // Если для этого Telegram уже есть бот-аккаунт (отдельный от веб-аккаунта) —
     // мигрируем данные и снимаем telegramId со старого аккаунта
     const botAccount = await prisma.user.findUnique({ where: { telegramId: tgIdStr } })
-    if (botAccount && botAccount.id !== webUser.id) {
-      // Переносим холодильник (только личные позиции, без семейных групп)
-      const botFridge = await prisma.fridgeItem.findMany({
-        where: { userId: botAccount.id, groupId: null },
-      })
-      for (const item of botFridge) {
-        const exists = await prisma.fridgeItem.findFirst({
-          where: { userId: webUser.id, ingredientId: item.ingredientId, groupId: null },
+
+    await prisma.$transaction(async (tx) => {
+      if (botAccount && botAccount.id !== webUser.id) {
+        // Переносим холодильник (только личные позиции, без семейных групп)
+        const botFridge = await tx.fridgeItem.findMany({
+          where: { userId: botAccount.id, groupId: null },
         })
-        if (!exists) {
-          await prisma.fridgeItem.update({
-            where: { id: item.id },
-            data: { userId: webUser.id },
+        for (const item of botFridge) {
+          const exists = await tx.fridgeItem.findFirst({
+            where: { userId: webUser.id, ingredientId: item.ingredientId, groupId: null },
           })
-        } else {
-          await prisma.fridgeItem.delete({ where: { id: item.id } })
+          if (!exists) {
+            await tx.fridgeItem.update({ where: { id: item.id }, data: { userId: webUser.id } })
+          } else {
+            await tx.fridgeItem.delete({ where: { id: item.id } })
+          }
         }
+
+        // Переносим план питания
+        await tx.mealPlan.updateMany({
+          where: { userId: botAccount.id },
+          data: { userId: webUser.id },
+        })
+
+        // Снимаем telegramId со старого аккаунта
+        await tx.user.update({
+          where: { id: botAccount.id },
+          data: { telegramId: null, telegramUsername: null },
+        })
       }
 
-      // Переносим план питания
-      await prisma.mealPlan.updateMany({
-        where: { userId: botAccount.id },
-        data: { userId: webUser.id },
+      // Привязываем Telegram к веб-аккаунту
+      await tx.user.update({
+        where: { id: webUser.id },
+        data: {
+          telegramId: tgIdStr,
+          telegramUsername: msg.from.username,
+          pendingTelegramLink: null,
+          pendingTelegramLinkExpiresAt: null,
+        },
       })
-
-      // Снимаем telegramId со старого аккаунта
-      await prisma.user.update({
-        where: { id: botAccount.id },
-        data: { telegramId: null, telegramUsername: null },
-      })
-    }
-
-    // Привязываем Telegram к веб-аккаунту
-    await prisma.user.update({
-      where: { id: webUser.id },
-      data: {
-        telegramId: tgIdStr,
-        telegramUsername: msg.from.username,
-        pendingTelegramLink: null,
-      },
-    })
+    }) // конец транзакции
 
     const name = webUser.name || msg.from.first_name || 'друг'
     const migratedNote = botAccount && botAccount.id !== webUser.id
