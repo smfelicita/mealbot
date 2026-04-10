@@ -6,13 +6,19 @@ import { useStore } from '../store'
 export default function TelegramAuthPage() {
   const [searchParams] = useSearchParams()
   const [error, setError] = useState('')
-  const { setAuth } = useStore()
+  const { setAuth, user } = useStore()
   const navigate = useNavigate()
 
   useEffect(() => {
     const token = searchParams.get('token')
     if (!token) {
       setError('Токен не передан. Вернитесь в Telegram и запросите новую ссылку.')
+      return
+    }
+
+    // Если пользователь уже авторизован — не перезаписываем сессию
+    if (user) {
+      navigate('/', { replace: true })
       return
     }
 

@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit')
 const prisma = require('../lib/prisma')
 const { Resend } = require('resend')
 const { authMiddleware } = require('../middleware/auth')
+const { addDefaultFridgeItems } = require('../lib/fridge')
 
 // Строгий rate limit для verify-эндпоинтов: 5 попыток за 15 минут по target (email/phone)
 const verifyLimiter = rateLimit({
@@ -13,6 +14,16 @@ const verifyLimiter = rateLimit({
   max: 5,
   keyGenerator: (req) => req.body.email || req.body.phone || req.ip,
   message: { error: 'Слишком много попыток. Подождите 15 минут.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+// Rate limit на отправку кодов: 5 отправок за 10 минут по IP
+const sendCodeLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => req.ip,
+  message: { error: 'Слишком много запросов на отправку кода. Подождите 10 минут.' },
   standardHeaders: true,
   legacyHeaders: false,
 })
@@ -40,29 +51,8 @@ async function sendEmailCode(email, code) {
   })
 }
 
-const signToken = (userId, role) =>
-  jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: '30d' })
-
-// Добавляет базовые продукты в холодильник (только те, которых ещё нет)
-async function addDefaultFridgeItems(userId) {
-  const basics = await prisma.ingredient.findMany({ where: { isBasic: true }, select: { id: true, defaultQuantity: true, defaultUnit: true } })
-  if (!basics.length) return
-  const basicIds = basics.map(b => b.id)
-  const existing = await prisma.fridgeItem.findMany({ where: { userId, groupId: null, ingredientId: { in: basicIds } }, select: { ingredientId: true } })
-  const existingIds = new Set(existing.map(e => e.ingredientId))
-  const missing = basics.filter(b => !existingIds.has(b.id))
-  if (!missing.length) return
-  await prisma.fridgeItem.createMany({
-    data: missing.map(ing => ({
-      userId,
-      ingredientId: ing.id,
-      groupId: null,
-      quantityValue: ing.defaultQuantity ?? null,
-      quantityUnit: ing.defaultUnit ?? null,
-    })),
-    skipDuplicates: true,
-  })
-}
+const signToken = (userId, role, tokenVersion) =>
+  jwt.sign({ userId, role, tokenVersion }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
 function genCode() {
   return String(Math.floor(100000 + Math.random() * 900000))
@@ -99,7 +89,17 @@ router.post('/register', async (req, res, next) => {
     const { email, password, name } = schema.parse(req.body)
 
     const existing = await prisma.user.findUnique({ where: { email } })
-    if (existing) return res.status(409).json({ error: 'Email уже зарегистрирован' })
+    if (existing) {
+      // Аккаунт есть, но email не подтверждён — даём шанс пройти верификацию
+      if (!existing.emailVerified) {
+        await prisma.verificationCode.deleteMany({ where: { type: 'email', target: email, usedAt: null } })
+        const code = genCode()
+        await saveCode('email', email, code)
+        await sendEmailCode(email, code)
+        return res.status(200).json({ requireVerification: true, email })
+      }
+      return res.status(409).json({ error: 'Email уже зарегистрирован' })
+    }
 
     const passwordHash = await bcrypt.hash(password, 12)
     await prisma.user.create({ data: { email, passwordHash, name } })
@@ -129,16 +129,16 @@ router.post('/verify-email', verifyLimiter, async (req, res, next) => {
     const user = await prisma.user.update({
       where: { email },
       data: { emailVerified: true },
-      select: { id: true, email: true, name: true, role: true },
+      select: { id: true, email: true, name: true, role: true, tokenVersion: true },
     })
 
     await addDefaultFridgeItems(user.id)
-    res.json({ token: signToken(user.id, user.role), user })
+    res.json({ token: signToken(user.id, user.role, user.tokenVersion), user })
   } catch (err) { next(err) }
 })
 
 // POST /api/auth/resend-email-code
-router.post('/resend-email-code', async (req, res, next) => {
+router.post('/resend-email-code', sendCodeLimiter, async (req, res, next) => {
   try {
     const { email } = req.body
     if (!email) return res.status(400).json({ error: 'Укажи email' })
@@ -175,17 +175,15 @@ router.post('/login', async (req, res, next) => {
 
     if (!user.emailVerified) return res.status(403).json({ error: 'Подтвердите email перед входом', requireVerification: true, email })
 
-    await addDefaultFridgeItems(user.id)
-
     res.json({
-      token: signToken(user.id, user.role),
+      token: signToken(user.id, user.role, user.tokenVersion),
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     })
   } catch (err) { next(err) }
 })
 
 // POST /api/auth/send-phone-code
-router.post('/send-phone-code', async (req, res, next) => {
+router.post('/send-phone-code', sendCodeLimiter, async (req, res, next) => {
   try {
     const { phone } = req.body
     if (!phone) return res.status(400).json({ error: 'Укажи номер телефона' })
@@ -237,7 +235,7 @@ router.post('/verify-phone', verifyLimiter, async (req, res, next) => {
 
     if (isNew) await addDefaultFridgeItems(user.id)
     res.json({
-      token: signToken(user.id, user.role),
+      token: signToken(user.id, user.role, user.tokenVersion),
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     })
   } catch (err) { next(err) }
@@ -265,7 +263,7 @@ router.post('/google', async (req, res, next) => {
 
     if (isNew) await addDefaultFridgeItems(user.id)
     res.json({
-      token: signToken(user.id, user.role),
+      token: signToken(user.id, user.role, user.tokenVersion),
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     })
   } catch (err) {
@@ -318,16 +316,27 @@ router.get('/tg', async (req, res, next) => {
     const age = Date.now() - new Date(user.webLoginTokenAt).getTime()
     if (age > 10 * 60 * 1000) return res.status(401).json({ error: 'Токен истёк' })
 
-    // Сбрасываем токен после использования
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { webLoginToken: null, webLoginTokenAt: null },
-    })
-
+    // Сначала отправляем ответ, потом сбрасываем токен в фоне.
+    // Так race condition не заблокирует пользователя если запрос упадёт после update.
     res.json({
-      token: signToken(user.id, user.role),
+      token: signToken(user.id, user.role, user.tokenVersion),
       user: { id: user.id, email: user.email, name: user.name, role: user.role, telegramId: user.telegramId, telegramUsername: user.telegramUsername },
     })
+    prisma.user.update({
+      where: { id: user.id },
+      data: { webLoginToken: null, webLoginTokenAt: null },
+    }).catch(() => {})
+  } catch (err) { next(err) }
+})
+
+// POST /api/auth/logout — инвалидирует все активные токены пользователя
+router.post('/logout', authMiddleware, async (req, res, next) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { tokenVersion: { increment: 1 } },
+    })
+    res.json({ ok: true })
   } catch (err) { next(err) }
 })
 

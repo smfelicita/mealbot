@@ -1,5 +1,12 @@
 import { create } from 'zustand'
 
+// Вызывается из api/index.js при 401 — без доступа к React-хукам
+export function forceLogout() {
+  localStorage.removeItem('mealbot_token')
+  useStore.setState({ user: null, token: null })
+  window.location.href = '/auth'
+}
+
 export const useStore = create((set, get) => ({
   // Auth
   user: null,

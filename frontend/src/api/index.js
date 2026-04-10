@@ -1,3 +1,5 @@
+import { forceLogout } from '../store'
+
 const BASE = '/api'
 
 function getToken() {
@@ -16,7 +18,15 @@ async function request(path, options = {}) {
     body: options.body ? JSON.stringify(options.body) : undefined,
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Ошибка запроса')
+  if (res.status === 401 && token) {
+    forceLogout()
+    throw new Error('Сессия истекла, войдите снова')
+  }
+  if (!res.ok) {
+    const err = new Error(data.error || 'Ошибка запроса')
+    err.data = data
+    throw err
+  }
   return data
 }
 
@@ -26,6 +36,7 @@ export const api = {
     request('/auth/register', { method: 'POST', body: { email, password, name } }),
   login: (email, password) =>
     request('/auth/login', { method: 'POST', body: { email, password } }),
+  logout: () => request('/auth/logout', { method: 'POST' }),
   me: () => request('/auth/me'),
   verifyEmail: (email, code) =>
     request('/auth/verify-email', { method: 'POST', body: { email, code } }),
@@ -112,7 +123,6 @@ export const api = {
   deleteMealPlan: (id) => request(`/meal-plans/${id}`, { method: 'DELETE' }),
 
   // Telegram linking
-  getTelegramLinkToken: () => request('/telegram/link-token', { method: 'POST' }),
   getTelegramLinkStatus: () => request('/telegram/link-status'),
 
   // Favorites

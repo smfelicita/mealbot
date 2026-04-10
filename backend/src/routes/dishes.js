@@ -70,6 +70,23 @@ async function buildVisibilityFilter(userId) {
   }
 }
 
+// Проверка доступа к блюду по visibility — возвращает true если доступ разрешён
+async function checkDishAccess(dish, userId) {
+  if (dish.visibility === 'PUBLIC') return true
+  if (dish.authorId === userId) return true
+  const groupIds = await getMemberGroupIds(userId)
+  if (dish.visibility === 'FAMILY' && dish.groupId) {
+    return groupIds.includes(dish.groupId)
+  }
+  if (dish.visibility === 'ALL_GROUPS') {
+    const sharedGroup = await prisma.groupMember.findFirst({
+      where: { groupId: { in: groupIds }, userId: dish.authorId },
+    })
+    return Boolean(sharedGroup)
+  }
+  return false
+}
+
 // Полнотекстовый + нечёткий поиск через pg_trgm (raw SQL)
 async function getSearchIds(q) {
   const likeQ = `%${q}%`
@@ -187,24 +204,8 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
     })
     if (!dish) return res.status(404).json({ error: 'Блюдо не найдено' })
 
-    // Проверка доступа по visibility
-    if (dish.visibility === 'PUBLIC') {
-      // доступно всем
-    } else if (dish.authorId === req.userId) {
-      // автор всегда имеет доступ
-    } else {
-      const groupIds = await getMemberGroupIds(req.userId)
-      let allowed = false
-      if (dish.visibility === 'FAMILY' && dish.groupId) {
-        allowed = groupIds.includes(dish.groupId)
-      } else if (dish.visibility === 'ALL_GROUPS') {
-        const sharedGroup = await prisma.groupMember.findFirst({
-          where: { groupId: { in: groupIds }, userId: dish.authorId },
-        })
-        allowed = Boolean(sharedGroup)
-      }
-      // PRIVATE (с groupId или без) — только автор, остальным запрещено
-      if (!allowed) return res.status(403).json({ error: 'Нет доступа' })
+    if (!await checkDishAccess(dish, req.userId)) {
+      return res.status(403).json({ error: 'Нет доступа' })
     }
     res.json(formatDish(dish))
   } catch (err) {
@@ -421,19 +422,8 @@ router.get('/:id/recommendations', optionalAuth, async (req, res, next) => {
     })
     if (!dish) return res.status(404).json({ error: 'Блюдо не найдено' })
 
-    // Проверка доступа (аналогично GET /:id)
-    if (dish.visibility !== 'PUBLIC' && dish.authorId !== req.userId) {
-      const groupIds = await getMemberGroupIds(req.userId)
-      let allowed = false
-      if (dish.visibility === 'FAMILY' && dish.groupId) {
-        allowed = groupIds.includes(dish.groupId)
-      } else if (dish.visibility === 'ALL_GROUPS') {
-        const sharedGroup = await prisma.groupMember.findFirst({
-          where: { groupId: { in: groupIds }, userId: dish.authorId },
-        })
-        allowed = Boolean(sharedGroup)
-      }
-      if (!allowed) return res.status(403).json({ error: 'Нет доступа' })
+    if (!await checkDishAccess(dish, req.userId)) {
+      return res.status(403).json({ error: 'Нет доступа' })
     }
 
     const dishIngIds = dish.ingredients.filter(di => !di.toTaste).map(di => di.ingredientId)

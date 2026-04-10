@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken')
+const prisma = require('../lib/prisma')
 
-// Базовая авторизация — проверяет токен, кладёт userId и role в req
-function authMiddleware(req, res, next) {
+// Базовая авторизация — проверяет токен и tokenVersion, кладёт userId и role в req
+async function authMiddleware(req, res, next) {
   const header = req.headers.authorization
   if (!header?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Требуется авторизация' })
@@ -9,6 +10,14 @@ function authMiddleware(req, res, next) {
   const token = header.slice(7)
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET)
+    // Проверяем tokenVersion — если пользователь вышел, версия не совпадёт
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { tokenVersion: true },
+    })
+    if (!user || user.tokenVersion !== payload.tokenVersion) {
+      return res.status(401).json({ error: 'Сессия завершена' })
+    }
     req.userId = payload.userId
     req.userRole = payload.role
     next()
@@ -24,6 +33,8 @@ function optionalAuth(req, res, next) {
     try {
       const token = header.slice(7)
       const payload = jwt.verify(token, process.env.JWT_SECRET)
+      // optionalAuth не проверяет tokenVersion — это публичные роуты,
+      // невалидная версия просто не даст userId (гостевой режим)
       req.userId = payload.userId
       req.userRole = payload.role
     } catch {

@@ -103,16 +103,23 @@ export default function RecipeFormPage() {
   const [showCuisineSuggest, setShowCuisineSuggest] = useState(false)
   const [sourceDishName, setSourceDishName]   = useState('')
 
+  const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
+
   const [form, setForm] = useState({
     nameRu: '', description: '', categories: [],
     mealTime: [], difficulty: '', cookTime: '',
     calories: '', recipe: '', imageUrl: '', videoUrl: '',
-    tags: '', visibility: 'FAMILY',
+    tags: '', visibility: 'PRIVATE',
   })
 
   // ── Load data ────────────────────────────────────────────────────────────
   useEffect(() => {
     api.getIngredients().then(setAllIngredients).catch(() => {})
+    api.getGroups().then(groups => {
+      const hasFamily = groups.some(g => g.type === 'FAMILY')
+      setHasFamilyGroup(hasFamily)
+      // Если блюдо новое и семьи нет — default PRIVATE (уже выставлен в useState)
+    }).catch(() => {})
 
     function applyDish(dish, resetImages = true) {
       setForm({
@@ -153,7 +160,7 @@ export default function RecipeFormPage() {
       api.getDish(copyFromId)
         .then(dish => {
           setSourceDishName(dish.name)
-          applyDish({ ...dish, imageUrl: '', videoUrl: '', visibility: 'FAMILY' })
+          applyDish({ ...dish, imageUrl: '', videoUrl: '', visibility: 'PRIVATE' })
         })
         .catch(() => {})
     }
@@ -640,7 +647,7 @@ export default function RecipeFormPage() {
         <div>
           <Label>Доступ</Label>
           <div className="flex flex-col gap-2">
-            {VISIBILITY_OPTIONS.map(opt => (
+            {VISIBILITY_OPTIONS.filter(opt => opt.value !== 'FAMILY' || hasFamilyGroup).map(opt => (
               <label
                 key={opt.value}
                 className={[

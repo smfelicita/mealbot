@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const [loading, setLoading]   = useState(true)
   const [tgLink, setTgLink]     = useState(null)
   const [tgLoading, setTgLoading] = useState(false)
+  const [tgError, setTgError]   = useState('')
 
   useEffect(() => {
     api.me()
@@ -34,10 +35,13 @@ export default function ProfilePage() {
 
   async function connectTelegram() {
     setTgLoading(true)
+    setTgError('')
     try {
       const { url } = await api.generateTelegramLink()
       setTgLink(url)
-    } catch {}
+    } catch (err) {
+      setTgError(err.message || 'Не удалось получить ссылку')
+    }
     setTgLoading(false)
   }
 
@@ -100,6 +104,7 @@ export default function ProfilePage() {
               Открыть бота →
             </a>
           )}
+          {tgError && <p className="text-red-400 text-[13px] mt-2">{tgError}</p>}
         </div>
       )}
 
@@ -107,7 +112,11 @@ export default function ProfilePage() {
       <Button
         variant="secondary"
         className="w-full text-red-400 border-red-400/30 hover:bg-red-400/5 fade-up"
-        onClick={() => { logout(); navigate('/auth') }}
+        onClick={async () => {
+          try { await api.logout() } catch {}
+          logout()
+          navigate('/auth')
+        }}
       >
         🚪 Выйти из аккаунта
       </Button>

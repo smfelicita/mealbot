@@ -27,7 +27,7 @@ const CAT_ORDER = [
 ]
 
 // ─── Telegram banner ─────────────────────────────────────────────────────────
-function TelegramBanner({ onLinked }) {
+function TelegramBanner({ onLinked, onError }) {
   const [status, setStatus] = useState('idle') // idle | loading | polling
   const pollRef    = useRef(null)
   const timeoutRef = useRef(null)
@@ -40,14 +40,8 @@ function TelegramBanner({ onLinked }) {
   async function connect() {
     setStatus('loading')
     try {
-      const { token, botUsername, already_linked } = await api.getTelegramLinkToken()
-      if (already_linked) { onLinked(); return }
-      if (!botUsername) {
-        alert('Имя бота не настроено. Спросите администратора.')
-        setStatus('idle')
-        return
-      }
-      window.open(`https://t.me/${botUsername}?start=link_${token}`, '_blank')
+      const { url } = await api.generateTelegramLink()
+      window.open(url, '_blank')
       setStatus('polling')
 
       pollRef.current = setInterval(async () => {
@@ -60,8 +54,9 @@ function TelegramBanner({ onLinked }) {
       timeoutRef.current = setTimeout(() => {
         if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; setStatus('idle') }
       }, 180_000)
-    } catch {
+    } catch (err) {
       setStatus('idle')
+      onError?.(err.message || 'Не удалось получить ссылку')
     }
   }
 
@@ -262,7 +257,10 @@ export default function FridgePage() {
       <div className="pt-[68px] pb-8 px-4">
         {/* Telegram banner */}
         {telegramLinked === false && (
-          <TelegramBanner onLinked={() => { setTelegramLinked(true); show('Telegram подключён! 🎉', 'success') }} />
+          <TelegramBanner
+            onLinked={() => { setTelegramLinked(true); show('Telegram подключён!', 'success') }}
+            onError={(msg) => show(msg, 'error')}
+          />
         )}
 
         {fridge.length === 0 ? (

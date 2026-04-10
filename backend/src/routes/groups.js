@@ -16,35 +16,32 @@ async function getMembership(groupId, userId) {
   })
 }
 
-async function migratePersonalFridgeToFamily(userId, groupId) {
-  // Получаем личные продукты пользователя
-  const personal = await prisma.fridgeItem.findMany({
+async function migratePersonalFridgeToFamily(tx, userId, groupId) {
+  const personal = await tx.fridgeItem.findMany({
     where: { userId, groupId: null },
     select: { id: true, ingredientId: true },
   })
   if (!personal.length) return
 
-  // Получаем уже существующие продукты в семейном холодильнике
-  const existing = await prisma.fridgeItem.findMany({
+  const existing = await tx.fridgeItem.findMany({
     where: { groupId },
     select: { ingredientId: true },
   })
   const existingIds = new Set(existing.map(f => f.ingredientId))
 
-  // Переносим только те, которых ещё нет в семейном; дубли удаляем
   const toMove = personal.filter(i => !existingIds.has(i.ingredientId)).map(i => i.id)
   const toDel  = personal.filter(i =>  existingIds.has(i.ingredientId)).map(i => i.id)
 
   if (toMove.length) {
-    await prisma.fridgeItem.updateMany({ where: { id: { in: toMove } }, data: { groupId } })
+    await tx.fridgeItem.updateMany({ where: { id: { in: toMove } }, data: { groupId } })
   }
   if (toDel.length) {
-    await prisma.fridgeItem.deleteMany({ where: { id: { in: toDel } } })
+    await tx.fridgeItem.deleteMany({ where: { id: { in: toDel } } })
   }
 }
 
-async function restorePersonalFridge(userId, groupId) {
-  await prisma.fridgeItem.updateMany({
+async function restorePersonalFridge(tx, userId, groupId) {
+  await tx.fridgeItem.updateMany({
     where: { userId, groupId },
     data: { groupId: null },
   })
@@ -91,21 +88,23 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: `Вы уже состоите в максимальном количестве ${label} групп (${LIMITS[type].groups})` })
     }
 
-    const group = await prisma.group.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        avatarUrl: avatarUrl || null,
-        type,
-        ownerId: req.userId,
-        members: { create: { userId: req.userId, role: 'OWNER' } },
-      },
-      include: { _count: { select: { members: true, dishes: true } } },
+    const group = await prisma.$transaction(async (tx) => {
+      const created = await tx.group.create({
+        data: {
+          name: name.trim(),
+          description: description?.trim() || null,
+          avatarUrl: avatarUrl || null,
+          type,
+          ownerId: req.userId,
+          members: { create: { userId: req.userId, role: 'OWNER' } },
+        },
+        include: { _count: { select: { members: true, dishes: true } } },
+      })
+      if (type === 'FAMILY') {
+        await migratePersonalFridgeToFamily(tx, req.userId, created.id)
+      }
+      return created
     })
-
-    if (type === 'FAMILY') {
-      await migratePersonalFridgeToFamily(req.userId, group.id)
-    }
 
     res.status(201).json(formatGroup(group))
   } catch (e) { next(e) }
@@ -131,20 +130,22 @@ router.post('/join', async (req, res, next) => {
     })
     if (userGroupCount >= LIMITS[group.type].groups) {
       const label = group.type === 'FAMILY' ? 'семейной' : 'обычной'
-      return res.status(400).json({ error: `Вы уже состоите в максимальном количестве ${label} групп (${LIMITS[group.type].groups})` })
+      const hint = group.type === 'FAMILY' ? ' Сначала выйдите из текущей семейной группы в настройках.' : ''
+      return res.status(400).json({ error: `Вы уже состоите в максимальном количестве ${label} групп (${LIMITS[group.type].groups}).${hint}` })
     }
 
     if (group._count.members >= LIMITS[group.type].members) {
       return res.status(400).json({ error: `Группа заполнена (максимум ${LIMITS[group.type].members} участников)` })
     }
 
-    await prisma.groupMember.create({
-      data: { groupId: code, userId: req.userId, role: 'MEMBER' },
+    await prisma.$transaction(async (tx) => {
+      await tx.groupMember.create({
+        data: { groupId: code, userId: req.userId, role: 'MEMBER' },
+      })
+      if (group.type === 'FAMILY') {
+        await migratePersonalFridgeToFamily(tx, req.userId, code)
+      }
     })
-
-    if (group.type === 'FAMILY') {
-      await migratePersonalFridgeToFamily(req.userId, code)
-    }
 
     res.json({ groupId: code, message: 'Вы вступили в группу' })
   } catch (e) { next(e) }
@@ -240,13 +241,19 @@ router.delete('/:id', async (req, res, next) => {
     if (!group) return res.status(404).json({ error: 'Группа не найдена' })
     if (group.ownerId !== req.userId) return res.status(403).json({ error: 'Только владелец может удалить группу' })
 
-    if (group.type === 'FAMILY') {
-      for (const member of group.members) {
-        await restorePersonalFridge(member.userId, req.params.id)
+    await prisma.$transaction(async (tx) => {
+      if (group.type === 'FAMILY') {
+        for (const member of group.members) {
+          await restorePersonalFridge(tx, member.userId, req.params.id)
+        }
+        await tx.dish.updateMany({
+          where: { groupId: req.params.id, visibility: 'FAMILY' },
+          data: { visibility: 'PRIVATE', groupId: null },
+        })
       }
-    }
+      await tx.group.delete({ where: { id: req.params.id } })
+    })
 
-    await prisma.group.delete({ where: { id: req.params.id } })
     res.json({ message: 'Группа удалена' })
   } catch (e) { next(e) }
 })
@@ -261,13 +268,15 @@ router.delete('/:id/leave', async (req, res, next) => {
     const membership = await getMembership(req.params.id, req.userId)
     if (!membership) return res.status(400).json({ error: 'Вы не в этой группе' })
 
-    if (group.type === 'FAMILY') {
-      await restorePersonalFridge(req.userId, req.params.id)
-    }
-
-    await prisma.groupMember.delete({
-      where: { groupId_userId: { groupId: req.params.id, userId: req.userId } },
+    await prisma.$transaction(async (tx) => {
+      if (group.type === 'FAMILY') {
+        await restorePersonalFridge(tx, req.userId, req.params.id)
+      }
+      await tx.groupMember.delete({
+        where: { groupId_userId: { groupId: req.params.id, userId: req.userId } },
+      })
     })
+
     res.json({ message: 'Вы вышли из группы' })
   } catch (e) { next(e) }
 })
@@ -280,13 +289,15 @@ router.delete('/:id/members/:userId', async (req, res, next) => {
     if (group.ownerId !== req.userId) return res.status(403).json({ error: 'Только владелец может исключать участников' })
     if (req.params.userId === req.userId) return res.status(400).json({ error: 'Нельзя исключить себя' })
 
-    if (group.type === 'FAMILY') {
-      await restorePersonalFridge(req.params.userId, req.params.id)
-    }
-
-    await prisma.groupMember.delete({
-      where: { groupId_userId: { groupId: req.params.id, userId: req.params.userId } },
+    await prisma.$transaction(async (tx) => {
+      if (group.type === 'FAMILY') {
+        await restorePersonalFridge(tx, req.params.userId, req.params.id)
+      }
+      await tx.groupMember.delete({
+        where: { groupId_userId: { groupId: req.params.id, userId: req.params.userId } },
+      })
     })
+
     res.json({ message: 'Участник исключён' })
   } catch (e) { next(e) }
 })

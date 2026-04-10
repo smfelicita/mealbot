@@ -65,7 +65,17 @@ export default function AuthPage() {
           setAuth(res.user, res.token); navigate('/')
         }
       }
-    } catch (err) { setError(err.message) }
+    } catch (err) {
+      if (err.data?.requireVerification) {
+        setPendingEmail(err.data.email || form.email)
+        setStep('verify-email')
+        // countdown = 0 — кнопка "Отправить повторно" сразу доступна,
+        // потому что при логине новый код не отправляется автоматически
+        setResendCountdown(0)
+        return
+      }
+      setError(err.message)
+    }
     finally { setLoading(false) }
   }
 
@@ -134,8 +144,7 @@ export default function AuthPage() {
           <>
             <h2 className="font-serif text-[20px] font-extrabold mb-1">Подтверди email</h2>
             <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
-              Код отправлен на <strong>{pendingEmail}</strong><br />
-              <span className="text-accent text-[12px]">Для теста смотри логи сервера</span>
+              Код отправлен на <strong>{pendingEmail}</strong>
             </p>
             <form onSubmit={submitVerifyEmail} className="flex flex-col gap-4">
               <div>
@@ -175,8 +184,7 @@ export default function AuthPage() {
           <>
             <h2 className="font-serif text-[20px] font-extrabold mb-1">Введи код</h2>
             <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
-              Код отправлен на <strong>{pendingPhone}</strong><br />
-              <span className="text-accent text-[12px]">Для теста смотри логи сервера</span>
+              Код отправлен на <strong>{pendingPhone}</strong>
             </p>
             <form onSubmit={submitVerifyPhone} className="flex flex-col gap-4">
               <div>
@@ -262,21 +270,25 @@ export default function AuthPage() {
             </p>
 
             {/* Divider + Google */}
-            <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-[12px] text-text-3">или</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={r => handleGoogle(r.credential)}
-                onError={() => setError('Ошибка Google авторизации')}
-                text="continue_with"
-                shape="rectangular"
-                width="100%"
-                locale="ru"
-              />
-            </div>
+            {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+              <>
+                <div className="flex items-center gap-3 my-5">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-[12px] text-text-3">или</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={r => handleGoogle(r.credential)}
+                    onError={() => setError('Ошибка Google авторизации')}
+                    text="continue_with"
+                    shape="rectangular"
+                    width="100%"
+                    locale="ru"
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

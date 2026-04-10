@@ -20,6 +20,18 @@ const commentRoutes = require('./routes/comments')
 // Планировщик уведомлений (запускается сразу при старте)
 require('./lib/scheduler')
 
+// Очистка при старте
+const prisma = require('./lib/prisma')
+prisma.verificationCode.deleteMany({ where: { expiresAt: { lt: new Date() } } })
+  .then(r => r.count > 0 && console.log(`[startup] Deleted ${r.count} expired verification codes`))
+  .catch(() => {})
+// Старые pendingTelegramLink без TTL (созданные устаревшим роутом) — сбрасываем
+prisma.user.updateMany({
+  where: { pendingTelegramLink: { not: null }, pendingTelegramLinkExpiresAt: null },
+  data: { pendingTelegramLink: null },
+}).then(r => r.count > 0 && console.log(`[startup] Cleared ${r.count} legacy pendingTelegramLink records`))
+  .catch(() => {})
+
 const app = express()
 const PORT = process.env.PORT || 3001
 
