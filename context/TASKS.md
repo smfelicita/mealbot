@@ -45,6 +45,8 @@
 - [x] REGULAR группы — временно отключены (UI скрыт, backend 503/400)
 - [x] Единый error middleware (Prisma errors, JSON parse, 5xx без утечки деталей)
 - [x] Zod-валидация на всех write-эндпоинтах (groups, dishes, invites, comments)
+- [x] Структурированное логирование: pino, requestId, maskEmail, redact чувствительных полей
+- [x] LOG_LEVEL и NODE_ENV управляют verbosity и форматом логов (см. FUNCTIONAL_SPEC.md)
 
 ### Фронтенд
 - [x] React + Vite + PWA manifest + iOS meta-теги

@@ -235,6 +235,50 @@ _Актуально на апрель 2026_
 
 ---
 
+## Логирование
+
+Библиотека: **pino** + **pino-pretty** (только dev).
+
+### Переменные окружения
+
+| Переменная | Prod | Dev |
+|---|---|---|
+| `NODE_ENV` | `production` | `development` (или не задавать) |
+| `LOG_LEVEL` | `info` | `debug` (или не задавать) |
+
+### LOG_LEVEL — допустимые значения (от тихого к подробному)
+
+| Значение | Что логируется |
+|---|---|
+| `silent` | Ничего |
+| `fatal` | Только критические падения |
+| `error` | Ошибки + fatal |
+| `warn` | Предупреждения + error + fatal |
+| `info` | Бизнес-события + warn + error + fatal ← **prod** |
+| `debug` | Всё выше + детали ← **dev only** |
+| `trace` | Абсолютно всё |
+
+### NODE_ENV — эффект
+
+| Значение | Формат логов | detail в 500-ошибках |
+|---|---|---|
+| `production` | Чистый JSON в stdout | ❌ не показывается клиенту |
+| `development` / любое другое | pino-pretty (цветной) | ✅ виден в ответе |
+
+### Что логируется
+
+- **Auth**: registration, login success/failed, email sent/failed, verification
+- **Groups**: created, deleted, left, member kicked
+- **Invites**: sent, accepted, rate limit hit
+- **AI**: request sent/completed/failed, blocked by filter, limit exceeded
+- **HTTP**: все POST/PUT/DELETE; GET только при ошибке или >500ms
+
+### Что никогда не попадает в логи
+
+Пароли, коды верификации, JWT, invite-токены, telegram-токены, полный email (маскируется: `u***@domain.com`), содержимое чата.
+
+---
+
 ## Деплой
 
 - VPS Timeweb, IP 194.87.130.215, домен smarussya.ru
