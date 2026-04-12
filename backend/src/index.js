@@ -67,12 +67,8 @@ app.use('/api', inviteRoutes)
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }))
 
 // Error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(err.status || 500).json({
-    error: err.message || 'Внутренняя ошибка сервера',
-  })
-})
+const errorHandler = require('./middleware/errorHandler')
+app.use(errorHandler)
 
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on http://localhost:${PORT}`)
