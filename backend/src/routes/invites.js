@@ -41,6 +41,23 @@ router.post('/groups/:id/invite', authMiddleware, validate(inviteCreate), async 
       return res.status(400).json({ error: 'Группа заполнена' })
     }
 
+    // Rate limit: 10 инвайтов / день / userId
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const senderCount = await prisma.groupInvite.count({
+      where: { invitedById: req.userId, createdAt: { gte: since } },
+    })
+    if (senderCount >= 10) {
+      return res.status(429).json({ error: 'Вы достигли лимита приглашений на сегодня (10 в день)' })
+    }
+
+    // Rate limit: 3 инвайта / день / email (по всем группам)
+    const targetCount = await prisma.groupInvite.count({
+      where: { email: normalEmail, createdAt: { gte: since } },
+    })
+    if (targetCount >= 3) {
+      return res.status(429).json({ error: 'Этот адрес уже получил максимальное количество приглашений за сегодня' })
+    }
+
     // Уже участник? (У2: case-insensitive поиск)
     const invitedUser = await prisma.user.findFirst({ where: { email: { equals: normalEmail, mode: 'insensitive' } }, select: { id: true } })
     if (invitedUser) {
