@@ -135,46 +135,8 @@ router.post('/', async (req, res, next) => {
 })
 
 // POST /api/groups/join (временно отключено)
-router.post('/join', async (req, res) => {
-  return res.status(503).json({ error: 'Вступление по коду временно недоступно' })
-})
-router.post('/join_disabled', joinLimiter, async (req, res, next) => {
-  try {
-    const { code } = req.body
-    if (!code?.trim()) return res.status(400).json({ error: 'Укажите код группы' })
-
-    // К1: ищем только REGULAR-группы по joinCode (FAMILY недоступны через код)
-    const group = await prisma.group.findFirst({
-      where: { joinCode: code.trim().toUpperCase(), type: 'REGULAR' },
-      include: { _count: { select: { members: true } } },
-    })
-    if (!group) return res.status(404).json({ error: 'Группа не найдена' })
-
-    // К4: единая ошибка — не раскрываем, истёк ли код или не существует
-    if (!group.joinCodeExpiresAt || group.joinCodeExpiresAt < new Date()) {
-      return res.status(410).json({ error: 'Код устарел. Попросите участника обновить код.' })
-    }
-
-    const existing = await getMembership(group.id, req.userId)
-    if (existing) return res.status(409).json({ error: 'Вы уже в этой группе' })
-
-    const userGroupCount = await prisma.groupMember.count({
-      where: { userId: req.userId, group: { type: 'REGULAR' } },
-    })
-    if (userGroupCount >= LIMITS.REGULAR.groups) {
-      return res.status(400).json({ error: `Вы уже состоите в максимальном количестве обычных групп (${LIMITS.REGULAR.groups})` })
-    }
-
-    if (group._count.members >= LIMITS.REGULAR.members) {
-      return res.status(400).json({ error: 'Группа заполнена' })
-    }
-
-    await prisma.groupMember.create({
-      data: { groupId: group.id, userId: req.userId, role: 'MEMBER' },
-    })
-
-    res.json({ groupId: group.id, message: 'Вы вступили в группу' })
-  } catch (e) { next(e) }
+router.post('/join', (req, res) => {
+  res.status(503).json({ error: 'Вступление по коду временно недоступно' })
 })
 
 // GET /api/groups/:id

@@ -16,7 +16,6 @@ export default function GroupDetailPage() {
   const [tab, setTab]       = useState('dishes')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
-  const [regenerating, setRegenerating] = useState(false)
 
   useEffect(() => {
     api.getGroup(id)
@@ -48,24 +47,6 @@ export default function GroupDetailPage() {
       setGroup(g => ({ ...g, members: g.members.filter(m => m.userId !== memberId) }))
       show('Участник исключён', 'success')
     } catch (e) { show(e.message, 'error') }
-  }
-
-  function copyCode() {
-    const code = group?.joinCode
-    if (!code) return
-    navigator.clipboard.writeText(code)
-    show('Код скопирован! Поделитесь им с участниками.', 'success')
-  }
-
-  async function handleRegenerateCode() {
-    if (!confirm('Текущий код станет недействительным. Продолжить?')) return
-    setRegenerating(true)
-    try {
-      const res = await api.regenerateJoinCode(id)
-      setGroup(g => ({ ...g, joinCode: res.joinCode, joinCodeExpiresAt: res.joinCodeExpiresAt }))
-      show('Код обновлён', 'success')
-    } catch (e) { show(e.message, 'error') }
-    finally { setRegenerating(false) }
   }
 
   async function handleInvite() {
@@ -133,17 +114,7 @@ export default function GroupDetailPage() {
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-2 px-4 pb-3.5 flex-wrap">
-          {group.type === 'REGULAR' && group.joinCode && (
-            <Button variant="secondary" size="sm" onClick={copyCode}>
-              🔑 {group.joinCode}
-            </Button>
-          )}
-          {group.type === 'REGULAR' && isOwner && (
-            <Button variant="ghost" size="sm" loading={regenerating} onClick={handleRegenerateCode}>
-              {!regenerating && '↻ Обновить код'}
-            </Button>
-          )}
+        <div className="flex gap-2 px-4 pb-3.5">
           <Button size="sm"
             onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name, groupType: group.type } })}>
             + Блюдо в группу
