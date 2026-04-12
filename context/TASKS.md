@@ -4,11 +4,11 @@
 
 ### Бэкенд
 - [x] Express сервер с CORS, helmet, rate limiting
-- [x] Prisma схема (Users, Dishes, Ingredients, FridgeItems, ChatMessages, Groups, GroupMembers, MealPlan, Favorite, PushSubscription)
-- [x] JWT авторизация (register / login / Google OAuth)
+- [x] Prisma схема (Users, Dishes, Ingredients, FridgeItems, ChatMessages, Groups, GroupMembers, MealPlan, Favorite, PushSubscription, GroupInvite, Comment)
+- [x] JWT авторизация (register / login / Google OAuth) + token versioning (server-side invalidation)
 - [x] Авторизация: email + код подтверждения (Resend)
 - [x] Авторизация: по номеру телефона + SMS-код
-- [x] Авторизация: Google OAuth
+- [x] Авторизация: Google OAuth (auto-link к существующему email-аккаунту)
 - [x] API блюд с инклюзивной фильтрацией (хотя бы один продукт совпадает)
 - [x] API блюд с эксклюзивной фильтрацией (режим холодильника)
 - [x] API холодильника (add / remove / bulk / clear)
@@ -37,6 +37,14 @@
 - [x] Количество ингредиентов в холодильнике (quantityValue + quantityUnit)
 - [x] Фильтрация: не учитывать toTaste=true ингредиенты
 - [x] isBasic=true: 20 продуктов — не требуются в холодильнике при фильтрации
+- [x] Комментарии к рецептам: модель Comment, API /api/comments (CRUD + pin), доступ автору и FAMILY
+- [x] Приглашения в группу по email: one-time token (TTL 7 дней), route /api/invites
+- [x] Безопасность инвайтов: FAMILY — только owner, проверка email при accept, rate limit (3/день/email, 10/день/sender)
+- [x] Полный аудит авторизации: token versioning, loginLimiter, Google auto-link, транзакции
+- [x] Полный аудит групп: видимость, лимиты, транзакционность, kick/leave
+- [x] REGULAR группы — временно отключены (UI скрыт, backend 503/400)
+- [x] Единый error middleware (Prisma errors, JSON parse, 5xx без утечки деталей)
+- [x] Zod-валидация на всех write-эндпоинтах (groups, dishes, invites, comments)
 
 ### Фронтенд
 - [x] React + Vite + PWA manifest + iOS meta-теги
@@ -82,8 +90,15 @@
 
 ## 📋 Бэклог
 
+### Качество и надёжность
+- [ ] Integration-тесты: auth flow, invite flow, fridge migration, access control
+- [ ] Zod-валидация на оставшихся эндпоинтах (fridge, meal-plans, comments PATCH)
+- [ ] Rate limit на /api/comments POST
+- [ ] Логирование критичных действий (auth, группы, инвайты)
+- [ ] Индексы в БД (email, groupId, authorId, createdAt на горячих таблицах)
+- [ ] Пагинация в /api/dishes (сейчас все блюда сразу)
+
 ### Рецепты
-- [ ] Комментарии к рецептам (в рамках семейной группы)
 - [ ] Список покупок: автогенерация из выбранных блюд
 
 ### Уведомления
