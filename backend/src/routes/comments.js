@@ -4,6 +4,7 @@ const prisma = require('../lib/prisma')
 const { authMiddleware } = require('../middleware/auth')
 const validate = require('../middleware/validate')
 const { commentCreate } = require('../lib/schemas')
+const { logger } = require('../lib/logger')
 
 // Проверка доступа к комментариям блюда:
 // - автор блюда (личные заметки)
@@ -48,6 +49,13 @@ router.post('/', authMiddleware, validate(commentCreate), async (req, res) => {
     const { dishId, content } = req.body
     if (!dishId || !content?.trim()) return res.status(400).json({ error: 'dishId и content обязательны' })
 
+    // Rate limit: 30 комментариев в час на пользователя
+    const since = new Date(Date.now() - 60 * 60 * 1000)
+    const recentCount = await prisma.comment.count({
+      where: { userId: req.userId, createdAt: { gte: since } },
+    })
+    if (recentCount >= 30) return res.status(429).json({ error: 'Слишком много комментариев. Подождите немного.' })
+
     const dish = await prisma.dish.findUnique({ where: { id: dishId } })
     if (!dish) return res.status(404).json({ error: 'Блюдо не найдено' })
     if (!await canComment(req.userId, dish)) return res.status(403).json({ error: 'Нет доступа' })
@@ -56,6 +64,7 @@ router.post('/', authMiddleware, validate(commentCreate), async (req, res) => {
       data: { dishId, userId: req.userId, content: content.trim() },
       include: { user: { select: { id: true, name: true } } },
     })
+    logger.info({ action: 'comment_created', commentId: comment.id, dishId, userId: req.userId, requestId: req.requestId }, 'comment_created')
     res.status(201).json(comment)
   } catch (e) {
     res.status(500).json({ error: e.message })
@@ -70,6 +79,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (comment.userId !== req.userId) return res.status(403).json({ error: 'Нет доступа' })
 
     await prisma.comment.delete({ where: { id: req.params.id } })
+    logger.info({ action: 'comment_deleted', commentId: req.params.id, userId: req.userId, requestId: req.requestId }, 'comment_deleted')
     res.json({ ok: true })
   } catch (e) {
     res.status(500).json({ error: e.message })

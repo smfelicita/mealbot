@@ -70,6 +70,19 @@ const inviteCreate = z.object({
          .trim().email('Некорректный email').max(255),
 })
 
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+const authRegister = z.object({
+  email:    z.string({ required_error: 'Укажите email' }).trim().email('Некорректный email').max(255),
+  password: z.string({ required_error: 'Укажите пароль' }).min(6, 'Пароль не менее 6 символов').max(100),
+  name:     z.string().trim().min(1).max(100).optional(),
+})
+
+const authLogin = z.object({
+  email:    z.string({ required_error: 'Укажите email' }).trim().email('Некорректный email').max(255),
+  password: z.string({ required_error: 'Укажите пароль' }).min(1, 'Укажите пароль').max(100),
+})
+
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
 const commentCreate = z.object({
@@ -86,4 +99,6 @@ module.exports = {
   dishBulk,
   inviteCreate,
   commentCreate,
+  authRegister,
+  authLogin,
 }

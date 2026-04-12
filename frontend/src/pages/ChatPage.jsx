@@ -12,7 +12,7 @@ const SUGGESTIONS = [
   'Что можно из яиц и молока?',
 ]
 
-const GUEST_LIMIT  = 5
+const GUEST_LIMIT  = 2
 const STORAGE_KEY  = 'mealbot_guest_chat'
 
 function getGuestState() {
@@ -31,9 +31,12 @@ function saveGuestState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
 }
 
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 function cleanAndFormat(text) {
-  return text
-    .replace(/\[DISH:[a-z0-9]+\]/gi, '')
+  return escapeHtml(text.replace(/\[DISH:[a-z0-9]+\]/gi, ''))
     .replace(/\n/g, '<br/>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
 }

@@ -4,6 +4,7 @@ const prisma = require('../lib/prisma')
 const { authMiddleware } = require('../middleware/auth')
 const webpush = require('web-push')
 const { sendTelegramMessage } = require('../lib/telegram')
+const { logger } = require('../lib/logger')
 
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
@@ -32,9 +33,11 @@ async function notifyFamilyGroup(groupId, excludeUserId, text) {
     where: { groupId, userId: { not: excludeUserId } },
     include: { user: { select: { telegramId: true } } },
   })
-  for (const m of members) {
-    if (m.user.telegramId) await sendTelegramMessage(m.user.telegramId, text)
-  }
+  await Promise.all(
+    members
+      .filter(m => m.user.telegramId)
+      .map(m => sendTelegramMessage(m.user.telegramId, text).catch(() => {}))
+  )
 }
 
 async function sendPushToGroup(groupId, excludeUserId, payload) {
@@ -87,13 +90,27 @@ router.post('/', authMiddleware, async (req, res) => {
       groupId = await getFamilyGroupId(req.userId)
     }
 
+    const parsedDate = date ? new Date(date) : null
+
+    // Prevent duplicates: same dish + date + mealType + groupId for this user
+    const existing = await prisma.mealPlan.findFirst({
+      where: {
+        userId: req.userId,
+        dishId,
+        mealType,
+        groupId: groupId || null,
+        date: parsedDate,
+      },
+    })
+    if (existing) return res.status(409).json({ error: 'Это блюдо уже добавлено в план' })
+
     const plan = await prisma.mealPlan.create({
       data: {
         dishId,
         userId: req.userId,
         groupId,
         mealType,
-        date: date ? new Date(date) : null,
+        date: parsedDate,
         note: note || null,
       },
       include: {
@@ -118,6 +135,7 @@ router.post('/', authMiddleware, async (req, res) => {
         `${name} добавил(а) блюдо в план:\n*${dish.nameRu}*`).catch(() => {})
     }
 
+    logger.info({ action: 'meal_plan_added', planId: plan.id, dishId, mealType, groupId: groupId || null, userId: req.userId, requestId: req.requestId }, 'meal_plan_added')
     res.status(201).json(plan)
   } catch (e) {
     res.status(500).json({ error: e.message })
@@ -135,6 +153,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     if (plan.userId !== req.userId) return res.status(403).json({ error: 'Нет доступа' })
 
     await prisma.mealPlan.delete({ where: { id: req.params.id } })
+    logger.info({ action: 'meal_plan_removed', planId: req.params.id, userId: req.userId, requestId: req.requestId }, 'meal_plan_removed')
 
     if (plan.groupId) {
       const initiator = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } })

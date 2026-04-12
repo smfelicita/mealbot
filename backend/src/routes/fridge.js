@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth } = require('../middleware/auth')
+const { logger } = require('../lib/logger')
 
 router.use(auth)
 
@@ -107,6 +108,7 @@ router.post('/', async (req, res, next) => {
     const familyGroupId = await getFamilyGroupId(req.userId)
     const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, expiresAt, quantityValue, quantityUnit, ingredient.defaultQuantity, ingredient.defaultUnit)
 
+    logger.info({ action: 'fridge_item_added', ingredientId, userId: req.userId, familyGroupId: familyGroupId || null, requestId: req.requestId }, 'fridge_item_added')
     res.status(201).json(formatItem(item))
   } catch (err) { next(err) }
 })
@@ -158,6 +160,7 @@ router.delete('/:ingredientId', async (req, res, next) => {
       : { userId: req.userId, ingredientId: req.params.ingredientId, groupId: null }
 
     await prisma.fridgeItem.deleteMany({ where })
+    logger.info({ action: 'fridge_item_removed', ingredientId: req.params.ingredientId, userId: req.userId, requestId: req.requestId }, 'fridge_item_removed')
     res.json({ ok: true })
   } catch (err) { next(err) }
 })

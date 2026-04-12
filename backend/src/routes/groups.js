@@ -6,6 +6,7 @@ const { authMiddleware: auth } = require('../middleware/auth')
 const validate = require('../middleware/validate')
 const { groupCreate, groupUpdate } = require('../lib/schemas')
 const { logger } = require('../lib/logger')
+const { migratePersonalFridgeToFamily, restorePersonalFridge } = require('../lib/fridgeMigration')
 
 // Лимиты
 const LIMITS = {
@@ -36,36 +37,6 @@ async function getMembership(groupId, userId) {
   })
 }
 
-async function migratePersonalFridgeToFamily(tx, userId, groupId) {
-  const personal = await tx.fridgeItem.findMany({
-    where: { userId, groupId: null },
-    select: { id: true, ingredientId: true },
-  })
-  if (!personal.length) return
-
-  const existing = await tx.fridgeItem.findMany({
-    where: { groupId },
-    select: { ingredientId: true },
-  })
-  const existingIds = new Set(existing.map(f => f.ingredientId))
-
-  const toMove = personal.filter(i => !existingIds.has(i.ingredientId)).map(i => i.id)
-  const toDel  = personal.filter(i =>  existingIds.has(i.ingredientId)).map(i => i.id)
-
-  if (toMove.length) {
-    await tx.fridgeItem.updateMany({ where: { id: { in: toMove } }, data: { groupId } })
-  }
-  if (toDel.length) {
-    await tx.fridgeItem.deleteMany({ where: { id: { in: toDel } } })
-  }
-}
-
-async function restorePersonalFridge(tx, userId, groupId) {
-  await tx.fridgeItem.updateMany({
-    where: { userId, groupId },
-    data: { groupId: null },
-  })
-}
 
 function formatGroup(group) {
   return {
@@ -180,26 +151,28 @@ router.get('/:id', async (req, res, next) => {
         role: m.role,
         joinedAt: m.joinedAt,
       })),
-      dishes: group.dishes.map(d => ({
-        id: d.id,
-        name: d.nameRu,
-        description: d.description,
-        categories: d.categories,
-        cuisine: d.cuisine,
-        cookTime: d.cookTime,
-        calories: d.calories,
-        difficulty: d.difficulty,
-        imageUrl: d.imageUrl,
-        tags: d.tags,
-        authorId: d.authorId,
-        ingredients: d.ingredients.map(di => ({
-          id: di.ingredient.id,
-          name: di.ingredient.nameRu,
-          emoji: di.ingredient.emoji,
-          amount: di.amount,
-          optional: di.optional,
+      dishes: group.dishes
+        .filter(d => d.visibility !== 'PRIVATE' || d.authorId === req.userId)
+        .map(d => ({
+          id: d.id,
+          name: d.nameRu,
+          description: d.description,
+          categories: d.categories,
+          cuisine: d.cuisine,
+          cookTime: d.cookTime,
+          calories: d.calories,
+          difficulty: d.difficulty,
+          imageUrl: d.imageUrl,
+          tags: d.tags,
+          authorId: d.authorId,
+          ingredients: d.ingredients.map(di => ({
+            id: di.ingredient.id,
+            name: di.ingredient.nameRu,
+            emoji: di.ingredient.emoji,
+            amount: di.amount,
+            optional: di.optional,
+          })),
         })),
-      })),
     })
   } catch (e) { next(e) }
 })
@@ -266,6 +239,10 @@ router.delete('/:id/leave', async (req, res, next) => {
     await prisma.$transaction(async (tx) => {
       if (group.type === 'FAMILY') {
         await restorePersonalFridge(tx, req.userId, req.params.id)
+        await tx.dish.updateMany({
+          where: { authorId: req.userId, groupId: req.params.id, visibility: 'FAMILY' },
+          data: { visibility: 'PRIVATE', groupId: null },
+        })
       }
       await tx.groupMember.delete({
         where: { groupId_userId: { groupId: req.params.id, userId: req.userId } },
@@ -288,6 +265,10 @@ router.delete('/:id/members/:userId', async (req, res, next) => {
     await prisma.$transaction(async (tx) => {
       if (group.type === 'FAMILY') {
         await restorePersonalFridge(tx, req.params.userId, req.params.id)
+        await tx.dish.updateMany({
+          where: { authorId: req.params.userId, groupId: req.params.id, visibility: 'FAMILY' },
+          data: { visibility: 'PRIVATE', groupId: null },
+        })
       }
       await tx.groupMember.delete({
         where: { groupId_userId: { groupId: req.params.id, userId: req.params.userId } },

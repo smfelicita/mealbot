@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, Component } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useStore } from './store'
 import { api } from './api'
@@ -19,6 +19,28 @@ import TelegramAuthPage from './pages/TelegramAuthPage'
 import ProfilePage from './pages/ProfilePage'
 import InvitePage from './pages/InvitePage'
 
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false } }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6 text-center">
+          <p className="text-[18px] font-bold">Что-то пошло не так</p>
+          <p className="text-text-2 text-[14px]">Перезагрузите страницу — данные в порядке</p>
+          <button
+            className="mt-2 px-5 py-2 bg-accent text-white rounded-lg text-[14px] font-semibold"
+            onClick={() => window.location.reload()}
+          >
+            Перезагрузить
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 function RequireAuth({ children }) {
   const token = useStore(s => s.token)
   return token ? children : <Navigate to="/auth" replace />
@@ -38,6 +60,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ErrorBoundary>
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/tg" element={<TelegramAuthPage />} />
@@ -59,6 +82,7 @@ export default function App() {
           <Route path="profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
         </Route>
       </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
+const { logger } = require('./lib/logger')
 
 const authRoutes = require('./routes/auth')
 const dishRoutes = require('./routes/dishes')
@@ -36,6 +37,11 @@ prisma.user.updateMany({
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Startup checks
+if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
+  logger.warn({ action: 'startup_missing_env', var: 'FRONTEND_URL' }, 'FRONTEND_URL not set in production — CORS will use localhost fallback')
+}
+
 // Request ID + structured logging
 const requestId     = require('./middleware/requestId')
 const requestLogger = require('./middleware/requestLogger')
@@ -44,8 +50,13 @@ app.use(requestLogger)
 
 // Security
 app.use(helmet())
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173'
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, cb) => {
+    if (!origin || origin === allowedOrigin) return cb(null, true)
+    logger.warn({ action: 'cors_rejected', origin }, 'cors_rejected')
+    cb(new Error('Not allowed by CORS'))
+  },
   credentials: true,
 }))
 app.use(express.json())

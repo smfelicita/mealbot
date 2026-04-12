@@ -6,6 +6,7 @@ const { authMiddleware } = require('../middleware/auth')
 const validate = require('../middleware/validate')
 const { inviteCreate } = require('../lib/schemas')
 const { logger, maskEmail } = require('../lib/logger')
+const { migratePersonalFridgeToFamily } = require('../lib/fridgeMigration')
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.RESEND_FROM || 'MealBot <noreply@smarussya.ru>'
@@ -210,28 +211,12 @@ router.post('/invites/:token/accept', authMiddleware, async (req, res, next) => 
       return res.status(400).json({ error: 'Группа заполнена' })
     }
 
-    // Импортируем миграцию холодильника из groups.js через Prisma напрямую
     await prisma.$transaction(async (tx) => {
       await tx.groupMember.create({
         data: { groupId: invite.groupId, userId: req.userId, role: 'MEMBER' },
       })
       if (type === 'FAMILY') {
-        // Миграция личного холодильника в семейный
-        const personal = await tx.fridgeItem.findMany({
-          where: { userId: req.userId, groupId: null },
-          select: { id: true, ingredientId: true },
-        })
-        if (personal.length) {
-          const existing = await tx.fridgeItem.findMany({
-            where: { groupId: invite.groupId },
-            select: { ingredientId: true },
-          })
-          const existingIds = new Set(existing.map(f => f.ingredientId))
-          const toMove = personal.filter(i => !existingIds.has(i.ingredientId)).map(i => i.id)
-          const toDel  = personal.filter(i =>  existingIds.has(i.ingredientId)).map(i => i.id)
-          if (toMove.length) await tx.fridgeItem.updateMany({ where: { id: { in: toMove } }, data: { groupId: invite.groupId } })
-          if (toDel.length)  await tx.fridgeItem.deleteMany({ where: { id: { in: toDel } } })
-        }
+        await migratePersonalFridgeToFamily(tx, req.userId, invite.groupId)
       }
       await tx.groupInvite.update({ where: { token: req.params.token }, data: { usedAt: new Date() } })
     })

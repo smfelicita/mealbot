@@ -1,13 +1,14 @@
 const router = require('express').Router()
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { z } = require('zod')
 const rateLimit = require('express-rate-limit')
 const prisma = require('../lib/prisma')
 const { Resend } = require('resend')
 const { authMiddleware } = require('../middleware/auth')
 const { addDefaultFridgeItems } = require('../lib/fridge')
 const { logger, maskEmail } = require('../lib/logger')
+const validate = require('../middleware/validate')
+const { authRegister, authLogin } = require('../lib/schemas')
 
 // Строгий rate limit для verify-эндпоинтов: 5 попыток за 15 минут по target (email/phone)
 const verifyLimiter = rateLimit({
@@ -96,14 +97,9 @@ function normalizePhone(raw) {
 }
 
 // POST /api/auth/register
-router.post('/register', async (req, res, next) => {
+router.post('/register', validate(authRegister), async (req, res, next) => {
   try {
-    const schema = z.object({
-      email: z.string().email(),
-      password: z.string().min(6),
-      name: z.string().min(1).optional(),
-    })
-    const { email, password, name } = schema.parse(req.body)
+    const { email, password, name } = req.body
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
@@ -132,10 +128,7 @@ router.post('/register', async (req, res, next) => {
     logger.info({ action: 'registration_completed', email: maskEmail(email), requestId: req.requestId }, 'registration_completed')
 
     res.status(201).json({ requireVerification: true, email })
-  } catch (err) {
-    if (err.name === 'ZodError') return res.status(400).json({ error: err.errors })
-    next(err)
-  }
+  } catch (err) { next(err) }
 })
 
 // POST /api/auth/verify-email
@@ -184,14 +177,14 @@ router.post('/resend-email-code', sendCodeLimiter, async (req, res, next) => {
 
     const code = genCode()
     await saveCode('email', email, code)
-    await sendEmailCode(email, code)
+    await sendEmailCode(email, code, req.requestId)
 
     res.json({ sent: true })
   } catch (err) { next(err) }
 })
 
 // POST /api/auth/login
-router.post('/login', loginLimiter, async (req, res, next) => {
+router.post('/login', loginLimiter, validate(authLogin), async (req, res, next) => {
   try {
     const { email, password } = req.body
     const user = await prisma.user.findUnique({ where: { email } })
@@ -344,10 +337,10 @@ router.post('/generate-telegram-link', authMiddleware, async (req, res, next) =>
   } catch (err) { next(err) }
 })
 
-// GET /api/auth/tg?token= — обмен одноразового токена на JWT
-router.get('/tg', async (req, res, next) => {
+// POST /api/auth/tg — обмен одноразового токена на JWT (токен в теле, не в URL)
+router.post('/tg', async (req, res, next) => {
   try {
-    const { token } = req.query
+    const { token } = req.body
     if (!token) return res.status(400).json({ error: 'Токен не передан' })
 
     const user = await prisma.user.findUnique({ where: { webLoginToken: token } })

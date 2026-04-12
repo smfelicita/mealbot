@@ -4,6 +4,7 @@ const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
 const { calculateNutrition } = require('../utils/nutrition')
 const validate = require('../middleware/validate')
 const { dishCreate, dishUpdate, dishBulk } = require('../lib/schemas')
+const { logger } = require('../lib/logger')
 
 // Вспомогательная — список groupId где user является участником
 async function getMemberGroupIds(userId) {
@@ -27,7 +28,11 @@ async function getFamilyGroupIds(userId) {
 
 // Фильтр "Моя кухня": только личные и семейные блюда
 async function buildMyKitchenFilter(userId) {
-  const familyGroupIds = await getFamilyGroupIds(userId)
+  const memberships = await prisma.groupMember.findMany({
+    where: { userId, group: { type: 'FAMILY' } },
+    select: { groupId: true },
+  })
+  const familyGroupIds = memberships.map(m => m.groupId)
   return {
     OR: [
       { authorId: userId },
@@ -38,34 +43,35 @@ async function buildMyKitchenFilter(userId) {
 
 // Строит фильтр видимости с учётом групп и DishVisibility
 async function buildVisibilityFilter(userId) {
-  const groupIds = await getMemberGroupIds(userId)
+  if (!userId) return { OR: [{ visibility: 'PUBLIC' }] }
 
-  // ALL_GROUPS: рецепты авторов, с которыми я в одной группе
+  // Один запрос: всё членство с типом группы
+  const memberships = await prisma.groupMember.findMany({
+    where: { userId },
+    select: { groupId: true, group: { select: { type: true } } },
+  })
+
+  const familyGroupIds = memberships.filter(m => m.group.type === 'FAMILY').map(m => m.groupId)
+  const allGroupIds    = memberships.map(m => m.groupId)
+
+  // Co-members для ALL_GROUPS — один запрос
   let allGroupsCondition = []
-  if (userId && groupIds.length) {
-    const coMembers = await prisma.groupMember.findMany({
-      where: { groupId: { in: groupIds }, userId: { not: userId } },
+  if (allGroupIds.length) {
+    const coMemberIds = await prisma.groupMember.findMany({
+      where: { groupId: { in: allGroupIds }, userId: { not: userId } },
       select: { userId: true },
+      distinct: ['userId'],
     })
-    const coMemberIds = [...new Set(coMembers.map(m => m.userId))]
     if (coMemberIds.length) {
-      allGroupsCondition = [{ visibility: 'ALL_GROUPS', authorId: { in: coMemberIds } }]
+      allGroupsCondition = [{ visibility: 'ALL_GROUPS', authorId: { in: coMemberIds.map(m => m.userId) } }]
     }
   }
-
-  // FAMILY: рецепты с groupId, который является семейной группой пользователя
-  const familyGroupIds = groupIds.length
-    ? (await prisma.group.findMany({
-        where: { id: { in: groupIds }, type: 'FAMILY' },
-        select: { id: true },
-      })).map(g => g.id)
-    : []
 
   return {
     OR: [
       { visibility: 'PUBLIC' },
-      ...(userId ? [{ authorId: userId }] : []),
-      ...(groupIds.length ? [{ visibility: 'FAMILY', groupId: { in: familyGroupIds.length ? familyGroupIds : ['__none__'] } }] : []),
+      { authorId: userId },
+      ...(familyGroupIds.length ? [{ visibility: 'FAMILY', groupId: { in: familyGroupIds } }] : []),
       ...allGroupsCondition,
     ],
   }
@@ -107,19 +113,24 @@ async function getSearchIds(q) {
 }
 
 // GET /api/dishes — поиск и фильтрация
-// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen
+// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, limit, offset
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, favorites } = req.query
+    const limit  = Math.min(parseInt(req.query.limit  || '100', 10), 200)
+    const offset = parseInt(req.query.offset || '0', 10) || 0
 
     const visibilityFilter = (myKitchen === 'true' && req.userId)
       ? await buildMyKitchenFilter(req.userId)
       : await buildVisibilityFilter(req.userId)
 
     const baseWhere = { ...visibilityFilter, ...buildBaseFilter({ mealTime, category, tags, cuisine }) }
+
+    // Collect id-filter sets — AND them together at the end
+    let idSets = []
+
     if (q) {
-      const ids = await getSearchIds(q)
-      baseWhere.id = { in: ids }
+      idSets.push(await getSearchIds(q))
     }
 
     if (favorites === 'true' && req.userId) {
@@ -127,7 +138,18 @@ router.get('/', optionalAuth, async (req, res, next) => {
         where: { userId: req.userId },
         select: { dishId: true },
       })
-      baseWhere.id = { in: favs.map(f => f.dishId) }
+      idSets.push(favs.map(f => f.dishId))
+    }
+
+    if (idSets.length === 1) {
+      baseWhere.id = { in: idSets[0] }
+    } else if (idSets.length > 1) {
+      // Intersect all sets
+      const intersection = idSets.reduce((a, b) => {
+        const setB = new Set(b)
+        return a.filter(id => setB.has(id))
+      })
+      baseWhere.id = { in: intersection }
     }
 
     if (fridgeMode === 'true') {
@@ -170,13 +192,18 @@ router.get('/', optionalAuth, async (req, res, next) => {
         : {}),
     }
 
-    const dishes = await prisma.dish.findMany({
-      where,
-      include: { ingredients: { include: { ingredient: true } } },
-      orderBy: { nameRu: 'asc' },
-    })
+    const [dishes, total] = await Promise.all([
+      prisma.dish.findMany({
+        where,
+        include: { ingredients: { include: { ingredient: true } } },
+        orderBy: { nameRu: 'asc' },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.dish.count({ where }),
+    ])
 
-    res.json(formatDishes(dishes))
+    res.json({ dishes: formatDishes(dishes), total, limit, offset })
   } catch (err) {
     next(err)
   }
@@ -206,6 +233,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
     if (!dish) return res.status(404).json({ error: 'Блюдо не найдено' })
 
     if (!await checkDishAccess(dish, req.userId)) {
+      logger.warn({ action: 'dish_access_denied', dishId: req.params.id, userId: req.userId || 'guest', requestId: req.requestId }, 'dish_access_denied')
       return res.status(403).json({ error: 'Нет доступа' })
     }
     res.json(formatDish(dish))
@@ -550,6 +578,7 @@ function formatDish(dish) {
       unit: di.unit,
       toTaste: di.toTaste,
       optional: di.optional,
+      isBasic: di.ingredient.isBasic || false,
     })),
   }
 }

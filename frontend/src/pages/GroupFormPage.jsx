@@ -13,11 +13,12 @@ export default function GroupFormPage() {
   const [loading, setLoading]   = useState(isEdit)
   const [saving, setSaving]     = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [nameError, setNameError] = useState('')
 
   useEffect(() => {
     if (!isEdit) return
     api.getGroup(id)
-      .then(g => setForm({ name: g.name, description: g.description || '', avatarUrl: g.avatarUrl || '', type: g.type || 'REGULAR' }))
+      .then(g => setForm({ name: g.name, description: g.description || '', avatarUrl: g.avatarUrl || '', type: g.type || 'FAMILY' }))
       .catch(() => navigate('/groups'))
       .finally(() => setLoading(false))
   }, [id])
@@ -35,7 +36,8 @@ export default function GroupFormPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.name.trim()) { show('Укажите название', 'error'); return }
+    if (!form.name.trim()) { setNameError('Укажите название'); return }
+    setNameError('')
     setSaving(true)
     try {
       if (isEdit) {
@@ -91,7 +93,8 @@ export default function GroupFormPage() {
             required
             placeholder="Например: Семья, Друзья, Команда..."
             value={form.name}
-            onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            error={nameError}
+            onChange={e => { setForm(f => ({ ...f, name: e.target.value })); if (nameError) setNameError('') }}
           />
 
           <Textarea

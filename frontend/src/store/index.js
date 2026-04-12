@@ -12,8 +12,12 @@ export const useStore = create((set, get) => ({
   user: null,
   token: localStorage.getItem('mealbot_token'),
   setAuth: (user, token) => {
-    localStorage.setItem('mealbot_token', token)
-    set({ user, token })
+    if (token) {
+      localStorage.setItem('mealbot_token', token)
+    } else {
+      localStorage.removeItem('mealbot_token')
+    }
+    set({ user, token: token || null })
   },
   logout: () => {
     localStorage.removeItem('mealbot_token')

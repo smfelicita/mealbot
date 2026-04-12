@@ -106,7 +106,7 @@ export default function GroupDetailPage() {
               <p className="text-[13px] text-text-2 leading-snug">{group.description}</p>
             )}
             <div className="flex gap-3 mt-2 text-[12px] text-text-3 flex-wrap">
-              <span>👤 {group.members.length} участников</span>
+              <span>👤 {group.members.length}{group.type === 'FAMILY' ? '/10' : ''} участников</span>
               <span>🍽️ {group.dishes.length} рецептов</span>
               {group.type === 'FAMILY' && <span>🧊 Общий холодильник</span>}
             </div>

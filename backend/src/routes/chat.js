@@ -8,9 +8,29 @@ const { logger } = require('../lib/logger')
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+// Кэш списка блюд для системного промпта — обновляется раз в 5 минут
+let dishCache = null
+let dishCacheAt = 0
+const DISH_CACHE_TTL = 5 * 60 * 1000 // 5 мин
+
+async function getCachedDishes() {
+  if (dishCache && Date.now() - dishCacheAt < DISH_CACHE_TTL) return dishCache
+  const dishes = await prisma.dish.findMany({
+    where: { visibility: 'PUBLIC' },
+    select: { id: true, nameRu: true, name: true, mealTime: true, tags: true, imageUrl: true, images: true },
+  })
+  dishCache = dishes
+  dishCacheAt = Date.now()
+  return dishes
+}
+
 // Счётчик сообщений для гостей: { ip -> { count, date } }
+// ВНИМАНИЕ: счётчики сбрасываются при рестарте процесса — гости получают сброс лимита.
+// Это ожидаемое поведение: при рестарте логируется предупреждение ниже.
 const guestCounters = new Map()
 const GUEST_LIMIT = 2
+
+logger.warn({ action: 'guest_counters_reset', note: 'in-memory guest AI counters cleared on startup' }, 'guest_counters_reset')
 
 function getGuestCount(ip) {
   const today = new Date().toDateString()
@@ -116,11 +136,8 @@ router.post('/', optionalAuth, async (req, res, next) => {
       }
     }
 
-    // Блюда из БД — нужны всем
-    const dishes = await prisma.dish.findMany({
-      where: { visibility: 'PUBLIC' },
-      select: { id: true, nameRu: true, name: true, mealTime: true, tags: true, imageUrl: true, images: true },
-    })
+    // Блюда из БД — нужны всем (кэшируются на 5 мин)
+    const dishes = await getCachedDishes()
     const dishMap = new Map(dishes.map(d => [d.id, d]))
     const dishSummary = dishes.map(d =>
       `[DISH:${d.id}] ${d.nameRu} (${d.mealTime.join('/')}, теги: ${d.tags.join(', ')})`

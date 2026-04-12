@@ -4,24 +4,34 @@ const path = require('path')
 const { authMiddleware } = require('../middleware/auth')
 const getSupabase = require('../lib/supabase')
 
-// Файл хранится в памяти (не на диске) — сразу отправляем в Supabase
+const ALLOWED = {
+  image: {
+    mimes: ['image/jpeg', 'image/png', 'image/webp'],
+    exts: ['.jpg', '.jpeg', '.png', '.webp'],
+    maxSize: 5 * 1024 * 1024,   // 5 MB
+  },
+  video: {
+    mimes: ['video/mp4', 'video/webm', 'video/quicktime'],
+    exts: ['.mp4', '.webm', '.mov'],
+    maxSize: 100 * 1024 * 1024, // 100 MB
+  },
+}
+
+// Use the largest limit at multer level; per-type enforcement is in the route handler
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 100 * 1024 * 1024, // 100 MB максимум
-  },
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = {
-      image: ['image/jpeg', 'image/png', 'image/webp'],
-      video: ['video/mp4', 'video/webm', 'video/quicktime'],
+    const rules = ALLOWED[req.params.type]
+    if (!rules) return cb(new Error('Неверный тип загрузки'))
+    if (!rules.mimes.includes(file.mimetype)) {
+      return cb(new Error(`Недопустимый тип файла: ${file.mimetype}`))
     }
-    const type = req.params.type
-    const allowedTypes = allowed[type] || []
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true)
-    } else {
-      cb(new Error(`Недопустимый тип файла: ${file.mimetype}`))
+    const ext = path.extname(file.originalname).toLowerCase()
+    if (!rules.exts.includes(ext)) {
+      return cb(new Error(`Недопустимое расширение файла: ${ext}`))
     }
+    cb(null, true)
   },
 })
 
@@ -35,6 +45,12 @@ router.post('/:type', authMiddleware, upload.single('file'), async (req, res) =>
     }
     if (!req.file) {
       return res.status(400).json({ error: 'Файл не загружен' })
+    }
+
+    const rules = ALLOWED[type]
+    const maxMB = rules.maxSize / (1024 * 1024)
+    if (req.file.size > rules.maxSize) {
+      return res.status(413).json({ error: `Файл слишком большой. Максимум: ${maxMB} MB` })
     }
 
     const ext = path.extname(req.file.originalname).toLowerCase()

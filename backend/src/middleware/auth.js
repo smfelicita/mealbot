@@ -26,17 +26,22 @@ async function authMiddleware(req, res, next) {
   }
 }
 
-// Мягкая авторизация — не блокирует, но кладёт userId если токен есть
-function optionalAuth(req, res, next) {
+// Мягкая авторизация — не блокирует, но кладёт userId если токен есть и tokenVersion совпадает
+async function optionalAuth(req, res, next) {
   const header = req.headers.authorization
   if (header?.startsWith('Bearer ')) {
     try {
       const token = header.slice(7)
       const payload = jwt.verify(token, process.env.JWT_SECRET)
-      // optionalAuth не проверяет tokenVersion — это публичные роуты,
-      // невалидная версия просто не даст userId (гостевой режим)
-      req.userId = payload.userId
-      req.userRole = payload.role
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { tokenVersion: true },
+      })
+      if (user && user.tokenVersion === payload.tokenVersion) {
+        req.userId = payload.userId
+        req.userRole = payload.role
+      }
+      // Если tokenVersion не совпадает — игнорируем токен (гостевой режим)
     } catch {
       // игнорируем невалидный токен
     }

@@ -49,7 +49,7 @@ export const api = {
   googleAuth: (token) =>
     request('/auth/google', { method: 'POST', body: { token } }),
   telegramAuth: (token) =>
-    request(`/auth/tg?token=${encodeURIComponent(token)}`),
+    request('/auth/tg', { method: 'POST', body: { token } }),
   generateTelegramLink: () =>
     request('/auth/generate-telegram-link', { method: 'POST' }),
 
