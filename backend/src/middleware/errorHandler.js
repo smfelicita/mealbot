@@ -1,4 +1,5 @@
 const { Prisma } = require('@prisma/client')
+const { logger } = require('../lib/logger')
 
 // Коды Prisma → человекочитаемые сообщения
 const PRISMA_MESSAGES = {
@@ -12,23 +13,25 @@ module.exports = function errorHandler(err, req, res, next) {
   // Уже отправили ответ — передаём дальше
   if (res.headersSent) return next(err)
 
+  const ctx = { requestId: req.requestId, method: req.method, path: req.path, userId: req.userId }
+
   // ── Prisma: известная ошибка запроса (P2xxx) ──────────────────────────────
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     const msg = PRISMA_MESSAGES[err.code] || 'Ошибка базы данных'
-    console.error(`[Prisma ${err.code}] ${req.method} ${req.path}:`, err.meta)
+    logger.warn({ ...ctx, errorCode: err.code, meta: err.meta }, 'prisma_known_error')
     return res.status(409).json({ error: msg })
   }
 
   // ── Prisma: ошибка валидации (неверный тип поля и т.п.) ──────────────────
   if (err instanceof Prisma.PrismaClientValidationError) {
-    console.error(`[Prisma validation] ${req.method} ${req.path}:`, err.message)
+    logger.warn({ ...ctx }, 'prisma_validation_error')
     return res.status(400).json({ error: 'Неверные данные запроса' })
   }
 
   // ── Prisma: не удалось подключиться к БД ─────────────────────────────────
   if (err instanceof Prisma.PrismaClientInitializationError ||
       err instanceof Prisma.PrismaClientRustPanicError) {
-    console.error(`[Prisma init/panic] ${req.method} ${req.path}:`, err.message)
+    logger.error({ ...ctx, err }, 'prisma_connection_error')
     return res.status(503).json({ error: 'Сервис временно недоступен' })
   }
 
@@ -39,11 +42,12 @@ module.exports = function errorHandler(err, req, res, next) {
 
   // ── Прикладные ошибки с явным статусом (throw с err.status) ─────────────
   if (err.status && err.status < 500) {
+    logger.warn({ ...ctx, statusCode: err.status }, err.message)
     return res.status(err.status).json({ error: err.message })
   }
 
   // ── Всё остальное — 500, детали не утекают в продакшне ───────────────────
-  console.error(`[500] ${req.method} ${req.path}:`, err)
+  logger.error({ ...ctx, err }, 'internal_server_error')
   const isDev = process.env.NODE_ENV !== 'production'
   res.status(500).json({
     error: 'Внутренняя ошибка сервера',

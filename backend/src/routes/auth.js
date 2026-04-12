@@ -7,6 +7,7 @@ const prisma = require('../lib/prisma')
 const { Resend } = require('resend')
 const { authMiddleware } = require('../middleware/auth')
 const { addDefaultFridgeItems } = require('../lib/fridge')
+const { logger, maskEmail } = require('../lib/logger')
 
 // Строгий rate limit для verify-эндпоинтов: 5 попыток за 15 минут по target (email/phone)
 const verifyLimiter = rateLimit({
@@ -41,9 +42,9 @@ const loginLimiter = rateLimit({
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.RESEND_FROM || 'MealBot <noreply@smarussya.ru>'
 
-async function sendEmailCode(email, code) {
+async function sendEmailCode(email, code, requestId) {
   if (!resend) {
-    console.log(`[EMAIL STUB] Код подтверждения для ${email}: ${code}`)
+    logger.debug({ action: 'email_send_stub', email: maskEmail(email), requestId }, 'email_send_stub')
     return
   }
   const result = await resend.emails.send({
@@ -60,10 +61,10 @@ async function sendEmailCode(email, code) {
     `,
   })
   if (result?.error) {
-    console.error(`[Resend] Ошибка отправки на ${email}:`, result.error)
+    logger.error({ action: 'email_send_failed', email: maskEmail(email), error: result.error, requestId }, 'email_send_failed')
     throw new Error('Не удалось отправить письмо. Попробуйте позже.')
   }
-  console.log(`[Resend] Отправлено на ${email}, id=${result?.data?.id}`)
+  logger.info({ action: 'email_sent', email: maskEmail(email), messageId: result?.data?.id, requestId }, 'email_sent')
 }
 
 const signToken = (userId, role, tokenVersion) =>
@@ -116,7 +117,7 @@ router.post('/register', async (req, res, next) => {
         await prisma.verificationCode.deleteMany({ where: { type: 'email', target: email, usedAt: null } })
         const code = genCode()
         await saveCode('email', email, code)
-        await sendEmailCode(email, code)
+        await sendEmailCode(email, code, req.requestId)
         return res.status(200).json({ requireVerification: true, email })
       }
       return res.status(409).json({ error: 'Email уже зарегистрирован' })
@@ -127,7 +128,8 @@ router.post('/register', async (req, res, next) => {
 
     const code = genCode()
     await saveCode('email', email, code)
-    await sendEmailCode(email, code)
+    await sendEmailCode(email, code, req.requestId)
+    logger.info({ action: 'registration_completed', email: maskEmail(email), requestId: req.requestId }, 'registration_completed')
 
     res.status(201).json({ requireVerification: true, email })
   } catch (err) {
@@ -143,7 +145,10 @@ router.post('/verify-email', verifyLimiter, async (req, res, next) => {
     if (!email || !code) return res.status(400).json({ error: 'Укажи email и код' })
 
     const vc = await findValidCode('email', email, code)
-    if (!vc) return res.status(400).json({ error: 'Неверный или истёкший код' })
+    if (!vc) {
+      logger.warn({ action: 'email_verification_failed', email: maskEmail(email), requestId: req.requestId }, 'email_verification_failed')
+      return res.status(400).json({ error: 'Неверный или истёкший код' })
+    }
 
     await prisma.verificationCode.update({ where: { id: vc.id }, data: { usedAt: new Date() } })
 
@@ -154,6 +159,7 @@ router.post('/verify-email', verifyLimiter, async (req, res, next) => {
     })
 
     await addDefaultFridgeItems(user.id)
+    logger.info({ action: 'email_verification_completed', userId: user.id, requestId: req.requestId }, 'email_verification_completed')
     res.json({ token: signToken(user.id, user.role, user.tokenVersion), user })
   } catch (err) { next(err) }
 })
@@ -193,10 +199,14 @@ router.post('/login', loginLimiter, async (req, res, next) => {
     if (!user.passwordHash) return res.status(401).json({ error: 'Этот аккаунт создан через Google. Войдите через кнопку «Войти с Google».' })
 
     const ok = await bcrypt.compare(password, user.passwordHash)
-    if (!ok) return res.status(401).json({ error: 'Неверный email или пароль' })
+    if (!ok) {
+      logger.warn({ action: 'login_failed', email: maskEmail(email), reason: 'wrong_password', requestId: req.requestId }, 'login_failed')
+      return res.status(401).json({ error: 'Неверный email или пароль' })
+    }
 
     if (!user.emailVerified) return res.status(403).json({ error: 'Подтвердите email перед входом', requireVerification: true, email })
 
+    logger.info({ action: 'login_success', userId: user.id, requestId: req.requestId }, 'login_success')
     res.json({
       token: signToken(user.id, user.role, user.tokenVersion),
       user: { id: user.id, email: user.email, name: user.name, role: user.role },

@@ -5,6 +5,7 @@ const prisma = require('../lib/prisma')
 const { authMiddleware: auth } = require('../middleware/auth')
 const validate = require('../middleware/validate')
 const { groupCreate, groupUpdate } = require('../lib/schemas')
+const { logger } = require('../lib/logger')
 
 // Лимиты
 const LIMITS = {
@@ -132,6 +133,7 @@ router.post('/', validate(groupCreate), async (req, res, next) => {
       return created
     })
 
+    logger.info({ action: 'group_created', groupId: group.id, groupType: group.type, userId: req.userId, requestId: req.requestId }, 'group_created')
     res.status(201).json(formatGroup(group))
   } catch (e) { next(e) }
 })
@@ -246,6 +248,7 @@ router.delete('/:id', async (req, res, next) => {
       await tx.group.delete({ where: { id: req.params.id } })
     })
 
+    logger.info({ action: 'group_deleted', groupId: req.params.id, groupType: group.type, userId: req.userId, requestId: req.requestId }, 'group_deleted')
     res.json({ message: 'Группа удалена' })
   } catch (e) { next(e) }
 })
@@ -269,6 +272,7 @@ router.delete('/:id/leave', async (req, res, next) => {
       })
     })
 
+    logger.info({ action: 'group_left', groupId: req.params.id, userId: req.userId, requestId: req.requestId }, 'group_left')
     res.json({ message: 'Вы вышли из группы' })
   } catch (e) { next(e) }
 })
@@ -290,6 +294,7 @@ router.delete('/:id/members/:userId', async (req, res, next) => {
       })
     })
 
+    logger.info({ action: 'member_kicked', groupId: req.params.id, targetUserId: req.params.userId, userId: req.userId, requestId: req.requestId }, 'member_kicked')
     res.json({ message: 'Участник исключён' })
   } catch (e) { next(e) }
 })

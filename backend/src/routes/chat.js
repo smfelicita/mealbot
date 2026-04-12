@@ -4,6 +4,7 @@ const prisma = require('../lib/prisma')
 const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
 const { checkAiLimit } = require('../lib/aiLimit')
 const { checkMessageRelevance } = require('../lib/messageFilter')
+const { logger } = require('../lib/logger')
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -91,6 +92,7 @@ router.post('/', optionalAuth, async (req, res, next) => {
     // Проверка релевантности запроса — до обращения к API и списания лимита
     const relevance = checkMessageRelevance(message)
     if (!relevance.allowed) {
+      logger.warn({ action: 'ai_request_blocked_by_filter', userId: req.userId || 'guest', requestId: req.requestId }, 'ai_request_blocked_by_filter')
       return res.status(400).json({ error: relevance.reason, offTopic: true })
     }
 
@@ -101,6 +103,7 @@ router.post('/', optionalAuth, async (req, res, next) => {
     if (isGuest) {
       const count = getGuestCount(ip)
       if (count >= GUEST_LIMIT) {
+        logger.warn({ action: 'ai_limit_exceeded', type: 'guest', requestId: req.requestId }, 'ai_limit_exceeded')
         return res.status(429).json({ error: 'Лимит исчерпан', guestLimitReached: true, guestMessagesLeft: 0 })
       }
       incrementGuestCount(ip)
@@ -108,6 +111,7 @@ router.post('/', optionalAuth, async (req, res, next) => {
       // Проверка лимита для авторизованных пользователей (общий с ботом, через БД)
       const { allowed } = await checkAiLimit(req.userId)
       if (!allowed) {
+        logger.warn({ action: 'ai_limit_exceeded', type: 'user', userId: req.userId, requestId: req.requestId }, 'ai_limit_exceeded')
         return res.status(429).json({ error: 'Дневной лимит ИИ-сообщений исчерпан (50/день)', limitReached: true, messagesLeft: 0 })
       }
     }
@@ -149,14 +153,22 @@ router.post('/', optionalAuth, async (req, res, next) => {
       ]
     }
 
-    const aiResponse = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 800,
-      system: systemPrompt,
-      messages,
-    })
+    logger.info({ action: 'ai_request_sent', userId: req.userId || 'guest', platform, requestId: req.requestId }, 'ai_request_sent')
+    let aiResponse
+    try {
+      aiResponse = await anthropic.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 800,
+        system: systemPrompt,
+        messages,
+      })
+    } catch (apiErr) {
+      logger.error({ action: 'ai_request_failed', userId: req.userId || 'guest', error: apiErr.message, requestId: req.requestId }, 'ai_request_failed')
+      throw apiErr
+    }
     const assistantText = aiResponse.content[0].text
     const mentionedDishes = extractMentionedDishes(assistantText, dishMap)
+    logger.info({ action: 'ai_request_completed', userId: req.userId || 'guest', dishMatches: mentionedDishes.length, requestId: req.requestId }, 'ai_request_completed')
 
     if (!isGuest) {
       await prisma.chatMessage.createMany({

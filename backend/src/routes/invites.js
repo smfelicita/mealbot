@@ -5,6 +5,7 @@ const prisma = require('../lib/prisma')
 const { authMiddleware } = require('../middleware/auth')
 const validate = require('../middleware/validate')
 const { inviteCreate } = require('../lib/schemas')
+const { logger, maskEmail } = require('../lib/logger')
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.RESEND_FROM || 'MealBot <noreply@smarussya.ru>'
@@ -47,6 +48,7 @@ router.post('/groups/:id/invite', authMiddleware, validate(inviteCreate), async 
       where: { invitedById: req.userId, createdAt: { gte: since } },
     })
     if (senderCount >= 10) {
+      logger.warn({ action: 'invite_rate_limit_sender', userId: req.userId, groupId: req.params.id, requestId: req.requestId }, 'invite_rate_limit_sender')
       return res.status(429).json({ error: 'Вы достигли лимита приглашений на сегодня (10 в день)' })
     }
 
@@ -55,6 +57,7 @@ router.post('/groups/:id/invite', authMiddleware, validate(inviteCreate), async 
       where: { email: normalEmail, createdAt: { gte: since } },
     })
     if (targetCount >= 3) {
+      logger.warn({ action: 'invite_rate_limit_target', email: maskEmail(normalEmail), groupId: req.params.id, requestId: req.requestId }, 'invite_rate_limit_target')
       return res.status(429).json({ error: 'Этот адрес уже получил максимальное количество приглашений за сегодня' })
     }
 
@@ -113,9 +116,10 @@ router.post('/groups/:id/invite', authMiddleware, validate(inviteCreate), async 
         return res.status(500).json({ error: 'Не удалось отправить письмо' })
       }
     } else {
-      console.log(`[INVITE STUB] ${normalEmail} → ${inviteUrl}`)
+      logger.debug({ action: 'invite_email_stub', email: maskEmail(normalEmail), requestId: req.requestId }, 'invite_email_stub')
     }
 
+    logger.info({ action: 'group_invite_sent', groupId: req.params.id, groupType: group.type, email: maskEmail(normalEmail), userId: req.userId, requestId: req.requestId }, 'group_invite_sent')
     res.json({ ok: true })
   } catch (err) { next(err) }
 })
@@ -232,6 +236,7 @@ router.post('/invites/:token/accept', authMiddleware, async (req, res, next) => 
       await tx.groupInvite.update({ where: { token: req.params.token }, data: { usedAt: new Date() } })
     })
 
+    logger.info({ action: 'group_invite_accepted', groupId: invite.groupId, groupType: type, userId: req.userId, requestId: req.requestId }, 'group_invite_accepted')
     res.json({ ok: true, groupId: invite.groupId })
   } catch (err) { next(err) }
 })

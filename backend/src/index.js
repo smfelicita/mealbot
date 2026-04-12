@@ -36,6 +36,12 @@ prisma.user.updateMany({
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Request ID + structured logging
+const requestId     = require('./middleware/requestId')
+const requestLogger = require('./middleware/requestLogger')
+app.use(requestId)
+app.use(requestLogger)
+
 // Security
 app.use(helmet())
 app.use(cors({
