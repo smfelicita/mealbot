@@ -83,7 +83,7 @@ export default function GroupsPage() {
           <div className="flex gap-2">
             <input
               className="flex-1 bg-bg-3 border border-border rounded-sm text-text text-[15px] px-3.5 py-2.5 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3"
-              placeholder="Код группы..."
+              placeholder="8-значный код (напр. A3F7D2E9)..."
               value={joinCode}
               onChange={e => setJoinCode(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleJoin()}

@@ -29,13 +29,18 @@ router.post('/groups/:id/invite', authMiddleware, async (req, res, next) => {
     })
     if (!group) return res.status(404).json({ error: 'Группа не найдена' })
 
+    // У5: в FAMILY-группу приглашать может только владелец
+    if (group.type === 'FAMILY' && membership.role !== 'OWNER') {
+      return res.status(403).json({ error: 'Приглашать в семейную группу может только владелец' })
+    }
+
     const LIMITS = { FAMILY: 10, REGULAR: 1000 }
     if (group._count.members >= LIMITS[group.type]) {
       return res.status(400).json({ error: 'Группа заполнена' })
     }
 
-    // Уже участник?
-    const invitedUser = await prisma.user.findUnique({ where: { email: normalEmail }, select: { id: true } })
+    // Уже участник? (У2: case-insensitive поиск)
+    const invitedUser = await prisma.user.findFirst({ where: { email: { equals: normalEmail, mode: 'insensitive' } }, select: { id: true } })
     if (invitedUser) {
       const alreadyMember = await prisma.groupMember.findUnique({
         where: { groupId_userId: { groupId: req.params.id, userId: invitedUser.id } },
@@ -129,13 +134,11 @@ router.get('/invites/:token', async (req, res, next) => {
     if (invite.usedAt) return res.status(410).json({ error: 'Это приглашение уже было использовано' })
 
     res.json({
-      groupId: invite.group.id,
       groupName: invite.group.name,
       groupType: invite.group.type,
       membersCount: invite.group._count.members,
       invitedBy: invite.invitedBy.name || invite.invitedBy.email,
       expiresAt: invite.expiresAt,
-      email: invite.email,
     })
   } catch (err) { next(err) }
 })
@@ -154,6 +157,14 @@ router.post('/invites/:token/accept', authMiddleware, async (req, res, next) => 
 
     const LIMITS = { FAMILY: { groups: 1, members: 10 }, REGULAR: { groups: 2, members: 1000 } }
     const type = invite.group.type
+
+    // У1: для FAMILY проверяем, что принимает тот, кому отправлено
+    if (invite.group.type === 'FAMILY') {
+      const accepter = await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } })
+      if (!accepter?.email || accepter.email.toLowerCase() !== invite.email.toLowerCase()) {
+        return res.status(403).json({ error: 'Это приглашение предназначено другому пользователю' })
+      }
+    }
 
     // Уже в группе?
     const alreadyMember = await prisma.groupMember.findUnique({

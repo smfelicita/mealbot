@@ -112,6 +112,7 @@ export const api = {
   leaveGroup: (id) => request(`/groups/${id}/leave`, { method: 'DELETE' }),
   kickMember: (groupId, userId) => request(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' }),
   inviteMember: (groupId, email) => request(`/groups/${groupId}/invite`, { method: 'POST', body: { email } }),
+  regenerateJoinCode: (groupId) => request(`/groups/${groupId}/regenerate-code`, { method: 'POST' }),
   revokeInvite: (groupId, token) => request(`/groups/${groupId}/invites/${token}`, { method: 'DELETE' }),
   getInvite: (token) => request(`/invites/${token}`),
   acceptInvite: (token) => request(`/invites/${token}/accept`, { method: 'POST' }),

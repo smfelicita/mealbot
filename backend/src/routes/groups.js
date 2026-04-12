@@ -1,4 +1,6 @@
 const router = require('express').Router()
+const { randomBytes } = require('crypto')
+const rateLimit = require('express-rate-limit')
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth } = require('../middleware/auth')
 
@@ -7,6 +9,21 @@ const LIMITS = {
   FAMILY: { groups: 1, members: 10 },
   REGULAR: { groups: 2, members: 1000 },
 }
+
+const JOIN_CODE_TTL_DAYS = 7
+
+function generateJoinCode() {
+  return randomBytes(4).toString('hex').toUpperCase() // 8 символов, напр. "A3F7D2E9"
+}
+
+// Rate limit на join: 10 попыток за 15 минут по IP
+const joinLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Слишком много попыток вступления. Попробуйте позже.' },
+})
 
 router.use(auth)
 
@@ -88,6 +105,11 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: `Вы уже состоите в максимальном количестве ${label} групп (${LIMITS[type].groups})` })
     }
 
+    const joinCode = type === 'REGULAR' ? generateJoinCode() : null
+    const joinCodeExpiresAt = type === 'REGULAR'
+      ? new Date(Date.now() + JOIN_CODE_TTL_DAYS * 24 * 60 * 60 * 1000)
+      : null
+
     const group = await prisma.$transaction(async (tx) => {
       const created = await tx.group.create({
         data: {
@@ -96,6 +118,8 @@ router.post('/', async (req, res, next) => {
           avatarUrl: avatarUrl || null,
           type,
           ownerId: req.userId,
+          joinCode,
+          joinCodeExpiresAt,
           members: { create: { userId: req.userId, role: 'OWNER' } },
         },
         include: { _count: { select: { members: true, dishes: true } } },
@@ -111,43 +135,42 @@ router.post('/', async (req, res, next) => {
 })
 
 // POST /api/groups/join
-router.post('/join', async (req, res, next) => {
+router.post('/join', joinLimiter, async (req, res, next) => {
   try {
     const { code } = req.body
-    if (!code) return res.status(400).json({ error: 'Укажите код группы' })
+    if (!code?.trim()) return res.status(400).json({ error: 'Укажите код группы' })
 
-    const group = await prisma.group.findUnique({
-      where: { id: code },
+    // К1: ищем только REGULAR-группы по joinCode (FAMILY недоступны через код)
+    const group = await prisma.group.findFirst({
+      where: { joinCode: code.trim().toUpperCase(), type: 'REGULAR' },
       include: { _count: { select: { members: true } } },
     })
     if (!group) return res.status(404).json({ error: 'Группа не найдена' })
 
-    const existing = await getMembership(code, req.userId)
-    if (existing) return res.status(400).json({ error: 'Вы уже в этой группе' })
+    // К4: единая ошибка — не раскрываем, истёк ли код или не существует
+    if (!group.joinCodeExpiresAt || group.joinCodeExpiresAt < new Date()) {
+      return res.status(410).json({ error: 'Код устарел. Попросите участника обновить код.' })
+    }
+
+    const existing = await getMembership(group.id, req.userId)
+    if (existing) return res.status(409).json({ error: 'Вы уже в этой группе' })
 
     const userGroupCount = await prisma.groupMember.count({
-      where: { userId: req.userId, group: { type: group.type } },
+      where: { userId: req.userId, group: { type: 'REGULAR' } },
     })
-    if (userGroupCount >= LIMITS[group.type].groups) {
-      const label = group.type === 'FAMILY' ? 'семейной' : 'обычной'
-      const hint = group.type === 'FAMILY' ? ' Сначала выйдите из текущей семейной группы в настройках.' : ''
-      return res.status(400).json({ error: `Вы уже состоите в максимальном количестве ${label} групп (${LIMITS[group.type].groups}).${hint}` })
+    if (userGroupCount >= LIMITS.REGULAR.groups) {
+      return res.status(400).json({ error: `Вы уже состоите в максимальном количестве обычных групп (${LIMITS.REGULAR.groups})` })
     }
 
-    if (group._count.members >= LIMITS[group.type].members) {
-      return res.status(400).json({ error: `Группа заполнена (максимум ${LIMITS[group.type].members} участников)` })
+    if (group._count.members >= LIMITS.REGULAR.members) {
+      return res.status(400).json({ error: 'Группа заполнена' })
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.groupMember.create({
-        data: { groupId: code, userId: req.userId, role: 'MEMBER' },
-      })
-      if (group.type === 'FAMILY') {
-        await migratePersonalFridgeToFamily(tx, req.userId, code)
-      }
+    await prisma.groupMember.create({
+      data: { groupId: group.id, userId: req.userId, role: 'MEMBER' },
     })
 
-    res.json({ groupId: code, message: 'Вы вступили в группу' })
+    res.json({ groupId: group.id, message: 'Вы вступили в группу' })
   } catch (e) { next(e) }
 })
 
@@ -180,6 +203,8 @@ router.get('/:id', async (req, res, next) => {
       type: group.type,
       ownerId: group.ownerId,
       myRole: membership.role,
+      joinCode: group.type === 'REGULAR' ? group.joinCode : undefined,
+      joinCodeExpiresAt: group.type === 'REGULAR' ? group.joinCodeExpiresAt : undefined,
       members: group.members.map(m => ({
         userId: m.userId,
         name: m.user.name || m.user.email || 'Пользователь',
@@ -299,6 +324,24 @@ router.delete('/:id/members/:userId', async (req, res, next) => {
     })
 
     res.json({ message: 'Участник исключён' })
+  } catch (e) { next(e) }
+})
+
+// POST /api/groups/:id/regenerate-code — только владелец REGULAR группы
+router.post('/:id/regenerate-code', async (req, res, next) => {
+  try {
+    const group = await prisma.group.findUnique({ where: { id: req.params.id } })
+    if (!group) return res.status(404).json({ error: 'Группа не найдена' })
+    if (group.ownerId !== req.userId) return res.status(403).json({ error: 'Только владелец может обновить код' })
+    if (group.type === 'FAMILY') return res.status(400).json({ error: 'У семейной группы нет кода вступления' })
+
+    const joinCode = generateJoinCode()
+    const joinCodeExpiresAt = new Date(Date.now() + JOIN_CODE_TTL_DAYS * 24 * 60 * 60 * 1000)
+    await prisma.group.update({
+      where: { id: req.params.id },
+      data: { joinCode, joinCodeExpiresAt },
+    })
+    res.json({ joinCode, joinCodeExpiresAt })
   } catch (e) { next(e) }
 })
 
