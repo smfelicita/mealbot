@@ -14,6 +14,8 @@ export default function GroupDetailPage() {
   const [group, setGroup]   = useState(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab]       = useState('dishes')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviting, setInviting] = useState(false)
 
   useEffect(() => {
     api.getGroup(id)
@@ -50,6 +52,20 @@ export default function GroupDetailPage() {
   function copyCode() {
     navigator.clipboard.writeText(id)
     show('Код скопирован! Поделитесь им с участниками.', 'success')
+  }
+
+  async function handleInvite() {
+    if (!inviteEmail.trim()) return
+    setInviting(true)
+    try {
+      await api.inviteMember(id, inviteEmail.trim())
+      show(`Приглашение отправлено на ${inviteEmail.trim()}`, 'success')
+      setInviteEmail('')
+    } catch (e) {
+      show(e.message, 'error')
+    } finally {
+      setInviting(false)
+    }
   }
 
   if (loading) return <Loader fullPage />
@@ -155,7 +171,25 @@ export default function GroupDetailPage() {
         )}
 
         {tab === 'members' && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
+            {/* Invite form */}
+            <div className="bg-bg-2 border border-border rounded-sm p-3.5">
+              <p className="text-[12px] font-bold text-text-2 uppercase tracking-wider mb-2">Пригласить по email</p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  className="flex-1 bg-bg-3 border border-border rounded-sm text-text text-[14px] px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3"
+                  placeholder="email@example.com"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleInvite()}
+                />
+                <Button size="sm" loading={inviting} onClick={handleInvite}>
+                  {!inviting && 'Пригласить'}
+                </Button>
+              </div>
+            </div>
+
             {group.members.map(member => (
               <div
                 key={member.userId}

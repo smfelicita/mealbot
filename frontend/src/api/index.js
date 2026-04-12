@@ -111,6 +111,10 @@ export const api = {
   joinGroup: (code) => request('/groups/join', { method: 'POST', body: { code } }),
   leaveGroup: (id) => request(`/groups/${id}/leave`, { method: 'DELETE' }),
   kickMember: (groupId, userId) => request(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' }),
+  inviteMember: (groupId, email) => request(`/groups/${groupId}/invite`, { method: 'POST', body: { email } }),
+  revokeInvite: (groupId, token) => request(`/groups/${groupId}/invites/${token}`, { method: 'DELETE' }),
+  getInvite: (token) => request(`/invites/${token}`),
+  acceptInvite: (token) => request(`/invites/${token}/accept`, { method: 'POST' }),
 
   // Chat
   sendMessage: (message, platform = 'web') =>

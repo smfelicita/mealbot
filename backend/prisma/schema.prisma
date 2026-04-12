@@ -94,6 +94,7 @@ model User {
   pushSubscriptions   PushSubscription[]
   favorites           Favorite[]
   comments            Comment[]
+  sentInvites         GroupInvite[]
 
   @@map("users")
 }
@@ -226,6 +227,7 @@ model Group {
   dishes      Dish[]
   fridgeItems FridgeItem[]
   mealPlans   MealPlan[]
+  invites     GroupInvite[]
 
   @@map("groups")
 }
@@ -241,6 +243,21 @@ model GroupMember {
 
   @@unique([groupId, userId])
   @@map("group_members")
+}
+
+model GroupInvite {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  groupId     String
+  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  email       String
+  invitedById String
+  invitedBy   User      @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("group_invites")
 }
 
 // ─── Коды верификации ─────────────────────────────────────────────────────────

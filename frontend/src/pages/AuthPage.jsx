@@ -32,6 +32,7 @@ function ResendLine({ countdown, onResend, loading, label = 'Отправить 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AuthPage() {
   const [searchParams] = useSearchParams()
+  const redirectTo = searchParams.get('redirect') || '/'
   const [tab,  setTab]  = useState('email')
   const [step, setStep] = useState(searchParams.get('mode') === 'register' ? 'register' : 'login')
   const [form, setForm] = useState({ email: '', password: '', name: '', phone: '', code: '' })
@@ -56,13 +57,13 @@ export default function AuthPage() {
     try {
       if (step === 'login') {
         const res = await api.login(form.email, form.password)
-        setAuth(res.user, res.token); navigate('/')
+        setAuth(res.user, res.token); navigate(redirectTo, { replace: true })
       } else {
         const res = await api.register(form.email, form.password, form.name)
         if (res.requireVerification) {
           setPendingEmail(res.email); setStep('verify-email'); setResendCountdown(60)
         } else {
-          setAuth(res.user, res.token); navigate('/')
+          setAuth(res.user, res.token); navigate(redirectTo, { replace: true })
         }
       }
     } catch (err) {
@@ -83,7 +84,7 @@ export default function AuthPage() {
     e.preventDefault(); setError(''); setLoading(true)
     try {
       const res = await api.verifyEmail(pendingEmail, form.code)
-      setAuth(res.user, res.token); navigate('/')
+      setAuth(res.user, res.token); navigate(redirectTo, { replace: true })
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }
   }
@@ -108,7 +109,7 @@ export default function AuthPage() {
     e.preventDefault(); setError(''); setLoading(true)
     try {
       const res = await api.verifyPhone(pendingPhone, form.code, form.name || undefined)
-      setAuth(res.user, res.token); navigate('/')
+      setAuth(res.user, res.token); navigate(redirectTo, { replace: true })
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }
   }
@@ -117,7 +118,7 @@ export default function AuthPage() {
     setError(''); setLoading(true)
     try {
       const res = await api.googleAuth(credential)
-      setAuth(res.user, res.token); navigate('/')
+      setAuth(res.user, res.token); navigate(redirectTo, { replace: true })
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }
   }
