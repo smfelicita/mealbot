@@ -64,7 +64,6 @@ async function buildVisibilityFilter(userId) {
       { visibility: 'PUBLIC' },
       ...(userId ? [{ authorId: userId }] : []),
       ...(groupIds.length ? [{ visibility: 'FAMILY', groupId: { in: familyGroupIds.length ? familyGroupIds : ['__none__'] } }] : []),
-      ...(groupIds.length ? [{ visibility: 'PRIVATE', groupId: { in: groupIds } }] : []),
       ...allGroupsCondition,
     ],
   }

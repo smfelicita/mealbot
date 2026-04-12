@@ -28,6 +28,16 @@ const sendCodeLimiter = rateLimit({
   legacyHeaders: false,
 })
 
+// Rate limit на вход: 10 попыток за 15 минут по email
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.body.email || req.ip,
+  message: { error: 'Слишком много попыток входа. Подождите 15 минут.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.RESEND_FROM || 'MealBot <noreply@smarussya.ru>'
 
@@ -36,7 +46,7 @@ async function sendEmailCode(email, code) {
     console.log(`[EMAIL STUB] Код подтверждения для ${email}: ${code}`)
     return
   }
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: FROM,
     to: email,
     subject: 'Ваш код подтверждения — MealBot',
@@ -49,13 +59,19 @@ async function sendEmailCode(email, code) {
       </div>
     `,
   })
+  if (result?.error) {
+    console.error(`[Resend] Ошибка отправки на ${email}:`, result.error)
+    throw new Error('Не удалось отправить письмо. Попробуйте позже.')
+  }
+  console.log(`[Resend] Отправлено на ${email}, id=${result?.data?.id}`)
 }
 
 const signToken = (userId, role, tokenVersion) =>
   jwt.sign({ userId, role, tokenVersion }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
 function genCode() {
-  return String(Math.floor(100000 + Math.random() * 900000))
+  const { randomInt } = require('crypto')
+  return String(randomInt(100000, 1000000))
 }
 
 async function saveCode(type, target, code) {
@@ -90,8 +106,13 @@ router.post('/register', async (req, res, next) => {
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
-      // Аккаунт есть, но email не подтверждён — даём шанс пройти верификацию
+      // Аккаунт есть, но email не подтверждён — обновляем пароль/имя и высылаем новый код
       if (!existing.emailVerified) {
+        const passwordHash = await bcrypt.hash(password, 12)
+        await prisma.user.update({
+          where: { email },
+          data: { passwordHash, ...(name ? { name } : {}) },
+        })
         await prisma.verificationCode.deleteMany({ where: { type: 'email', target: email, usedAt: null } })
         const code = genCode()
         await saveCode('email', email, code)
@@ -164,11 +185,12 @@ router.post('/resend-email-code', sendCodeLimiter, async (req, res, next) => {
 })
 
 // POST /api/auth/login
-router.post('/login', async (req, res, next) => {
+router.post('/login', loginLimiter, async (req, res, next) => {
   try {
     const { email, password } = req.body
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user || !user.passwordHash) return res.status(401).json({ error: 'Неверный email или пароль' })
+    if (!user) return res.status(401).json({ error: 'Неверный email или пароль' })
+    if (!user.passwordHash) return res.status(401).json({ error: 'Этот аккаунт создан через Google. Войдите через кнопку «Войти с Google».' })
 
     const ok = await bcrypt.compare(password, user.passwordHash)
     if (!ok) return res.status(401).json({ error: 'Неверный email или пароль' })
@@ -254,11 +276,20 @@ router.post('/google', async (req, res, next) => {
     const { sub: googleId, email, name } = ticket.getPayload()
 
     let user = await prisma.user.findUnique({ where: { googleId } })
-    const isNew = !user
+    let isNew = !user
     if (!user) {
-      // Не линкуем автоматически к существующему email — это риск захвата аккаунта.
-      // Создаём нового пользователя. Связывание с email-аккаунтом — отдельный flow.
-      user = await prisma.user.create({ data: { googleId, email: email || null, name: name || null, emailVerified: !!email } })
+      // Google верифицирует email — безопасно связать с существующим аккаунтом
+      const existing = email ? await prisma.user.findUnique({ where: { email } }) : null
+      if (existing) {
+        user = await prisma.user.update({
+          where: { id: existing.id },
+          data: { googleId, emailVerified: true },
+        })
+        isNew = false
+      } else {
+        user = await prisma.user.create({ data: { googleId, email: email || null, name: name || null, emailVerified: !!email } })
+        isNew = true
+      }
     }
 
     if (isNew) await addDefaultFridgeItems(user.id)

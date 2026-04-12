@@ -30,7 +30,9 @@ export default function App() {
 
   useEffect(() => {
     if (!token) return
-    api.me().then(user => setAuth(user, token)).catch(() => logout())
+    // 401 обрабатывается глобальным обработчиком в api/index.js (forceLogout + редирект).
+    // Для сбоев сети / 5xx — оставляем пользователя залогиненным, не выходим.
+    api.me().then(user => setAuth(user, token)).catch(() => {})
   }, [token])
 
   return (

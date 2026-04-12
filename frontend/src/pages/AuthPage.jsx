@@ -144,7 +144,8 @@ export default function AuthPage() {
           <>
             <h2 className="font-serif text-[20px] font-extrabold mb-1">Подтверди email</h2>
             <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
-              Код отправлен на <strong>{pendingEmail}</strong>
+              Код отправлен на <strong>{pendingEmail}</strong><br />
+              <span className="text-text-3 text-[12px]">Не нашли? Проверьте папку «Спам»</span>
             </p>
             <form onSubmit={submitVerifyEmail} className="flex flex-col gap-4">
               <div>
