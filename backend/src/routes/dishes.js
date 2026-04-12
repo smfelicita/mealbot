@@ -2,6 +2,8 @@ const router = require('express').Router()
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth, optionalAuth } = require('../middleware/auth')
 const { calculateNutrition } = require('../utils/nutrition')
+const validate = require('../middleware/validate')
+const { dishCreate, dishUpdate, dishBulk } = require('../lib/schemas')
 
 // Вспомогательная — список groupId где user является участником
 async function getMemberGroupIds(userId) {
@@ -213,7 +215,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
 })
 
 // POST /api/dishes
-router.post('/', auth, async (req, res, next) => {
+router.post('/', auth, validate(dishCreate), async (req, res, next) => {
   try {
     const {
       nameRu, description, categories, cuisine, mealTime, tags,
@@ -281,7 +283,7 @@ router.post('/', auth, async (req, res, next) => {
 })
 
 // POST /api/dishes/bulk — быстрое добавление нескольких блюд по названию
-router.post('/bulk', auth, async (req, res, next) => {
+router.post('/bulk', auth, validate(dishBulk), async (req, res, next) => {
   try {
     const { names } = req.body
     if (!Array.isArray(names) || !names.length) {
@@ -324,7 +326,7 @@ router.post('/bulk', auth, async (req, res, next) => {
 })
 
 // PUT /api/dishes/:id
-router.put('/:id', auth, async (req, res, next) => {
+router.put('/:id', auth, validate(dishUpdate), async (req, res, next) => {
   try {
     const dish = await prisma.dish.findUnique({ where: { id: req.params.id } })
     if (!dish) return res.status(404).json({ error: 'Блюдо не найдено' })

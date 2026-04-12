@@ -3,6 +3,8 @@ const { randomBytes } = require('crypto')
 const rateLimit = require('express-rate-limit')
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth } = require('../middleware/auth')
+const validate = require('../middleware/validate')
+const { groupCreate, groupUpdate } = require('../lib/schemas')
 
 // Лимиты
 const LIMITS = {
@@ -91,7 +93,7 @@ router.get('/', async (req, res, next) => {
 })
 
 // POST /api/groups
-router.post('/', async (req, res, next) => {
+router.post('/', validate(groupCreate), async (req, res, next) => {
   try {
     const { name, description, avatarUrl, type = 'FAMILY' } = req.body
     if (!name?.trim()) return res.status(400).json({ error: 'Укажите название группы' })
@@ -201,7 +203,7 @@ router.get('/:id', async (req, res, next) => {
 })
 
 // PUT /api/groups/:id
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', validate(groupUpdate), async (req, res, next) => {
   try {
     const group = await prisma.group.findUnique({ where: { id: req.params.id } })
     if (!group) return res.status(404).json({ error: 'Группа не найдена' })

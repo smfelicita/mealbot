@@ -3,6 +3,8 @@ const { randomBytes } = require('crypto')
 const { Resend } = require('resend')
 const prisma = require('../lib/prisma')
 const { authMiddleware } = require('../middleware/auth')
+const validate = require('../middleware/validate')
+const { inviteCreate } = require('../lib/schemas')
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const FROM = process.env.RESEND_FROM || 'MealBot <noreply@smarussya.ru>'
@@ -11,7 +13,7 @@ const TTL_DAYS = 7
 
 // ─── POST /api/groups/:id/invite ─────────────────────────────────────────────
 // Только участник группы может приглашать. Возвращает { ok: true }.
-router.post('/groups/:id/invite', authMiddleware, async (req, res, next) => {
+router.post('/groups/:id/invite', authMiddleware, validate(inviteCreate), async (req, res, next) => {
   try {
     const { email } = req.body
     if (!email?.trim()) return res.status(400).json({ error: 'Укажите email' })

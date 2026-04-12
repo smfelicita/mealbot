@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const prisma = require('../lib/prisma')
 const { authMiddleware } = require('../middleware/auth')
+const validate = require('../middleware/validate')
+const { commentCreate } = require('../lib/schemas')
 
 // Проверка доступа к комментариям блюда:
 // - автор блюда (личные заметки)
@@ -41,7 +43,7 @@ router.get('/', authMiddleware, async (req, res) => {
 })
 
 // POST /api/comments — добавить комментарий
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, validate(commentCreate), async (req, res) => {
   try {
     const { dishId, content } = req.body
     if (!dishId || !content?.trim()) return res.status(400).json({ error: 'dishId и content обязательны' })
