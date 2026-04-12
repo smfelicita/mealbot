@@ -44,26 +44,10 @@ export default function GroupsPage() {
   const { show, Toast } = useToast()
   const [groups, setGroups]   = useState([])
   const [loading, setLoading] = useState(true)
-  const [joinCode, setJoinCode] = useState('')
-  const [joining, setJoining] = useState(false)
 
   useEffect(() => {
     api.getGroups().then(setGroups).catch(() => {}).finally(() => setLoading(false))
   }, [])
-
-  async function handleJoin() {
-    if (!joinCode.trim()) return
-    setJoining(true)
-    try {
-      const res = await api.joinGroup(joinCode.trim())
-      show('Вы вступили в группу!', 'success')
-      navigate(`/groups/${res.groupId}`)
-    } catch (e) {
-      show(e.message, 'error')
-    } finally {
-      setJoining(false)
-    }
-  }
 
   const familyGroups  = groups.filter(g => g.type === 'FAMILY')
   const regularGroups = groups.filter(g => g.type !== 'FAMILY')
@@ -77,23 +61,6 @@ export default function GroupsPage() {
       </div>
 
       <div className="pt-[68px] pb-8 px-4 flex flex-col gap-5">
-        {/* Join by code */}
-        <div className="bg-bg-2 border border-border rounded-DEFAULT p-4">
-          <p className="text-[13px] font-bold text-text-2 mb-3">Вступить в группу по коду</p>
-          <div className="flex gap-2">
-            <input
-              className="flex-1 bg-bg-3 border border-border rounded-sm text-text text-[15px] px-3.5 py-2.5 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3"
-              placeholder="8-значный код (напр. A3F7D2E9)..."
-              value={joinCode}
-              onChange={e => setJoinCode(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleJoin()}
-            />
-            <Button variant="secondary" loading={joining} onClick={handleJoin}>
-              {!joining && 'Вступить'}
-            </Button>
-          </div>
-        </div>
-
         {/* Groups list */}
         {loading ? (
           <Loader />

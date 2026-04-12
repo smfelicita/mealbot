@@ -3,18 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { Button, Loader, TextInput, Textarea, useToast } from '../components/ui'
 
-const GROUP_TYPES = [
-  { value: 'FAMILY',  label: '👨‍👩‍👧 Семейная', desc: 'Общий холодильник, общие рецепты. Одна на пользователя.' },
-  { value: 'REGULAR', label: '👥 Обычная',   desc: 'Только общие рецепты. До 2 групп.' },
-]
-
 export default function GroupFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = Boolean(id)
   const { show, Toast } = useToast()
 
-  const [form, setForm]         = useState({ name: '', description: '', avatarUrl: '', type: 'REGULAR' })
+  const [form, setForm]         = useState({ name: '', description: '', avatarUrl: '', type: 'FAMILY' })
   const [loading, setLoading]   = useState(isEdit)
   const [saving, setSaving]     = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -90,34 +85,6 @@ export default function GroupFormPage() {
             </div>
           </div>
 
-          {/* Type (create only) */}
-          {!isEdit && (
-            <div>
-              <p className="text-xs font-bold text-text-2 uppercase tracking-wider mb-2">Тип группы</p>
-              <div className="flex flex-col gap-2">
-                {GROUP_TYPES.map(opt => (
-                  <label
-                    key={opt.value}
-                    className={[
-                      'flex items-start gap-3 px-3 py-2.5 rounded-sm border-[1.5px] cursor-pointer transition-all',
-                      form.type === opt.value
-                        ? 'border-accent bg-accent/6'
-                        : 'border-border bg-bg-2 hover:border-accent/50',
-                    ].join(' ')}
-                  >
-                    <input type="radio" name="groupType" value={opt.value}
-                      checked={form.type === opt.value}
-                      onChange={() => setForm(f => ({ ...f, type: opt.value }))}
-                      className="mt-0.5 accent-accent" />
-                    <div>
-                      <p className="text-[13px] font-semibold">{opt.label}</p>
-                      <p className="text-[11px] text-text-2 mt-0.5">{opt.desc}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
 
           <TextInput
             label="Название"

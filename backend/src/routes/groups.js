@@ -93,9 +93,9 @@ router.get('/', async (req, res, next) => {
 // POST /api/groups
 router.post('/', async (req, res, next) => {
   try {
-    const { name, description, avatarUrl, type = 'REGULAR' } = req.body
+    const { name, description, avatarUrl, type = 'FAMILY' } = req.body
     if (!name?.trim()) return res.status(400).json({ error: 'Укажите название группы' })
-    if (!['FAMILY', 'REGULAR'].includes(type)) return res.status(400).json({ error: 'Неверный тип группы' })
+    if (type !== 'FAMILY') return res.status(400).json({ error: 'Создание обычных групп временно недоступно' })
 
     const existingCount = await prisma.groupMember.count({
       where: { userId: req.userId, group: { type } },
@@ -134,8 +134,11 @@ router.post('/', async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
-// POST /api/groups/join
-router.post('/join', joinLimiter, async (req, res, next) => {
+// POST /api/groups/join (временно отключено)
+router.post('/join', async (req, res) => {
+  return res.status(503).json({ error: 'Вступление по коду временно недоступно' })
+})
+router.post('/join_disabled', joinLimiter, async (req, res, next) => {
   try {
     const { code } = req.body
     if (!code?.trim()) return res.status(400).json({ error: 'Укажите код группы' })
