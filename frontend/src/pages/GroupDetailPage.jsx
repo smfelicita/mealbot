@@ -106,7 +106,7 @@ export default function GroupDetailPage() {
         <div className="flex gap-2 px-4 pb-3.5">
           <Button variant="secondary" size="sm" onClick={copyCode}>🔑 Код приглашения</Button>
           <Button size="sm"
-            onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name } })}>
+            onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name, groupType: group.type } })}>
             + Блюдо в группу
           </Button>
         </div>

@@ -121,7 +121,8 @@ router.post('/bulk', async (req, res, next) => {
     const results = []
     for (const ingredientId of ingredientIds) {
       const ingredient = await prisma.ingredient.findUnique({ where: { id: ingredientId }, select: { nameRu: true, defaultQuantity: true, defaultUnit: true } })
-      const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, null, undefined, undefined, ingredient?.defaultQuantity, ingredient?.defaultUnit)
+      if (!ingredient) continue
+      const item = await upsertFridgeItem(req.userId, familyGroupId, ingredientId, null, undefined, undefined, ingredient.defaultQuantity, ingredient.defaultUnit)
       results.push({ ingredientId, name: item.ingredient.nameRu })
     }
     res.json({ added: results })
@@ -137,10 +138,11 @@ router.patch('/:ingredientId', async (req, res, next) => {
       ? { groupId: familyGroupId, ingredientId: req.params.ingredientId }
       : { userId: req.userId, ingredientId: req.params.ingredientId, groupId: null }
 
-    await prisma.fridgeItem.updateMany({
+    const count = await prisma.fridgeItem.updateMany({
       where,
       data: { quantityValue: quantityValue ?? null, quantityUnit: quantityUnit ?? null },
     })
+    if (count.count === 0) return res.status(404).json({ error: 'Продукт не найден в холодильнике' })
 
     const updated = await prisma.fridgeItem.findFirst({ where, include: { ingredient: true } })
     res.json(formatItem(updated))

@@ -82,8 +82,9 @@ export default function RecipeFormPage() {
   const [searchParams] = useSearchParams()
   const { show, Toast } = useToast()
 
-  const isEdit    = Boolean(id)
+  const isEdit     = Boolean(id)
   const copyFromId = searchParams.get('copyFrom')
+  const fromGroup  = location.state?.groupId ? location.state : null
 
   const [mode, setMode]                       = useState(isEdit ? 'extended' : 'quick')
   const [loading, setLoading]                 = useState(isEdit)
@@ -105,11 +106,15 @@ export default function RecipeFormPage() {
 
   const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
 
+  const defaultVisibility = fromGroup?.groupType === 'FAMILY' ? 'FAMILY'
+    : fromGroup?.groupType === 'REGULAR' ? 'ALL_GROUPS'
+    : 'PRIVATE'
+
   const [form, setForm] = useState({
     nameRu: '', description: '', categories: [],
     mealTime: [], difficulty: '', cookTime: '',
     calories: '', recipe: '', imageUrl: '', videoUrl: '',
-    tags: '', visibility: 'PRIVATE',
+    tags: '', visibility: defaultVisibility,
   })
 
   // ── Load data ────────────────────────────────────────────────────────────
@@ -348,6 +353,13 @@ export default function RecipeFormPage() {
       </div>
 
       <div className="pt-[68px] pb-10 px-4 flex flex-col gap-5">
+
+        {/* Group context notice */}
+        {fromGroup && (
+          <div className="bg-accent/8 border border-accent/30 rounded-sm px-3.5 py-2.5 text-sm text-accent">
+            Блюдо будет добавлено в группу «{fromGroup.groupName}»
+          </div>
+        )}
 
         {/* Copy notice */}
         {copyFromId && sourceDishName && (
