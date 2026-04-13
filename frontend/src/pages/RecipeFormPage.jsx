@@ -315,6 +315,7 @@ export default function RecipeFormPage() {
           optional: i.optional || false,
         })),
         visibility: form.visibility,
+        groupId: fromGroup?.groupId || undefined,
       }
       if (isEdit) {
         await api.updateDish(id, data)
