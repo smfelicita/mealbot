@@ -88,10 +88,39 @@ export default function GroupFormPage() {
           </div>
 
 
+          {/* Тип группы — только при создании */}
+          {!isEdit && (
+            <div className="flex flex-col gap-2">
+              <p className="text-[13px] font-bold text-text-2">Тип группы</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: 'FAMILY', emoji: '👨‍👩‍👧', label: 'Семейная', hint: 'Общий холодильник и рецепты' },
+                  { value: 'REGULAR', emoji: '👥', label: 'Группа', hint: 'Делиться рецептами' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, type: opt.value }))}
+                    className={[
+                      'flex flex-col items-center gap-1 rounded-xl border-2 py-3 px-2 transition-all text-center',
+                      form.type === opt.value
+                        ? 'border-accent bg-accent/5'
+                        : 'border-border bg-bg-2',
+                    ].join(' ')}
+                  >
+                    <span className="text-[24px]">{opt.emoji}</span>
+                    <span className={['text-[13px] font-bold', form.type === opt.value ? 'text-accent' : 'text-text'].join(' ')}>{opt.label}</span>
+                    <span className="text-[11px] text-text-3 leading-snug">{opt.hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <TextInput
             label="Название"
             required
-            placeholder="Например: Семья, Друзья, Команда..."
+            placeholder={form.type === 'FAMILY' ? 'Например: Наша семья' : 'Например: Друзья, Команда...'}
             value={form.name}
             error={nameError}
             onChange={e => { setForm(f => ({ ...f, name: e.target.value })); if (nameError) setNameError('') }}

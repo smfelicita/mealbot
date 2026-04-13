@@ -44,10 +44,27 @@ export default function GroupsPage() {
   const { show, Toast } = useToast()
   const [groups, setGroups]   = useState([])
   const [loading, setLoading] = useState(true)
+  const [joinCode, setJoinCode] = useState('')
+  const [joining, setJoining]   = useState(false)
 
   useEffect(() => {
     api.getGroups().then(setGroups).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  async function handleJoin() {
+    if (!joinCode.trim()) return
+    setJoining(true)
+    try {
+      const group = await api.joinGroup(joinCode.trim())
+      setGroups(prev => [...prev, group])
+      setJoinCode('')
+      show(`Вы вступили в «${group.name}»`, 'success')
+    } catch (e) {
+      show(e.message, 'error')
+    } finally {
+      setJoining(false)
+    }
+  }
 
   const familyGroups  = groups.filter(g => g.type === 'FAMILY')
   const regularGroups = groups.filter(g => g.type !== 'FAMILY')
@@ -61,6 +78,24 @@ export default function GroupsPage() {
       </div>
 
       <div className="pt-[68px] pb-8 px-4 flex flex-col gap-5">
+        {/* Вступить по коду */}
+        <div className="bg-bg-2 border border-border rounded-sm p-3.5">
+          <p className="text-[12px] font-bold text-text-2 uppercase tracking-wider mb-2">Вступить по коду</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="flex-1 bg-bg-3 border border-border rounded-sm text-text text-[14px] px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3 uppercase tracking-widest"
+              placeholder="A3F7D2E9"
+              value={joinCode}
+              maxLength={8}
+              onChange={e => setJoinCode(e.target.value.toUpperCase())}
+              onKeyDown={e => e.key === 'Enter' && handleJoin()}
+            />
+            <Button size="sm" loading={joining} onClick={handleJoin}>
+              {!joining && 'Войти'}
+            </Button>
+          </div>
+        </div>
         {/* Groups list */}
         {loading ? (
           <Loader />

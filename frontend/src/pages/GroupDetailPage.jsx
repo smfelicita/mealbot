@@ -134,6 +134,42 @@ export default function GroupDetailPage() {
           </div>
         )}
 
+        {/* Код вступления (только REGULAR, только владелец) */}
+        {group.type === 'REGULAR' && isOwner && group.joinCode && (
+          <div className="mx-4 mb-2 bg-bg-3 border border-border rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold text-text-3 uppercase tracking-wider mb-0.5">Код вступления</p>
+              <p className="font-mono text-[18px] font-bold text-text tracking-widest">{group.joinCode}</p>
+              {group.joinCodeExpiresAt && (
+                <p className="text-[11px] text-text-3 mt-0.5">
+                  до {new Date(group.joinCodeExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(group.joinCode)
+                  show('Код скопирован', 'success')
+                }}
+                className="text-[12px] font-semibold text-accent"
+              >Копировать</button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const res = await api.regenerateJoinCode(id)
+                    setGroup(g => ({ ...g, joinCode: res.joinCode, joinCodeExpiresAt: res.joinCodeExpiresAt }))
+                    show('Код обновлён', 'success')
+                  } catch (e) { show(e.message, 'error') }
+                }}
+                className="text-[12px] font-semibold text-text-2"
+              >Обновить</button>
+            </div>
+          </div>
+        )}
+
         {/* Action buttons */}
         <div className="flex gap-2 px-4 pb-3.5">
           <Button size="sm"

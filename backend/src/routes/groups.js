@@ -10,8 +10,8 @@ const { migratePersonalFridgeToFamily, restorePersonalFridge } = require('../lib
 
 // Лимиты
 const LIMITS = {
-  FAMILY: { groups: 1, members: 10 },
-  REGULAR: { groups: 2, members: 1000 },
+  FAMILY:  { groups: 1,  members: 10   },
+  REGULAR: { groups: 10, members: 1000 },
 }
 
 const JOIN_CODE_TTL_DAYS = 7
@@ -69,7 +69,7 @@ router.post('/', validate(groupCreate), async (req, res, next) => {
   try {
     const { name, description, avatarUrl, type = 'FAMILY' } = req.body
     if (!name?.trim()) return res.status(400).json({ error: 'Укажите название группы' })
-    if (type !== 'FAMILY') return res.status(400).json({ error: 'Создание обычных групп временно недоступно' })
+    if (!['FAMILY', 'REGULAR'].includes(type)) return res.status(400).json({ error: 'Неверный тип группы' })
 
     const existingCount = await prisma.groupMember.count({
       where: { userId: req.userId, group: { type } },
@@ -109,9 +109,36 @@ router.post('/', validate(groupCreate), async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
-// POST /api/groups/join (временно отключено)
-router.post('/join', (req, res) => {
-  res.status(503).json({ error: 'Вступление по коду временно недоступно' })
+// POST /api/groups/join
+router.post('/join', joinLimiter, async (req, res, next) => {
+  try {
+    const { code } = req.body
+    if (!code?.trim()) return res.status(400).json({ error: 'Укажите код' })
+
+    const group = await prisma.group.findFirst({
+      where: {
+        joinCode: code.trim().toUpperCase(),
+        type: 'REGULAR',
+        joinCodeExpiresAt: { gt: new Date() },
+      },
+      include: { _count: { select: { members: true } } },
+    })
+    if (!group) return res.status(404).json({ error: 'Неверный или устаревший код' })
+
+    const existing = await getMembership(group.id, req.userId)
+    if (existing) return res.status(400).json({ error: 'Вы уже в этой группе' })
+
+    if (group._count.members >= LIMITS.REGULAR.members) {
+      return res.status(400).json({ error: 'Группа заполнена' })
+    }
+
+    await prisma.groupMember.create({
+      data: { groupId: group.id, userId: req.userId, role: 'MEMBER' },
+    })
+
+    logger.info({ action: 'group_joined', groupId: group.id, userId: req.userId }, 'group_joined')
+    res.json(formatGroup(group))
+  } catch (e) { next(e) }
 })
 
 // GET /api/groups/:id
