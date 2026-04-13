@@ -23,7 +23,10 @@ export default function MyRecipesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.getMyDishes().then(setDishes).catch(() => {}).finally(() => setLoading(false))
+    api.getMyDishes()
+      .then(data => setDishes([...new Map(data.map(d => [d.id, d])).values()]))
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
   async function handleDelete(dish) {

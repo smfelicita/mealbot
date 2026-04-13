@@ -290,12 +290,17 @@ export default function DishesPage() {
   }, [getParams])
 
   const loadMore = useCallback(async () => {
+    if (!canLoadRef.current) return
+    canLoadRef.current = false  // синхронно блокируем повторный вызов до ре-рендера
     setLoadingMore(true)
     try {
       const data = await api.getDishes({ ...getParams(), offset: offsetRef.current })
       const fetched = data.dishes ?? []
       const total   = data.total  ?? 0
-      setDishes(prev => [...prev, ...fetched])
+      setDishes(prev => {
+        const seen = new Set(prev.map(d => d.id))
+        return [...prev, ...fetched.filter(d => !seen.has(d.id))]
+      })
       offsetRef.current += fetched.length
       setHasMore(offsetRef.current < total)
     } catch {
