@@ -46,7 +46,8 @@ const dishCreate = z.object({
   cuisine:     z.string().trim().max(100).optional().nullable(),
   tags:        z.array(z.string().trim().max(50)).max(20).optional(),
   cookTime:    z.number().int().min(1).max(1440).optional().nullable(),
-  difficulty:  z.enum(DIFFICULTIES, { message: 'Неверная сложность' }).optional().nullable(),
+  difficulty:  z.enum(DIFFICULTIES, { message: 'Неверная сложность' }).optional().nullable()
+               .or(z.literal('').transform(() => null)),
   calories:    z.number().int().min(0).max(10000).optional().nullable(),
   imageUrl:    z.string().url('Некорректный URL изображения').optional().nullable().or(z.literal('')),
   images:      z.array(z.string().url()).max(10).optional(),
