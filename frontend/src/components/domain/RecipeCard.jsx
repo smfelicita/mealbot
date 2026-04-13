@@ -1,16 +1,5 @@
 import { forwardRef } from 'react'
-
-const CAT_EMOJI = {
-  BREAKFAST: '🍳', LUNCH: '🍱', DINNER: '🌙',
-  SOUP: '🍲', SALAD: '🥗', DESSERT: '🍰',
-  SNACK: '🥨', DRINK: '🥤',
-}
-
-const CAT_RU = {
-  BREAKFAST: 'Завтрак', LUNCH: 'Обед', DINNER: 'Ужин',
-  SOUP: 'Суп', SALAD: 'Салат', DESSERT: 'Десерт',
-  SNACK: 'Перекус', DRINK: 'Напиток',
-}
+import { CAT_EMOJI, CAT_RU } from './dishCategories'
 
 const VISIBILITY_BADGE = {
   PRIVATE:    { icon: '🔒' },
@@ -33,11 +22,12 @@ function Highlight({ text, query }) {
   )
 }
 
-// ─── Horizontal row card (Home screen) ───────────────────────────────────────
+// ─── Horizontal row card (Home screen / Dishes list) ─────────────────────────
 const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav, hint }, ref) {
   const img   = dish.images?.[0] || dish.imageUrl
   const cat   = dish.categories?.[0] ?? dish.category
   const emoji = CAT_EMOJI[cat] || '🍽️'
+  const isFamily = dish.visibility === 'FAMILY'
 
   return (
     <div className="flex flex-col">
@@ -58,6 +48,12 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
             {dish.cookTime && <span>{dish.cookTime} мин</span>}
             {dish.cookTime && dish.categories?.[0] && <span>·</span>}
             {dish.categories?.[0] && <span>{CAT_RU[cat] || cat}</span>}
+            {isFamily && (
+              <>
+                {(dish.cookTime || dish.categories?.[0]) && <span>·</span>}
+                <span className="font-semibold" style={{ color: '#5C7A59' }}>👨‍👩‍👧 Семья</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -83,7 +79,7 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
   )
 })
 
-// ─── Vertical grid card (Dishes / Search) ────────────────────────────────────
+// ─── Vertical grid card (Search / Group detail) ───────────────────────────────
 function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngredientIds }) {
   const img   = dish.images?.[0] || dish.imageUrl
   const cat   = dish.categories?.[0] ?? dish.category

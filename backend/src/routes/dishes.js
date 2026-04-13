@@ -113,18 +113,26 @@ async function getSearchIds(q) {
 }
 
 // GET /api/dishes — поиск и фильтрация
-// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, onlyMine, limit, offset
+// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, onlyMine, familyOnly, limit, offset
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, onlyMine, favorites } = req.query
+    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, onlyMine, familyOnly, favorites } = req.query
     const limit  = Math.min(parseInt(req.query.limit  || '100', 10), 200)
     const offset = parseInt(req.query.offset || '0', 10) || 0
 
-    const visibilityFilter = (onlyMine === 'true' && req.userId)
-      ? { authorId: req.userId }
-      : (myKitchen === 'true' && req.userId)
-        ? await buildMyKitchenFilter(req.userId)
-        : await buildVisibilityFilter(req.userId)
+    let visibilityFilter
+    if (familyOnly === 'true' && req.userId) {
+      const familyGroupIds = await getFamilyGroupIds(req.userId)
+      visibilityFilter = familyGroupIds.length
+        ? { visibility: 'FAMILY', groupId: { in: familyGroupIds } }
+        : { id: 'none' }
+    } else if (onlyMine === 'true' && req.userId) {
+      visibilityFilter = { authorId: req.userId }
+    } else if (myKitchen === 'true' && req.userId) {
+      visibilityFilter = await buildMyKitchenFilter(req.userId)
+    } else {
+      visibilityFilter = await buildVisibilityFilter(req.userId)
+    }
 
     const baseWhere = { ...visibilityFilter, ...buildBaseFilter({ mealTime, category, tags, cuisine }) }
 

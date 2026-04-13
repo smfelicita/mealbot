@@ -71,13 +71,12 @@ export default function GroupsPage() {
 
   return (
     <div>
-      {/* Top bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-bg/95 backdrop-blur-md border-b border-border flex items-center px-3 gap-2 max-w-app mx-auto">
-        <span className="font-serif text-[17px] font-bold flex-1">👥 Группы</span>
-        <Button size="sm" onClick={() => navigate('/groups/new')}>+ Создать</Button>
-      </div>
-
-      <div className="pt-[68px] pb-8 px-4 flex flex-col gap-5">
+      <div className="px-4 pt-5 pb-8 flex flex-col gap-5">
+        {/* Заголовок */}
+        <div className="flex items-center justify-between">
+          <h1 className="font-semibold text-[22px]" style={{ color: '#1a1a1a' }}>Мои группы</h1>
+          <Button size="sm" onClick={() => navigate('/groups/new')}>+ Создать</Button>
+        </div>
         {/* Вступить по коду */}
         <div className="bg-bg-2 border border-border rounded-sm p-3.5">
           <p className="text-[12px] font-bold text-text-2 uppercase tracking-wider mb-2">Вступить по коду</p>
