@@ -164,6 +164,9 @@ export default function HomePage() {
         Что приготовить<br />сегодня?
       </h1>
 
+      {/* Guest hero banner */}
+      {!token && <GuestHeroBanner onNavigate={navigate} />}
+
       {/* Chips */}
       <div className="shrink-0">
         <MealTypeChips
@@ -172,9 +175,6 @@ export default function HomePage() {
           showAll
         />
       </div>
-
-      {/* Guest hero banner */}
-      {!token && <GuestHeroBanner onNavigate={navigate} />}
 
       {/* Recipe list — flex-1 takes remaining space, overflow hidden = no scroll */}
       <div

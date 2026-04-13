@@ -156,7 +156,7 @@ export default function Layout() {
         {/* Logo + name */}
         <button type="button" onClick={() => navigate('/')}
           className="flex items-center gap-2 focus:outline-none">
-          <span className="text-[20px]">🍽️</span>
+          <img src="/favicon.svg" alt="" width="28" height="28" className="rounded-[6px]" />
           <span className="font-bold text-[16px] text-text tracking-[-0.2px]">Моя кухня</span>
         </button>
 
@@ -179,8 +179,13 @@ export default function Layout() {
             </>
           ) : (
             <button type="button" onClick={() => navigate('/auth')}
-              className="bg-accent text-white text-[13px] font-semibold px-4 py-1.5 rounded-full">
-              Войти
+              className="w-8 h-8 flex items-center justify-center rounded-full focus:outline-none"
+              style={{ color: '#9e9e9e' }}
+              aria-label="Войти">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
             </button>
           )}
         </div>

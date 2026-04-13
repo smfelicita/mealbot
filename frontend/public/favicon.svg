@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="#FFB84D"/>
+      <stop offset="100%" stop-color="#F08020"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="rgba(0,0,0,0.22)"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+
+  <!-- Ground shadow -->
+  <ellipse cx="256" cy="400" rx="145" ry="18" fill="rgba(0,0,0,0.18)"/>
+
+  <!-- Left page -->
+  <path d="M108 148 C108 143 162 132 244 137 L244 378 C162 373 108 384 108 379 Z"
+        fill="white" filter="url(#shadow)"/>
+
+  <!-- Right page -->
+  <path d="M268 137 C350 132 404 143 404 148 L404 379 C404 384 350 373 268 378 Z"
+        fill="#FFF6EA"/>
+
+  <!-- Spine -->
+  <rect x="241" y="134" width="18" height="247" rx="9" fill="#DFC49A"/>
+
+  <!-- Bookmark (yellow ribbon) -->
+  <polygon points="322,104 346,104 346,162 334,151 322,162" fill="#FFD93D"/>
+
+  <!-- Tomato on left page -->
+  <circle cx="178" cy="238" r="44" fill="#E8503A"/>
+  <path d="M162 200 Q178 187 194 200" stroke="#4A8030" stroke-width="8"
+        fill="none" stroke-linecap="round"/>
+  <line x1="178" y1="190" x2="178" y2="204" stroke="#4A8030" stroke-width="6"
+        stroke-linecap="round"/>
+  <circle cx="162" cy="224" r="9" fill="rgba(255,255,255,0.28)"/>
+
+  <!-- Egg (fried) on right page -->
+  <ellipse cx="332" cy="252" rx="36" ry="40" fill="white"/>
+  <circle cx="332" cy="258" r="19" fill="#FFD93D"/>
+  <circle cx="320" cy="244" r="6" fill="rgba(255,255,255,0.55)"/>
+
+  <!-- Text lines left page -->
+  <rect x="136" y="304" width="86" height="6" rx="3" fill="#E2E2E2"/>
+  <rect x="136" y="320" width="72" height="6" rx="3" fill="#E2E2E2"/>
+  <rect x="136" y="336" width="80" height="6" rx="3" fill="#E2E2E2"/>
+  <rect x="136" y="352" width="64" height="6" rx="3" fill="#E2E2E2"/>
+
+  <!-- Text lines right page -->
+  <rect x="276" y="304" width="100" height="6" rx="3" fill="#E8D8C4"/>
+  <rect x="276" y="320" width="84" height="6" rx="3" fill="#E8D8C4"/>
+  <rect x="276" y="336" width="92" height="6" rx="3" fill="#E8D8C4"/>
+  <rect x="276" y="352" width="70" height="6" rx="3" fill="#E8D8C4"/>
+</svg>
