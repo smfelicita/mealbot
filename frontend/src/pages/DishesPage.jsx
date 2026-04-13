@@ -194,6 +194,8 @@ function BulkAddModal({ onClose, onDone }) {
   )
 }
 
+const LIMIT = 20
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DishesPage() {
   const navigate = useNavigate()
@@ -201,12 +203,19 @@ export default function DishesPage() {
 
   const [dishes, setDishes]       = useState([])
   const [loading, setLoading]     = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore]     = useState(false)
   const [q, setQ]                 = useState('')
   const [mealTime, setMealTime]   = useState('')
   const [filter, setFilter]       = useState('all')   // 'all' | 'favorites'
   const [favIds, setFavIds]       = useState(new Set())
   const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
   const [showBulkAdd, setShowBulkAdd] = useState(false)
+
+  const offsetRef    = useRef(0)
+  const sentinelRef  = useRef(null)
+  const loadMoreFnRef = useRef(null)
+  const canLoadRef   = useRef(false)
 
   useEffect(() => {
     if (!token) return
@@ -216,28 +225,72 @@ export default function DishesPage() {
     ).catch(() => {})
   }, [token])
 
+  const getParams = useCallback(() => ({
+    q:          q || undefined,
+    mealTime:   mealTime || undefined,
+    fridgeMode: fridgeMode ? 'true' : undefined,
+    myKitchen:  token ? 'true' : undefined,
+    favorites:  (filter === 'favorites' && token) ? 'true' : undefined,
+    limit:      LIMIT,
+  }), [q, mealTime, fridgeMode, filter, token])
+
   const load = useCallback(async () => {
+    canLoadRef.current = false
     setLoading(true)
+    offsetRef.current = 0
     try {
-      const data = await api.getDishes({
-        q:          q || undefined,
-        mealTime:   mealTime || undefined,
-        fridgeMode: fridgeMode ? 'true' : undefined,
-        myKitchen:  token ? 'true' : undefined,
-        favorites:  (filter === 'favorites' && token) ? 'true' : undefined,
-      })
-      setDishes(data.dishes ?? data)
+      const data = await api.getDishes({ ...getParams(), offset: 0 })
+      const fetched = data.dishes ?? []
+      const total   = data.total  ?? fetched.length
+      setDishes(fetched)
+      offsetRef.current = fetched.length
+      setHasMore(fetched.length < total)
     } catch {
       setDishes([])
+      setHasMore(false)
     } finally {
       setLoading(false)
     }
-  }, [q, mealTime, fridgeMode, filter, token])
+  }, [getParams])
 
+  const loadMore = useCallback(async () => {
+    setLoadingMore(true)
+    try {
+      const data = await api.getDishes({ ...getParams(), offset: offsetRef.current })
+      const fetched = data.dishes ?? []
+      const total   = data.total  ?? 0
+      setDishes(prev => [...prev, ...fetched])
+      offsetRef.current += fetched.length
+      setHasMore(offsetRef.current < total)
+    } catch {
+      // silent — не сбрасываем список
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [getParams])
+
+  // Обновляем refs чтобы IntersectionObserver не захватывал устаревший callback
+  useEffect(() => { loadMoreFnRef.current = loadMore }, [loadMore])
+  useEffect(() => {
+    canLoadRef.current = hasMore && !loadingMore && !loading
+  }, [hasMore, loadingMore, loading])
+
+  // Загрузка при смене фильтров
   useEffect(() => {
     const t = setTimeout(load, 300)
     return () => clearTimeout(t)
   }, [load])
+
+  // IntersectionObserver — срабатывает когда sentinel попадает в viewport
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && canLoadRef.current) loadMoreFnRef.current?.()
+    }, { rootMargin: '200px' })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   function handleToggleFav(dishId) {
     const isFav = favIds.has(dishId)
@@ -319,6 +372,16 @@ export default function DishesPage() {
             fridgeIngredientIds={fridgeIngredientIds}
             onDishClick={id => navigate(`/dishes/${id}`)}
           />
+        )}
+
+        {/* Sentinel для IntersectionObserver */}
+        <div ref={sentinelRef} className="h-1" />
+
+        {/* Спиннер подгрузки */}
+        {loadingMore && (
+          <div className="flex justify-center py-5">
+            <div className="w-6 h-6 rounded-full border-2 border-[#C4704A] border-t-transparent animate-spin" />
+          </div>
         )}
       </div>
 

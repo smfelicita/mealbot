@@ -44,9 +44,13 @@
 - [x] Полный аудит групп: видимость, лимиты, транзакционность, kick/leave
 - [x] REGULAR группы — временно отключены (UI скрыт, backend 503/400)
 - [x] Единый error middleware (Prisma errors, JSON parse, 5xx без утечки деталей)
-- [x] Zod-валидация на всех write-эндпоинтах (groups, dishes, invites, comments)
+- [x] Zod-валидация на всех write-эндпоинтах (groups, dishes, invites, comments, fridge, meal-plans)
 - [x] Структурированное логирование: pino, requestId, maskEmail, redact чувствительных полей
 - [x] LOG_LEVEL и NODE_ENV управляют verbosity и форматом логов (см. FUNCTIONAL_SPEC.md)
+- [x] Rate limit на /api/comments POST (30/час по DB)
+- [x] Логирование критичных действий (auth, группы, инвайты, fridge, meal-plans, comments)
+- [x] Индексы в БД (authorId, visibility, groupId, createdAt, userId, platform, dishId)
+- [x] Пагинация в /api/dishes (limit/offset, возвращает total)
 
 ### Фронтенд
 - [x] React + Vite + PWA manifest + iOS meta-теги
@@ -94,11 +98,6 @@
 
 ### Качество и надёжность
 - [ ] Integration-тесты: auth flow, invite flow, fridge migration, access control
-- [ ] Zod-валидация на оставшихся эндпоинтах (fridge, meal-plans, comments PATCH)
-- [ ] Rate limit на /api/comments POST
-- [ ] Логирование критичных действий (auth, группы, инвайты)
-- [ ] Индексы в БД (email, groupId, authorId, createdAt на горячих таблицах)
-- [ ] Пагинация в /api/dishes (сейчас все блюда сразу)
 
 ### Рецепты
 - [ ] Список покупок: автогенерация из выбранных блюд

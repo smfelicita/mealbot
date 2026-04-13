@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const prisma = require('../lib/prisma')
 const { authMiddleware } = require('../middleware/auth')
+const validate = require('../middleware/validate')
+const { mealPlanCreate } = require('../lib/schemas')
 const webpush = require('web-push')
 const { sendTelegramMessage } = require('../lib/telegram')
 const { logger } = require('../lib/logger')
@@ -77,7 +79,7 @@ router.get('/', authMiddleware, async (req, res) => {
 })
 
 // POST /api/meal-plans — добавить блюдо в план
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authMiddleware, validate(mealPlanCreate), async (req, res) => {
   try {
     const { dishId, mealType = 'ANYTIME', date, note, shared = false } = req.body
     if (!dishId) return res.status(400).json({ error: 'dishId обязателен' })

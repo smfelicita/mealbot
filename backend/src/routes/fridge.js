@@ -1,6 +1,8 @@
 const router = require('express').Router()
 const prisma = require('../lib/prisma')
 const { authMiddleware: auth } = require('../middleware/auth')
+const validate = require('../middleware/validate')
+const { fridgeItemAdd, fridgeBulk, fridgePatch } = require('../lib/schemas')
 const { logger } = require('../lib/logger')
 
 router.use(auth)
@@ -97,7 +99,7 @@ router.get('/', async (req, res, next) => {
 })
 
 // POST /api/fridge
-router.post('/', async (req, res, next) => {
+router.post('/', validate(fridgeItemAdd), async (req, res, next) => {
   try {
     const { ingredientId, expiresAt, quantityValue, quantityUnit } = req.body
     if (!ingredientId) return res.status(400).json({ error: 'ingredientId обязателен' })
@@ -114,7 +116,7 @@ router.post('/', async (req, res, next) => {
 })
 
 // POST /api/fridge/bulk
-router.post('/bulk', async (req, res, next) => {
+router.post('/bulk', validate(fridgeBulk), async (req, res, next) => {
   try {
     const { ingredientIds } = req.body
     if (!Array.isArray(ingredientIds)) return res.status(400).json({ error: 'ingredientIds должен быть массивом' })
@@ -132,7 +134,7 @@ router.post('/bulk', async (req, res, next) => {
 })
 
 // PATCH /api/fridge/:ingredientId — обновить количество
-router.patch('/:ingredientId', async (req, res, next) => {
+router.patch('/:ingredientId', validate(fridgePatch), async (req, res, next) => {
   try {
     const { quantityValue, quantityUnit } = req.body
     const familyGroupId = await getFamilyGroupId(req.userId)

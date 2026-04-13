@@ -91,6 +91,34 @@ const commentCreate = z.object({
            .trim().min(1, 'Комментарий не может быть пустым').max(1000, 'Не более 1000 символов'),
 })
 
+// ─── Fridge ───────────────────────────────────────────────────────────────────
+
+const fridgeItemAdd = z.object({
+  ingredientId:  z.string({ required_error: 'ingredientId обязателен' }).min(1),
+  expiresAt:     z.string().datetime({ offset: true }).optional().nullable().or(z.literal('')),
+  quantityValue: z.number().positive('Количество должно быть положительным').optional().nullable(),
+  quantityUnit:  z.string().trim().max(20).optional().nullable(),
+})
+
+const fridgeBulk = z.object({
+  ingredientIds: z.array(z.string().min(1)).min(1, 'Укажите хотя бы один продукт').max(100),
+})
+
+const fridgePatch = z.object({
+  quantityValue: z.number().positive('Количество должно быть положительным').optional().nullable(),
+  quantityUnit:  z.string().trim().max(20).optional().nullable(),
+})
+
+// ─── Meal Plans ───────────────────────────────────────────────────────────────
+
+const mealPlanCreate = z.object({
+  dishId:   z.string({ required_error: 'dishId обязателен' }).min(1),
+  mealType: z.enum(MEAL_TYPES, { message: 'Неверный тип приёма пищи' }).default('ANYTIME'),
+  date:     z.string().datetime({ offset: true }).optional().nullable().or(z.literal('')),
+  note:     z.string().trim().max(500, 'Заметка не более 500 символов').optional().nullable(),
+  shared:   z.boolean().optional().default(false),
+})
+
 module.exports = {
   groupCreate,
   groupUpdate,
@@ -101,4 +129,8 @@ module.exports = {
   commentCreate,
   authRegister,
   authLogin,
+  fridgeItemAdd,
+  fridgeBulk,
+  fridgePatch,
+  mealPlanCreate,
 }
