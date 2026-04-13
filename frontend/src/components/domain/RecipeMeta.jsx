@@ -2,11 +2,13 @@ const CAT_EMOJI = {
   BREAKFAST: '🍳', LUNCH: '🍱', DINNER: '🌙',
   SOUP: '🍲', SALAD: '🥗', SNACK: '🥨',
   DESSERT: '🍰', DRINK: '🥤',
+  MAIN: '🍽️', SIDE: '🥘', BAKERY: '🥞', SAUCE: '🫙',
 }
 const CAT_RU = {
   BREAKFAST: 'Завтрак', LUNCH: 'Обед', DINNER: 'Ужин',
   SOUP: 'Суп', SALAD: 'Салат', SNACK: 'Перекус',
   DESSERT: 'Десерт', DRINK: 'Напиток',
+  MAIN: 'Основное', SIDE: 'Гарнир', BAKERY: 'Выпечка', SAUCE: 'Соус',
 }
 
 export default function RecipeMeta({ dish }) {
