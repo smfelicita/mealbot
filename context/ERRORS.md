@@ -94,6 +94,44 @@ git checkout package-lock.json && git pull
 
 ---
 
+## ❌ Ошибка 8 — CORS rejected: "Not allowed by CORS" при Google OAuth
+
+**Ошибка в pm2 logs:**
+```
+cors_rejected origin: https://smarussya.ru
+Error: Not allowed by CORS
+```
+
+**Причина:** `FRONTEND_URL` в backend/.env был задан как IP-адрес `http://194.87.130.215`, но браузер делает запросы с домена `https://smarussya.ru`. CORS-функция делает строгое `===` сравнение.
+
+**Решение:** Обновить `.env` на сервере:
+```
+FRONTEND_URL=https://smarussya.ru
+```
+Затем: `pm2 restart mealbot-backend`
+
+**Статус:** ✅ Исправлено
+
+---
+
+## ❌ Ошибка 9 — Backend не стартует после деплоя (Cannot find module 'pino')
+
+**Ошибка:**
+```
+Error: Cannot find module 'pino'
+```
+
+**Причина:** После `git pull` не был запущен `npm install`, новый пакет `pino` отсутствовал на сервере.
+
+**Решение:**
+```bash
+cd /var/www/mealbot/backend && npm install && pm2 restart mealbot-backend
+```
+
+**Статус:** ✅ Исправлено — после каждого `git pull` нужно запускать `npm install`
+
+---
+
 ## ❌ Ошибка 7 — Google OAuth не принимает IP-адрес
 
 **Ошибка:** `Invalid Origin: must end with a public top-level domain`

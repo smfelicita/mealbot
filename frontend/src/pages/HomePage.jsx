@@ -7,6 +7,56 @@ import MealTypeChips from '../components/domain/MealTypeChips'
 
 const CARD_GAP = 12 // gap-3 = 12px
 
+// ─── GuestHeroBanner ──────────────────────────────────────────────────────────
+function GuestHeroBanner({ onNavigate }) {
+  const [visible, setVisible] = useState(
+    () => !localStorage.getItem('mealbot_guest_banner_dismissed')
+  )
+  if (!visible) return null
+
+  function dismiss() {
+    localStorage.setItem('mealbot_guest_banner_dismissed', '1')
+    setVisible(false)
+  }
+
+  return (
+    <div className="relative bg-white rounded-2xl px-5 py-4 shrink-0"
+      style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label="Закрыть"
+        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-text-3 hover:text-text transition-colors"
+        style={{ fontSize: 18, lineHeight: 1 }}
+      >✕</button>
+
+      <p className="font-semibold text-[17px] leading-snug pr-6" style={{ color: '#1a1a1a' }}>
+        Добавь свои блюда —<br />и больше не думай, что готовить
+      </p>
+      <p className="text-[12px] mt-1 mb-3" style={{ color: '#9e9e9e' }}>Займёт меньше минуты</p>
+
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => onNavigate('/auth?mode=register')}
+          className="w-full py-2.5 rounded-xl text-[14px] font-semibold text-white transition-opacity active:opacity-80"
+          style={{ background: '#C4704A' }}
+        >
+          Создать свою кухню
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate('/auth')}
+          className="w-full py-2 rounded-xl text-[13px] font-medium transition-colors"
+          style={{ color: '#9e9e9e' }}
+        >
+          Уже есть аккаунт? Войти
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function defaultMealTime() {
   const h = new Date().getHours()
   if (h < 11) return 'breakfast'
@@ -40,6 +90,9 @@ export default function HomePage() {
   const [fridgeOnly, setFridgeOnly] = useState(false)
   const [favIds, setFavIds]         = useState(new Set())
   const [visibleCount, setVisibleCount] = useState(4)
+  const [fridgeModeHintDismissed, setFridgeModeHintDismissed] = useState(
+    () => !!localStorage.getItem('mealbot_hint_fridgeMode_seen')
+  )
 
   // Refs for measuring
   const listContainerRef = useRef(null)
@@ -120,6 +173,9 @@ export default function HomePage() {
         />
       </div>
 
+      {/* Guest hero banner */}
+      {!token && <GuestHeroBanner onNavigate={navigate} />}
+
       {/* Recipe list — flex-1 takes remaining space, overflow hidden = no scroll */}
       <div
         ref={listContainerRef}
@@ -128,6 +184,19 @@ export default function HomePage() {
       >
         {loading ? (
           [1, 2, 3, 4].map(i => <SkeletonCard key={i} />)
+        ) : visible.length === 0 && fridgeOnly && fridge.length === 0 ? (
+          <div className="bg-white rounded-2xl p-5 flex flex-col gap-3" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+            <p className="font-semibold text-[15px]" style={{ color: '#1a1a1a' }}>Холодильник пуст</p>
+            <p className="text-[13px]" style={{ color: '#9e9e9e' }}>Добавь продукты чтобы видеть блюда из того, что есть дома</p>
+            <button
+              type="button"
+              onClick={() => navigate('/fridge')}
+              className="self-start px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
+              style={{ background: '#5C7A59' }}
+            >
+              Заполнить холодильник
+            </button>
+          </div>
         ) : visible.length === 0 ? (
           <div className="bg-white rounded-2xl p-6 text-center" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
             <p className="text-[15px]" style={{ color: '#9e9e9e' }}>Нет подходящих блюд</p>
@@ -143,6 +212,36 @@ export default function HomePage() {
           />
         ))}
       </div>
+
+      {/* Однократный hint: fridge mode включён, холодильник пуст */}
+      {token && fridgeOnly && fridge.length === 0 && !fridgeModeHintDismissed && (
+        <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 shrink-0"
+          style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <p className="text-[13px]" style={{ color: '#666' }}>
+            Сначала добавь продукты в холодильник →
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.setItem('mealbot_hint_fridgeMode_seen', '1')
+              setFridgeModeHintDismissed(true)
+            }}
+            className="ml-3 shrink-0 text-text-3 text-lg leading-none"
+          >✕</button>
+        </div>
+      )}
+
+      {/* Добавить своё */}
+      {!loading && visible.length > 0 && (
+        <button
+          type="button"
+          onClick={() => navigate(token ? '/my-recipes/new' : '/auth?mode=register')}
+          className="shrink-0 w-full py-3 rounded-2xl text-[14px] font-semibold transition-opacity active:opacity-75"
+          style={{ background: '#fff', color: '#C4704A', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}
+        >
+          + Добавить своё блюдо
+        </button>
+      )}
 
       {/* Quick actions */}
       {token && (

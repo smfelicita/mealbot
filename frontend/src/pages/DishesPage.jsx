@@ -35,8 +35,40 @@ function FilterChips({ active, onChange }) {
 }
 
 // ─── RecipesEmptyState ────────────────────────────────────────────────────────
-function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset }) {
+function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest, onNavigate }) {
   const hasActiveFilters = filter !== 'all' || mealTime || q
+
+  if (!hasActiveFilters && isGuest) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center"
+          style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C4704A" strokeWidth="1.6" strokeLinecap="round">
+            <path d="M12 2C8 2 4 6 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4-4-8-8-8z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <p className="font-semibold text-[16px] text-text">Добавь свои блюда</p>
+        <p className="text-[13px] text-text-2">Зарегистрируйся — и MealBot каждый день будет подсказывать что приготовить</p>
+        <button
+          type="button"
+          onClick={() => onNavigate('/auth?mode=register')}
+          className="mt-1 px-5 py-2.5 rounded-full text-[14px] font-semibold text-white"
+          style={{ background: '#C4704A' }}
+        >
+          Создать свою кухню
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate('/auth')}
+          className="text-[13px]"
+          style={{ color: '#9e9e9e' }}
+        >
+          Уже есть аккаунт? Войти
+        </button>
+      </div>
+    )
+  }
 
   if (!hasActiveFilters) {
     return (
@@ -211,6 +243,10 @@ export default function DishesPage() {
   const [favIds, setFavIds]       = useState(new Set())
   const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
   const [showBulkAdd, setShowBulkAdd] = useState(false)
+  const [bulkAddHintDismissed, setBulkAddHintDismissed] = useState(
+    () => !!localStorage.getItem('mealbot_hint_bulkAdd_seen')
+  )
+  const [showFirstDishToast, setShowFirstDishToast] = useState(false)
 
   const offsetRef    = useRef(0)
   const sentinelRef  = useRef(null)
@@ -333,14 +369,32 @@ export default function DishesPage() {
 
       {/* Быстрое добавление */}
       {token && (
-        <div className="px-4 mt-3">
+        <div className="px-4 mt-3 flex flex-col gap-2">
           <button
             type="button"
             onClick={() => setShowBulkAdd(true)}
-            className="text-[13px] font-medium text-text-2 hover:text-text transition-colors"
+            className="text-[13px] font-medium text-text-2 hover:text-text transition-colors self-start"
           >
             Добавить несколько блюд →
           </button>
+
+          {/* Однократный hint про запятые */}
+          {!bulkAddHintDismissed && dishes.length > 0 && (
+            <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3"
+              style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+              <p className="text-[12px]" style={{ color: '#666' }}>
+                Используй <strong>Добавить несколько блюд</strong> — можно перечислить список через запятую
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('mealbot_hint_bulkAdd_seen', '1')
+                  setBulkAddHintDismissed(true)
+                }}
+                className="ml-3 shrink-0 text-text-3 text-lg leading-none"
+              >✕</button>
+            </div>
+          )}
         </div>
       )}
 
@@ -358,6 +412,8 @@ export default function DishesPage() {
             filter={filter}
             mealTime={mealTime}
             q={q}
+            isGuest={!token}
+            onNavigate={navigate}
             onAddRecipe={() => navigate('/my-recipes/new')}
             onReset={resetFilters}
           />
@@ -388,11 +444,32 @@ export default function DishesPage() {
       {/* AddRecipeButton (FAB) */}
       {token && <AddRecipeButton onClick={() => navigate('/my-recipes/new')} />}
 
+      {/* First-dish toast */}
+      {showFirstDishToast && (
+        <div className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-[9999] whitespace-nowrap
+          bg-[#1a1a1a] text-white text-[13px] px-[18px] py-[10px] rounded-[20px]"
+          style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}
+        >
+          Отлично! Добавь ещё или включи 🧊 режим холодильника
+        </div>
+      )}
+
       {/* BulkAddModal */}
       {showBulkAdd && (
         <BulkAddModal
           onClose={() => setShowBulkAdd(false)}
-          onDone={() => { setShowBulkAdd(false); load() }}
+          onDone={() => {
+            setShowBulkAdd(false)
+            // First-dish toast: показываем один раз
+            if (dishes.length === 0 && !localStorage.getItem('mealbot_hint_firstDish_seen')) {
+              localStorage.setItem('mealbot_hint_firstDish_seen', '1')
+              setTimeout(() => {
+                setShowFirstDishToast(true)
+                setTimeout(() => setShowFirstDishToast(false), 3500)
+              }, 800)
+            }
+            load()
+          }}
         />
       )}
     </div>

@@ -63,6 +63,7 @@ export default function AuthPage() {
         if (res.requireVerification) {
           setPendingEmail(res.email); setStep('verify-email'); setResendCountdown(60)
         } else {
+          localStorage.setItem('mealbot_show_onboarding', '1')
           setAuth(res.user, res.token); navigate(redirectTo, { replace: true })
         }
       }
@@ -84,6 +85,7 @@ export default function AuthPage() {
     e.preventDefault(); setError(''); setLoading(true)
     try {
       const res = await api.verifyEmail(pendingEmail, form.code)
+      localStorage.setItem('mealbot_show_onboarding', '1')
       setAuth(res.user, res.token); navigate(redirectTo, { replace: true })
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }
@@ -109,6 +111,7 @@ export default function AuthPage() {
     e.preventDefault(); setError(''); setLoading(true)
     try {
       const res = await api.verifyPhone(pendingPhone, form.code, form.name || undefined)
+      localStorage.setItem('mealbot_show_onboarding', '1')
       setAuth(res.user, res.token); navigate(redirectTo, { replace: true })
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }

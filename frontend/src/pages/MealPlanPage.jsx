@@ -83,16 +83,44 @@ function PlanItem({ plan, currentUserId, onNavigate, onRemove }) {
   )
 }
 
+// ─── Guest block ─────────────────────────────────────────────────────────────
+function GuestMealPlanBlock() {
+  const navigate = useNavigate()
+  return (
+    <div className="px-4 pt-5 pb-24">
+      <h1 className="font-serif text-[22px] font-extrabold mb-5">📅 Буду готовить</h1>
+      <EmptyState
+        icon="📅"
+        title="Планируй меню заранее"
+        description="Добавляй блюда на неделю вперёд — и больше не думай, что готовить каждый день"
+        action={
+          <div className="flex flex-col gap-2 w-full px-4">
+            <Button className="w-full" onClick={() => navigate('/auth?mode=register')}>
+              Создать свою кухню
+            </Button>
+            <Button variant="ghost" size="sm" className="text-text-2"
+              onClick={() => navigate('/auth')}>
+              Уже есть аккаунт? Войти
+            </Button>
+          </div>
+        }
+      />
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function MealPlanPage() {
   const navigate = useNavigate()
-  const user = useStore(s => s.user)
+  const { user, token } = useStore(s => ({ user: s.user, token: s.token }))
   const { show, Toast } = useToast()
 
   const [plans, setPlans]   = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { loadPlans() }, [])
+  useEffect(() => {
+    if (token) loadPlans()
+  }, [token])
 
   async function loadPlans() {
     try {
@@ -120,6 +148,7 @@ export default function MealPlanPage() {
     return a.localeCompare(b)
   })
 
+  if (!token) return <GuestMealPlanBlock />
   if (loading) return <Loader fullPage />
 
   return (
@@ -130,9 +159,9 @@ export default function MealPlanPage() {
         <EmptyState
           icon="📋"
           title="Список пуст"
-          description="Добавляйте блюда, которые хотите приготовить"
+          description="Добавляй блюда в план прямо из карточки рецепта — кнопка 📅 Буду готовить"
           action={
-            <Button onClick={() => navigate('/dishes')}>Выбрать блюда</Button>
+            <Button onClick={() => navigate('/dishes')}>Посмотреть блюда</Button>
           }
         />
       ) : sortedKeys.map(dateKey => {

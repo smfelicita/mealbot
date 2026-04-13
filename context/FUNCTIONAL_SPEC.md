@@ -9,7 +9,7 @@ _Актуально на апрель 2026_
 | Возможность | Гость | User | Pro (перспектива) | Admin |
 |---|---|---|---|---|
 | Просмотр рецептов (база) | ✅ | ✅ | ✅ | ✅ |
-| ИИ-помощник | ✅ лимит 5/день | ✅ | ✅ | ✅ |
+| ИИ-помощник | ✅ лимит 2/день | ✅ | ✅ | ✅ |
 | Контекст холодильника в ИИ | ❌ | ✅ | ✅ | ✅ |
 | ИИ вне базы рецептов | ❌ | ❌ | ✅ | ✅ |
 | Холодильник | ❌ (CTA) | ✅ | ✅ | ✅ |
@@ -50,6 +50,37 @@ _Актуально на апрель 2026_
 
 ### Бэклог
 - "Войти через Telegram" на AuthPage — требует дополнительной проработки flow
+
+---
+
+## API / Производительность
+
+### Пагинация
+- `GET /api/dishes` — limit/offset, по умолчанию 20 блюд за запрос
+- Ответ: `{ dishes, total, limit, offset }`
+- Фронтенд: infinite scroll (IntersectionObserver, подгрузка при прокрутке)
+
+### Rate limits
+| Эндпоинт | Лимит | Тип |
+|---|---|---|
+| Весь `/api` | 100 запросов/мин | express-rate-limit (IP) |
+| `/api/chat` | 20 запросов/мин | express-rate-limit (IP) |
+| `/api/auth/login` | 10 попыток / 15 мин | express-rate-limit |
+| Verify-эндпоинты | 5 попыток / 15 мин | express-rate-limit |
+| ИИ-чат (гость) | 2 сообщения/день | in-memory по IP |
+| ИИ-чат (user) | 50 сообщений/день | по DB |
+| Инвайты | 10/день отправитель, 3/день получатель | по DB |
+| `POST /api/comments` | 30/час | по DB |
+
+### Валидация (Zod)
+Все write-эндпоинты защищены `validate(schema)` middleware:
+- auth: `authRegister`, `authLogin`
+- groups: `groupCreate`, `groupUpdate`
+- dishes: `dishCreate`, `dishUpdate`, `dishBulk`
+- invites: `inviteCreate`
+- comments: `commentCreate`
+- fridge: `fridgeItemAdd`, `fridgeBulk`, `fridgePatch`
+- meal-plans: `mealPlanCreate`
 
 ---
 
@@ -126,7 +157,7 @@ _Актуально на апрель 2026_
 - PRO/ADMIN: могут получать рецепты вне базы
 - Быстрые подсказки (кнопки)
 - История чата для авторизованных
-- Гости: лимит 5 сообщений/день по IP, история не сохраняется
+- Гости: лимит 2 сообщений/день по IP, история не сохраняется
 
 ---
 
@@ -270,6 +301,9 @@ _Актуально на апрель 2026_
 - **Auth**: registration, login success/failed, email sent/failed, verification
 - **Groups**: created, deleted, left, member kicked
 - **Invites**: sent, accepted, rate limit hit
+- **Fridge**: fridge_item_added, fridge_item_removed
+- **Meal plans**: meal_plan_added, meal_plan_removed
+- **Comments**: comment_created, comment_deleted
 - **AI**: request sent/completed/failed, blocked by filter, limit exceeded
 - **HTTP**: все POST/PUT/DELETE; GET только при ошибке или >500ms
 

@@ -86,12 +86,12 @@ function GuestFridgeBlock() {
       <div className="pt-[52px]">
         <EmptyState
           icon="🧊"
-          title="Холодильник для участников"
-          description="Сохраняйте продукты — ИИ-помощник будет предлагать блюда именно из того, что у вас есть дома."
+          title="Готовь из того, что есть дома"
+          description="Добавь продукты из холодильника — MealBot подберёт блюда, которые можно приготовить прямо сейчас."
           action={
             <div className="flex flex-col gap-2 w-full px-4">
               <Button className="w-full" onClick={() => navigate('/auth?mode=register')}>
-                Зарегистрироваться бесплатно
+                Создать свою кухню
               </Button>
               <Button variant="ghost" size="sm" className="text-text-2"
                 onClick={() => navigate('/auth')}>
@@ -267,7 +267,7 @@ export default function FridgePage() {
           <EmptyState
             icon="🧊"
             title="Холодильник пустой"
-            description="Добавьте продукты — ИИ найдёт блюда из того, что есть дома"
+            description="Добавь продукты которые есть дома — и мы покажем что можно приготовить прямо сейчас"
             action={
               <Button onClick={() => setShowPicker(true)}>+ Добавить продукты</Button>
             }

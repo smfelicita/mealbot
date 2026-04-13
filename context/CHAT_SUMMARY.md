@@ -50,6 +50,13 @@
 
 ---
 
+## Последние изменения (апрель 2026)
+
+- **Аудит безопасности (29 задач)**: token versioning, CORS-функция с логированием, Zod-валидация, единый errorHandler, индексы БД, пагинация /api/dishes, N+1 fix в buildVisibilityFilter, rate limit на comments, in-memory кэш блюд для ИИ, ErrorBoundary на фронте, XSS-защита в чате, фикс optionalAuth (async + tokenVersion)
+- **Infinite scroll**: DishesPage — 20 блюд за запрос, IntersectionObserver
+- **Zod-валидация**: добавлена на fridge (POST, PATCH, bulk) и meal-plans (POST)
+- **CORS фикс**: FRONTEND_URL на сервере должен быть `https://smarussya.ru` (домен), не IP — иначе Google OAuth и другие запросы с домена блокируются
+
 ## Важные детали
 
 ### Файлы которые НЕ должны быть в git

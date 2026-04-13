@@ -1,79 +1,96 @@
 # MealBot — Контекст проекта
 
 ## Что это за проект
-Кроссплатформенный сервис для выбора блюд на завтрак/обед/ужин с ИИ-помощником.
+Кроссплатформенный сервис для выбора блюд с ИИ-помощником.
+Доступен как PWA (устанавливается на телефон) и Telegram-бот.
 
 ## Стек технологий
-- **Бэкенд:** Node.js + Express + Prisma ORM
-- **База данных:** PostgreSQL (Supabase — бесплатный хостинг)
-- **Фронтенд:** React + Vite (PWA — работает как мобильное приложение)
+- **Бэкенд:** Node.js + Express + Prisma ORM + Zod (валидация)
+- **База данных:** PostgreSQL (Supabase, Session Pooler порт 5432)
+- **Фронтенд:** React + Vite + Tailwind CSS (PWA)
 - **Telegram-бот:** node-telegram-bot-api
-- **ИИ:** Claude API (Anthropic) — claude-opus-4-5
-- **Хостинг бэкенда:** Railway
-- **Хостинг фронтенда:** Vercel
+- **ИИ:** Claude API (Anthropic)
+- **Хостинг:** VPS Timeweb (IP 194.87.130.215), nginx + PM2
+- **Домен:** https://smarussya.ru
+- **Медиафайлы:** Supabase Storage
 
 ## Структура проекта
 ```
 mealbot/
 ├── backend/
 │   ├── prisma/
-│   │   └── schema.prisma          ← схема БД
+│   │   └── schema.prisma
 │   ├── src/
 │   │   ├── index.js               ← Express сервер (порт 3001)
 │   │   ├── middleware/
-│   │   │   └── auth.js            ← JWT авторизация
-│   │   ├── routes/
-│   │   │   ├── auth.js            ← /api/auth (register, login, me)
-│   │   │   ├── dishes.js          ← /api/dishes (поиск + фильтрация)
-│   │   │   ├── fridge.js          ← /api/fridge (холодильник)
-│   │   │   ├── chat.js            ← /api/chat (ИИ-помощник)
-│   │   │   └── ingredients.js     ← /api/ingredients
-│   │   ├── prisma/
-│   │   │   ├── seed.js            ← загрузка данных (ИСПРАВЛЕН — см. ошибки)
-│   │   │   └── seed_fix.js        ← альтернативный seed если основной не работает
-│   │   └── startup.js             ← для первого деплоя на Railway
-│   ├── .env                       ← ЛОКАЛЬНЫЙ (не в git!)
-│   ├── .env.example               ← шаблон для .env
+│   │   │   ├── auth.js            ← authMiddleware, optionalAuth, requireRole
+│   │   │   ├── validate.js        ← Zod-валидация (validate(schema))
+│   │   │   └── errorHandler.js    ← единый обработчик ошибок
+│   │   ├── lib/
+│   │   │   ├── prisma.js          ← ЕДИНЫЙ PrismaClient singleton
+│   │   │   ├── supabase.js        ← Supabase Storage клиент
+│   │   │   ├── schemas.js         ← все Zod-схемы (groups, dishes, auth, fridge, meal-plans, comments)
+│   │   │   ├── logger.js          ← pino logger
+│   │   │   ├── nutrition.js       ← расчёт КБЖУ
+│   │   │   ├── messageFilter.js   ← blocklist для ИИ-чата
+│   │   │   └── fridgeMigration.js ← миграция холодильника при вступлении в FAMILY
+│   │   └── routes/
+│   │       ├── auth.js            ← /api/auth (register, login, google, tg, me)
+│   │       ├── dishes.js          ← /api/dishes (поиск, фильтрация, пагинация)
+│   │       ├── fridge.js          ← /api/fridge
+│   │       ├── chat.js            ← /api/chat (ИИ-помощник)
+│   │       ├── groups.js          ← /api/groups
+│   │       ├── invites.js         ← /api/invites
+│   │       ├── ingredients.js     ← /api/ingredients
+│   │       ├── comments.js        ← /api/comments
+│   │       ├── meal-plans.js      ← /api/meal-plans
+│   │       └── upload.js          ← /api/upload
 │   └── package.json
 │
 ├── frontend/
-│   ├── src/
-│   │   ├── App.jsx                ← роутер (react-router-dom)
-│   │   ├── main.jsx               ← точка входа
-│   │   ├── styles.css             ← все стили (dark theme)
-│   │   ├── api/
-│   │   │   └── index.js           ← все запросы к бэкенду
-│   │   ├── store/
-│   │   │   └── index.js           ← Zustand стор (auth, fridge, chat)
-│   │   ├── components/
-│   │   │   └── Layout.jsx         ← нижняя навигация
-│   │   ├── hooks/
-│   │   │   └── useToast.jsx       ← уведомления (ВАЖНО: .jsx не .js!)
-│   │   └── pages/
-│   │       ├── AuthPage.jsx       ← вход / регистрация
-│   │       ├── HomePage.jsx       ← главная с фильтром по времени дня
-│   │       ├── DishesPage.jsx     ← каталог + поиск + фильтры
-│   │       ├── DishDetailPage.jsx ← рецепт блюда
-│   │       ├── FridgePage.jsx     ← управление холодильником
-│   │       └── ChatPage.jsx       ← ИИ-чат
-│   ├── public/
-│   │   └── manifest.json          ← PWA манифест
-│   ├── index.html
-│   ├── vite.config.js
-│   └── package.json
+│   └── src/
+│       ├── App.jsx                ← роутер + ErrorBoundary
+│       ├── api/index.js           ← все запросы к бэкенду
+│       ├── store/index.js         ← Zustand (user, token, fridge, chatMessages)
+│       ├── components/
+│       │   ├── ui/                ← Button, TextInput, SearchInput, Modal...
+│       │   └── domain/            ← RecipeList, DishCard, MealTypeChips...
+│       └── pages/
+│           ├── AuthPage.jsx
+│           ├── HomePage.jsx
+│           ├── DishesPage.jsx     ← infinite scroll (20 блюд / порция)
+│           ├── DishDetailPage.jsx
+│           ├── FridgePage.jsx
+│           ├── ChatPage.jsx
+│           ├── GroupsPage.jsx
+│           ├── GroupDetailPage.jsx
+│           ├── MealPlanPage.jsx
+│           └── ProfilePage.jsx
 │
-├── telegram-bot/
-│   ├── src/
-│   │   └── index.js               ← полный бот (меню, холодильник, ИИ)
-│   ├── .env                       ← ЛОКАЛЬНЫЙ (не в git!)
-│   ├── .env.example
-│   └── package.json
+├── telegram/                      ← Telegram-бот
 │
-├── context/                       ← ЭТА ПАПКА — контекст для ИИ
-│   ├── README.md                  ← этот файл
-│   ├── TASKS.md                   ← задачи и статус
-│   ├── ERRORS.md                  ← все ошибки и решения
-│   ├── CHAT_SUMMARY.md            ← краткое содержание диалога
-│   └── ENV_TEMPLATE.md            ← что нужно заполнить в .env
-│
-└── README.md                      ← инструкция по запуску
+└── context/                       ← документация проекта
+    ├── README.md                  ← этот файл
+    ├── TASKS.md                   ← задачи и статус
+    ├── ERRORS.md                  ← ошибки и решения
+    ├── CHAT_SUMMARY.md            ← история проекта
+    ├── ENV_TEMPLATE.md            ← шаблоны .env файлов
+    ├── FUNCTIONAL_SPEC.md         ← функциональная спецификация
+    ├── PRODUCT.md                 ← продуктовый документ
+    ├── FOR_CLAUDE_CODE.md         ← инструкция для Claude Code
+    ├── FRONTEND_STANDARDS.md      ← стандарты фронтенда
+    └── COMPONENTS.md              ← карта компонентов
+```
+
+## Деплой (команды на сервере)
+```bash
+# После git pull:
+cd /var/www/mealbot/backend && npm install
+pm2 restart mealbot-backend
+
+# Если изменился фронтенд:
+cd /var/www/mealbot/frontend && npm run build
+
+# Если изменилась схема БД:
+cd /var/www/mealbot/backend && npx prisma db push
+```

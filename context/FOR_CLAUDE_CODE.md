@@ -45,6 +45,17 @@ frontend/src/
 - seed.js использует `findFirst` + `create` (не `upsert`) для блюд
 - `.env` файлы НЕ в git
 
+### Валидация (Zod)
+- Схемы — в `backend/src/lib/schemas.js`
+- Middleware — `backend/src/middleware/validate.js`
+- Подключение: `router.post('/', validate(schemaName), handler)`
+- Все write-эндпоинты должны иметь Zod-схему
+
+### Логирование
+- `const { logger } = require('../lib/logger')` — импорт в роутах
+- `logger.info({ action: 'event_name', ...поля, requestId: req.requestId }, 'event_name')`
+- Никогда не логировать: пароли, JWT, коды, email целиком (маскировать через maskEmail)
+
 ### Авторизация
 - `authMiddleware` — требует JWT, 401 если нет
 - `optionalAuth` — не блокирует, кладёт userId если токен есть

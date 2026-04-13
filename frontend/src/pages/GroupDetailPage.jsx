@@ -16,6 +16,9 @@ export default function GroupDetailPage() {
   const [tab, setTab]       = useState('dishes')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
+  const [groupHintDismissed, setGroupHintDismissed] = useState(
+    () => !!localStorage.getItem('mealbot_hint_group_seen')
+  )
 
   useEffect(() => {
     api.getGroup(id)
@@ -112,6 +115,24 @@ export default function GroupDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Однократный hint про рецепты группы */}
+        {!groupHintDismissed && (
+          <div className="mx-4 mb-2 flex items-start gap-3 bg-white rounded-2xl px-4 py-3"
+            style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
+            <p className="flex-1 text-[12px]" style={{ color: '#666' }}>
+              Рецепты участников группы видны всем. Добавь свои блюда — {group?.type === 'FAMILY' ? 'семья' : 'участники'} увидят.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem('mealbot_hint_group_seen', '1')
+                setGroupHintDismissed(true)
+              }}
+              className="shrink-0 text-text-3 text-lg leading-none mt-0.5"
+            >✕</button>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex gap-2 px-4 pb-3.5">
