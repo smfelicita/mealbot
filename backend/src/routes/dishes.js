@@ -258,17 +258,27 @@ router.post('/', auth, validate(dishCreate), async (req, res, next) => {
     const {
       nameRu, description, categories, cuisine, mealTime, tags,
       cookTime, difficulty, calories, imageUrl, images, videoUrl,
-      recipe, ingredients, visibility = 'PRIVATE',
+      recipe, ingredients, visibility = 'PRIVATE', groupId,
     } = req.body
 
     if (!nameRu?.trim()) return res.status(400).json({ error: 'Укажите название' })
     if (!categories?.length) return res.status(400).json({ error: 'Укажите категорию' })
     if (!mealTime?.length) return res.status(400).json({ error: 'Укажите время приёма пищи' })
 
-    // Автоопределение groupId: FAMILY → семейная группа автора
-    const resolvedGroupId = visibility === 'FAMILY'
-      ? ((await getFamilyGroupIds(req.userId))[0] || null)
-      : null
+    // Определяем groupId:
+    // 1. Если передан groupId — проверяем членство и используем его
+    // 2. Если visibility=FAMILY — берём семейную группу автора
+    // 3. Иначе null
+    let resolvedGroupId = null
+    if (groupId) {
+      const membership = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId, userId: req.userId } },
+      })
+      if (!membership) return res.status(403).json({ error: 'Вы не являетесь участником этой группы' })
+      resolvedGroupId = groupId
+    } else if (visibility === 'FAMILY') {
+      resolvedGroupId = (await getFamilyGroupIds(req.userId))[0] || null
+    }
 
     const dish = await prisma.dish.create({
       data: {
