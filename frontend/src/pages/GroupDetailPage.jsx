@@ -121,7 +121,7 @@ export default function GroupDetailPage() {
           <div className="mx-4 mb-2 flex items-start gap-3 bg-white rounded-2xl px-4 py-3"
             style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
             <p className="flex-1 text-[12px]" style={{ color: '#666' }}>
-              Рецепты участников группы видны всем. Добавь свои блюда — {group?.type === 'FAMILY' ? 'семья' : 'участники'} увидят.
+              Личные рецепты остаются только твоими. Чтобы {group?.type === 'FAMILY' ? 'семья' : 'участники'} увидели блюдо — добавь его в группу.
             </p>
             <button
               type="button"
