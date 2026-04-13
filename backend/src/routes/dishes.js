@@ -113,16 +113,18 @@ async function getSearchIds(q) {
 }
 
 // GET /api/dishes — поиск и фильтрация
-// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, limit, offset
+// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, onlyMine, limit, offset
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, favorites } = req.query
+    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, onlyMine, favorites } = req.query
     const limit  = Math.min(parseInt(req.query.limit  || '100', 10), 200)
     const offset = parseInt(req.query.offset || '0', 10) || 0
 
-    const visibilityFilter = (myKitchen === 'true' && req.userId)
-      ? await buildMyKitchenFilter(req.userId)
-      : await buildVisibilityFilter(req.userId)
+    const visibilityFilter = (onlyMine === 'true' && req.userId)
+      ? { authorId: req.userId }
+      : (myKitchen === 'true' && req.userId)
+        ? await buildMyKitchenFilter(req.userId)
+        : await buildVisibilityFilter(req.userId)
 
     const baseWhere = { ...visibilityFilter, ...buildBaseFilter({ mealTime, category, tags, cuisine }) }
 

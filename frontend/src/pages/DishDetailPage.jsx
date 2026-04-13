@@ -402,8 +402,8 @@ export default function DishDetailPage() {
       {showMenu && (
         <ActionsMenu
           onClose={() => setShowMenu(false)}
-          onEdit={() => { setShowMenu(false); navigate(`/my-recipes/${id}/edit`) }}
-          onCopy={() => { setShowMenu(false); navigate(`/my-recipes/new?copyFrom=${id}`) }}
+          onEdit={() => { setShowMenu(false); navigate(`/dishes/${id}/edit`) }}
+          onCopy={() => { setShowMenu(false); navigate(`/dishes/new?copyFrom=${id}`) }}
           onDelete={handleDelete}
           isOwner={isOwner}
           hasUser={Boolean(user)}

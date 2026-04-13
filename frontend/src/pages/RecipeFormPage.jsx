@@ -159,7 +159,7 @@ export default function RecipeFormPage() {
     if (isEdit) {
       api.getDish(id)
         .then(dish => applyDish(dish))
-        .catch(() => navigate('/my-recipes'))
+        .catch(() => navigate('/dishes'))
         .finally(() => setLoading(false))
     } else if (copyFromId) {
       api.getDish(copyFromId)
@@ -319,7 +319,7 @@ export default function RecipeFormPage() {
       if (isEdit) {
         await api.updateDish(id, data)
         show('Рецепт сохранён', 'success')
-        setTimeout(() => navigate('/my-recipes'), 800)
+        setTimeout(() => navigate('/dishes'), 800)
       } else {
         const created = await api.createDish(data)
         navigate(`/dishes/${created.id}`, { replace: true })

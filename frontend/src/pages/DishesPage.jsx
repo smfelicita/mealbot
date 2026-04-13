@@ -5,38 +5,9 @@ import { useStore } from '../store'
 import { SearchInput } from '../components/ui'
 import { MealTypeChips, RecipeList } from '../components/domain'
 
-// ─── FilterChips (Все / Избранное) ────────────────────────────────────────────
-function FilterChips({ active, onChange }) {
-  const options = [
-    { value: 'all',       label: 'Все'       },
-    { value: 'favorites', label: 'Избранное' },
-  ]
-  return (
-    <div className="flex gap-2">
-      {options.map(o => (
-        <button
-          key={o.value}
-          type="button"
-          onClick={() => onChange(o.value)}
-          className={[
-            'px-4 py-1.5 rounded-full text-[13px] font-medium transition-all focus:outline-none',
-            active === o.value ? 'text-white' : 'bg-white text-text-2',
-          ].join(' ')}
-          style={active === o.value
-            ? { background: '#C4704A', boxShadow: '0 1px 6px rgba(196,112,74,0.3)' }
-            : { boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
-          }
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 // ─── RecipesEmptyState ────────────────────────────────────────────────────────
-function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest, onNavigate }) {
-  const hasActiveFilters = filter !== 'all' || mealTime || q
+function RecipesEmptyState({ mealTime, q, onAddRecipe, onReset, isGuest, onNavigate }) {
+  const hasActiveFilters = mealTime || q
 
   if (!hasActiveFilters && isGuest) {
     return (
@@ -239,7 +210,6 @@ export default function DishesPage() {
   const [hasMore, setHasMore]     = useState(false)
   const [q, setQ]                 = useState('')
   const [mealTime, setMealTime]   = useState('')
-  const [filter, setFilter]       = useState('all')   // 'all' | 'favorites'
   const [favIds, setFavIds]       = useState(new Set())
   const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
   const [showBulkAdd, setShowBulkAdd] = useState(false)
@@ -265,10 +235,9 @@ export default function DishesPage() {
     q:          q || undefined,
     mealTime:   mealTime || undefined,
     fridgeMode: fridgeMode ? 'true' : undefined,
-    myKitchen:  token ? 'true' : undefined,
-    favorites:  (filter === 'favorites' && token) ? 'true' : undefined,
+    onlyMine:   token ? 'true' : undefined,
     limit:      LIMIT,
-  }), [q, mealTime, fridgeMode, filter, token])
+  }), [q, mealTime, fridgeMode, token])
 
   const load = useCallback(async () => {
     canLoadRef.current = false
@@ -346,7 +315,6 @@ export default function DishesPage() {
   function resetFilters() {
     setQ('')
     setMealTime('')
-    setFilter('all')
   }
 
   return (
@@ -364,11 +332,8 @@ export default function DishesPage() {
         />
       </div>
 
-      {/* FilterChips + MealTypeChips */}
-      <div className="flex flex-col gap-3 px-4 mt-4">
-        {token && (
-          <FilterChips active={filter} onChange={v => { setFilter(v); setMealTime('') }} />
-        )}
+      {/* MealTypeChips */}
+      <div className="px-4 mt-4">
         <MealTypeChips active={mealTime} onChange={setMealTime} />
       </div>
 
@@ -414,12 +379,11 @@ export default function DishesPage() {
           </div>
         ) : dishes.length === 0 ? (
           <RecipesEmptyState
-            filter={filter}
             mealTime={mealTime}
             q={q}
             isGuest={!token}
             onNavigate={navigate}
-            onAddRecipe={() => navigate('/my-recipes/new')}
+            onAddRecipe={() => navigate('/dishes/new')}
             onReset={resetFilters}
           />
         ) : (
@@ -447,7 +411,7 @@ export default function DishesPage() {
       </div>
 
       {/* AddRecipeButton (FAB) */}
-      {token && <AddRecipeButton onClick={() => navigate('/my-recipes/new')} />}
+      {token && <AddRecipeButton onClick={() => navigate('/dishes/new')} />}
 
       {/* First-dish toast */}
       {showFirstDishToast && (

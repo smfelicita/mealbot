@@ -235,7 +235,7 @@ export default function HomePage() {
       {!loading && visible.length > 0 && (
         <button
           type="button"
-          onClick={() => navigate(token ? '/my-recipes/new' : '/auth?mode=register')}
+          onClick={() => navigate(token ? '/dishes/new' : '/auth?mode=register')}
           className="shrink-0 w-full py-3 rounded-2xl text-[14px] font-semibold transition-opacity active:opacity-75"
           style={{ background: '#fff', color: '#C4704A', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}
         >

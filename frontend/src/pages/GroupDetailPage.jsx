@@ -173,7 +173,7 @@ export default function GroupDetailPage() {
         {/* Action buttons */}
         <div className="flex gap-2 px-4 pb-3.5">
           <Button size="sm"
-            onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name, groupType: group.type } })}>
+            onClick={() => navigate('/dishes/new', { state: { groupId: id, groupName: group.name, groupType: group.type } })}>
             + Блюдо в группу
           </Button>
         </div>
@@ -205,7 +205,7 @@ export default function GroupDetailPage() {
               title="Нет рецептов"
               description="Добавьте первый рецепт в группу"
               action={
-                <Button onClick={() => navigate('/my-recipes/new', { state: { groupId: id, groupName: group.name } })}>
+                <Button onClick={() => navigate('/dishes/new', { state: { groupId: id, groupName: group.name } })}>
                   + Добавить рецепт
                 </Button>
               }

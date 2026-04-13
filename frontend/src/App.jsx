@@ -10,7 +10,6 @@ import DishesPage from './pages/DishesPage'
 import DishDetailPage from './pages/DishDetailPage'
 import FridgePage from './pages/FridgePage'
 import ChatPage from './pages/ChatPage'
-import MyRecipesPage from './pages/MyRecipesPage'
 import RecipeFormPage from './pages/RecipeFormPage'
 import GroupsPage from './pages/GroupsPage'
 import GroupDetailPage from './pages/GroupDetailPage'
@@ -86,9 +85,9 @@ export default function App() {
           <Route path="dishes/:id" element={<DishDetailPage />} />
           <Route path="fridge" element={<FridgePage />} />
           <Route path="chat" element={<ChatPage />} />
-          <Route path="my-recipes" element={<RequireAuth><MyRecipesPage /></RequireAuth>} />
-          <Route path="my-recipes/new" element={<RequireAuth><RecipeFormPage /></RequireAuth>} />
-          <Route path="my-recipes/:id/edit" element={<RequireAuth><RecipeFormPage /></RequireAuth>} />
+          <Route path="my-recipes" element={<Navigate to="/dishes" replace />} />
+          <Route path="dishes/new" element={<RequireAuth><RecipeFormPage /></RequireAuth>} />
+          <Route path="dishes/:id/edit" element={<RequireAuth><RecipeFormPage /></RequireAuth>} />
           <Route path="groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
           <Route path="groups/new" element={<RequireAuth><GroupFormPage /></RequireAuth>} />
           <Route path="groups/:id" element={<RequireAuth><GroupDetailPage /></RequireAuth>} />
