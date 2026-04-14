@@ -33,27 +33,27 @@ export default function TelegramAuthPage() {
   }, [])
 
   return (
-    <div className="auth-page fade-in">
-      <div className="auth-logo">🍽️ MealBot</div>
-      <div className="auth-card fade-up" style={{ textAlign: 'center' }}>
+    <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 fade-in">
+      <p className="text-2xl font-bold text-text mb-6">🍽️ MealBot</p>
+
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-card px-6 py-8 text-center fade-up">
         {error ? (
           <>
-            <p style={{ fontSize: 32, marginBottom: 12 }}>❌</p>
-            <h2>Ошибка входа</h2>
-            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 20 }}>{error}</p>
+            <p className="text-[32px] mb-3">❌</p>
+            <h2 className="font-bold text-lg text-text mb-2">Ошибка входа</h2>
+            <p className="text-sm text-text-2 mb-5">{error}</p>
             <a
               href={`https://t.me/${import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'MealBotRu'}`}
-              className="btn btn-primary"
-              style={{ display: 'inline-block', textDecoration: 'none' }}
+              className="inline-flex items-center justify-center w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm"
             >
               Открыть бота в Telegram
             </a>
           </>
         ) : (
           <>
-            <span className="loader" style={{ width: 32, height: 32, display: 'inline-block', marginBottom: 16 }} />
-            <h2>Вход через Telegram...</h2>
-            <p style={{ color: 'var(--text2)', fontSize: 14 }}>Подождите, выполняется авторизация</p>
+            <div className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin mx-auto mb-4" />
+            <h2 className="font-bold text-lg text-text mb-1">Вход через Telegram...</h2>
+            <p className="text-sm text-text-2">Подождите, выполняется авторизация</p>
           </>
         )}
       </div>
