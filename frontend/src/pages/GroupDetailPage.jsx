@@ -16,6 +16,7 @@ export default function GroupDetailPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab]       = useState('dishes')
   const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteError, setInviteError] = useState('')
   const [inviting, setInviting] = useState(false)
   const [groupHintDismissed, dismissGroupHint] = useHintDismiss('mealbot_hint_group_seen')
 
@@ -52,11 +53,17 @@ export default function GroupDetailPage() {
   }
 
   async function handleInvite() {
-    if (!inviteEmail.trim()) return
+    const email = inviteEmail.trim()
+    if (!email) return
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setInviteError('Введите корректный email')
+      return
+    }
+    setInviteError('')
     setInviting(true)
     try {
-      await api.inviteMember(id, inviteEmail.trim())
-      show(`Приглашение отправлено на ${inviteEmail.trim()}`, 'success')
+      await api.inviteMember(id, email)
+      show(`Приглашение отправлено на ${email}`, 'success')
       setInviteEmail('')
     } catch (e) {
       show(e.message, 'error')
@@ -140,16 +147,22 @@ export default function GroupDetailPage() {
               <div className="flex gap-2">
                 <input
                   type="email"
-                  className="flex-1 bg-bg-3 border border-border rounded-sm text-text text-sm px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3"
+                  className={[
+                    'flex-1 bg-bg-3 border rounded-sm text-text text-sm px-3 py-2 outline-none focus:ring-2 focus:ring-accent/20 placeholder:text-text-3',
+                    inviteError ? 'border-red-400 focus:border-red-400' : 'border-border focus:border-accent',
+                  ].join(' ')}
                   placeholder="email@example.com"
                   value={inviteEmail}
-                  onChange={e => setInviteEmail(e.target.value)}
+                  onChange={e => { setInviteEmail(e.target.value); setInviteError('') }}
                   onKeyDown={e => e.key === 'Enter' && handleInvite()}
                 />
                 <Button size="sm" loading={inviting} onClick={handleInvite}>
                   {!inviting && 'Пригласить'}
                 </Button>
               </div>
+              {inviteError && (
+                <p className="text-xs text-red-400 mt-1.5">{inviteError}</p>
+              )}
             </div>
 
             {group.members.map(member => (
