@@ -175,9 +175,32 @@ function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngred
   )
 }
 
+// ─── Compact inline card (AI chat) ───────────────────────────────────────────
+function InlineCard({ dish, onClick }) {
+  const img = dish.images?.[0] || dish.imageUrl
+  const cat = dish.categories?.[0] ?? dish.category
+  const emoji = CAT_EMOJI[cat] || '🍽️'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-2 bg-bg-3 border border-border rounded-xl px-2.5 py-2 w-full text-left hover:border-accent/50 transition-colors"
+    >
+      <div className="w-8 h-8 rounded-lg overflow-hidden bg-bg-2 flex items-center justify-center text-base shrink-0">
+        {img
+          ? <img src={img} alt="" className="w-full h-full object-cover" />
+          : emoji}
+      </div>
+      <span className="flex-1 text-[13px] font-semibold truncate text-text">{dish.nameRu || dish.name}</span>
+      <span className="text-text-3 text-xs shrink-0">→</span>
+    </button>
+  )
+}
+
 // ─── Export ───────────────────────────────────────────────────────────────────
 const DishCard = forwardRef(function DishCard({ variant = 'grid', ...props }, ref) {
-  if (variant === 'row') return <RowCard ref={ref} {...props} />
+  if (variant === 'row')    return <RowCard ref={ref} {...props} />
+  if (variant === 'inline') return <InlineCard {...props} />
   return <GridCard {...props} />
 })
 export default DishCard

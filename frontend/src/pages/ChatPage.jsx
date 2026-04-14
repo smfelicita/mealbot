@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { Button, Card } from '../components/ui'
+import { DishCard } from '../components/domain'
 
 const SUGGESTIONS = [
   'Что приготовить на завтрак?',
@@ -39,26 +40,6 @@ function cleanAndFormat(text) {
   return escapeHtml(text.replace(/\[DISH:[a-z0-9]+\]/gi, ''))
     .replace(/\n/g, '<br/>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-}
-
-// ─── Inline dish card in chat ────────────────────────────────────────────────
-function InlineDishCard({ dish, onClick }) {
-  const img = dish.images?.[0] || dish.imageUrl
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-2 bg-bg-3 border border-border rounded-sm px-2.5 py-2 w-full text-left hover:border-accent/50 transition-colors"
-    >
-      <div className="w-8 h-8 rounded-sm overflow-hidden bg-bg-2 flex items-center justify-center text-base shrink-0">
-        {img
-          ? <img src={img} alt="" className="w-full h-full object-cover" />
-          : '🍽'}
-      </div>
-      <span className="flex-1 text-[13px] font-semibold truncate">{dish.nameRu || dish.name}</span>
-      <span className="text-text-3 text-xs shrink-0">→</span>
-    </button>
-  )
 }
 
 // ─── Typing indicator ────────────────────────────────────────────────────────
@@ -186,7 +167,7 @@ export default function ChatPage() {
                 {msg.dishes?.length > 0 && (
                   <div className="mt-2.5 flex flex-col gap-1.5">
                     {msg.dishes.map(d => (
-                      <InlineDishCard key={d.id} dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+                      <DishCard key={d.id} variant="inline" dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
                     ))}
                   </div>
                 )}
