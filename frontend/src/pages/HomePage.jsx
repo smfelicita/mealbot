@@ -4,6 +4,7 @@ import { api } from '../api'
 import { useStore } from '../store'
 import { DishCard } from '../components/domain'
 import MealTypeChips from '../components/domain/MealTypeChips'
+import { useHintDismiss } from '../hooks/useHintDismiss'
 
 const CARD_GAP = 12 // gap-3 = 12px
 
@@ -90,9 +91,7 @@ export default function HomePage() {
   const [fridgeOnly, setFridgeOnly] = useState(false)
   const [favIds, setFavIds]         = useState(new Set())
   const [visibleCount, setVisibleCount] = useState(4)
-  const [fridgeModeHintDismissed, setFridgeModeHintDismissed] = useState(
-    () => !!localStorage.getItem('mealbot_hint_fridgeMode_seen')
-  )
+  const [fridgeModeHintDismissed, dismissFridgeModeHint] = useHintDismiss('mealbot_hint_fridgeMode_seen')
 
   // Refs for measuring
   const listContainerRef = useRef(null)
@@ -222,10 +221,7 @@ export default function HomePage() {
           </p>
           <button
             type="button"
-            onClick={() => {
-              localStorage.setItem('mealbot_hint_fridgeMode_seen', '1')
-              setFridgeModeHintDismissed(true)
-            }}
+            onClick={dismissFridgeModeHint}
             className="ml-3 shrink-0 text-text-3 text-lg leading-none"
           >✕</button>
         </div>

@@ -1,15 +1,7 @@
 import { useState } from 'react'
-import { api } from '../api'
-import { Modal, Button, Chip } from './ui'
-import { useToast } from './ui'
-
-const MEAL_TYPES = [
-  { value: 'BREAKFAST', label: '🌅 Завтрак'     },
-  { value: 'LUNCH',     label: '☀️ Обед'         },
-  { value: 'DINNER',    label: '🌙 Ужин'         },
-  { value: 'SNACK',     label: '🍎 Перекус'      },
-  { value: 'ANYTIME',   label: '🍽 Когда угодно' },
-]
+import { api } from '../../api'
+import { Modal, Button, Chip, useToast } from '../ui'
+import { PLAN_MEAL_TYPES } from '../../constants'
 
 export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded }) {
   const { show, Toast } = useToast()
@@ -36,7 +28,6 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
 
   return (
     <Modal onClose={onClose} title="📅 Буду готовить">
-      {/* Блюдо */}
       <div className="flex items-center gap-3 bg-bg-3 rounded-sm px-3 py-2.5 mb-5">
         <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-bg-2 flex items-center justify-center text-xl">
           {img
@@ -48,23 +39,17 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Приём пищи */}
         <div>
           <p className="text-xs font-bold text-text-2 uppercase tracking-widest mb-2">Приём пищи</p>
           <div className="flex flex-wrap gap-1.5">
-            {MEAL_TYPES.map(t => (
-              <Chip
-                key={t.value}
-                active={mealType === t.value}
-                onClick={() => setMealType(t.value)}
-              >
+            {PLAN_MEAL_TYPES.map(t => (
+              <Chip key={t.value} active={mealType === t.value} onClick={() => setMealType(t.value)}>
                 {t.label}
               </Chip>
             ))}
           </div>
         </div>
 
-        {/* Дата */}
         <div>
           <p className="text-xs font-bold text-text-2 uppercase tracking-widest mb-2">Дата (необязательно)</p>
           <input
@@ -76,7 +61,6 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
           />
         </div>
 
-        {/* Заметка */}
         <div>
           <p className="text-xs font-bold text-text-2 uppercase tracking-widest mb-2">Заметка</p>
           <input
@@ -90,7 +74,6 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
           />
         </div>
 
-        {/* Поделиться с семьёй */}
         {hasFamilyGroup && (
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -103,9 +86,7 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
           </label>
         )}
 
-        <Button type="submit" loading={loading} className="w-full">
-          Добавить
-        </Button>
+        <Button type="submit" loading={loading} className="w-full">Добавить</Button>
       </form>
 
       {Toast}

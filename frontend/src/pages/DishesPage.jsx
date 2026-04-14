@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { SearchInput } from '../components/ui'
-import { MealTypeChips, DishList } from '../components/domain'
+import { MealTypeChips, DishList, BulkAddModal } from '../components/domain'
+import { useHintDismiss } from '../hooks/useHintDismiss'
 
 // ─── FilterChips (Все / Избранное / Семейные) ─────────────────────────────────
 function FilterChips({ active, onChange }) {
@@ -163,69 +164,6 @@ function RecipesHeader({ fridgeMode, onToggleFridge }) {
   )
 }
 
-// ─── BulkAddModal ─────────────────────────────────────────────────────────────
-function BulkAddModal({ onClose, onDone }) {
-  const [value, setValue] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const taRef = useRef(null)
-
-  useEffect(() => { taRef.current?.focus() }, [])
-
-  async function handleSubmit() {
-    const names = value.split(',').map(s => s.trim()).filter(Boolean)
-    if (!names.length) { setError('Введите хотя бы одно название'); return }
-    setSaving(true)
-    setError('')
-    try {
-      await api.bulkCreateDishes(names)
-      onDone()
-    } catch (e) {
-      setError(e.message || 'Ошибка при создании')
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-end justify-center"
-      style={{ background: 'rgba(0,0,0,0.35)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div className="w-full max-w-lg bg-white rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-4"
-        style={{ boxShadow: '0 -4px 32px rgba(0,0,0,0.12)' }}>
-        {/* Handle */}
-        <div className="w-10 h-1 rounded-full bg-border mx-auto -mt-1" />
-
-        <h2 className="text-[18px] font-semibold">Добавить несколько блюд</h2>
-        <p className="text-[13px] text-text-2 -mt-2">
-          Введите названия через запятую
-        </p>
-
-        <textarea
-          ref={taRef}
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          placeholder="Блины, борщ, паста, омлет…"
-          rows={4}
-          className="w-full rounded-2xl border border-border px-4 py-3 text-[15px] resize-none focus:outline-none focus:border-[#C4704A] transition-colors"
-        />
-
-        {error && <p className="text-red-500 text-[13px] -mt-2">{error}</p>}
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={saving}
-          className="w-full rounded-2xl py-3.5 text-[15px] font-semibold text-white transition-opacity disabled:opacity-50"
-          style={{ background: '#C4704A' }}
-        >
-          {saving ? 'Добавляю…' : 'Добавить'}
-        </button>
-      </div>
-    </div>
-  )
-}
 
 const LIMIT = 20
 
@@ -244,9 +182,8 @@ export default function DishesPage() {
   const [favIds, setFavIds]       = useState(new Set())
   const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
   const [showBulkAdd, setShowBulkAdd] = useState(false)
-  const [bulkAddHintDismissed, setBulkAddHintDismissed] = useState(
-    () => !!localStorage.getItem('mealbot_hint_bulkAdd_seen')
-  )
+  const [bulkAddHintDismissed, dismissBulkAddHint] = useHintDismiss('mealbot_hint_bulkAdd_seen')
+  const [firstDishSeen, markFirstDishSeen] = useHintDismiss('mealbot_hint_firstDish_seen')
   const [showFirstDishToast, setShowFirstDishToast] = useState(false)
 
   const offsetRef    = useRef(0)
@@ -394,10 +331,7 @@ export default function DishesPage() {
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  localStorage.setItem('mealbot_hint_bulkAdd_seen', '1')
-                  setBulkAddHintDismissed(true)
-                }}
+                onClick={dismissBulkAddHint}
                 className="ml-3 shrink-0 text-text-3 text-lg leading-none"
               >✕</button>
             </div>
@@ -467,9 +401,8 @@ export default function DishesPage() {
           onClose={() => setShowBulkAdd(false)}
           onDone={() => {
             setShowBulkAdd(false)
-            // First-dish toast: показываем один раз
-            if (dishes.length === 0 && !localStorage.getItem('mealbot_hint_firstDish_seen')) {
-              localStorage.setItem('mealbot_hint_firstDish_seen', '1')
+            if (dishes.length === 0 && !firstDishSeen) {
+              markFirstDishSeen()
               setTimeout(() => {
                 setShowFirstDishToast(true)
                 setTimeout(() => setShowFirstDishToast(false), 3500)

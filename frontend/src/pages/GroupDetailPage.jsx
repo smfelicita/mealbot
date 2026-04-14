@@ -4,6 +4,7 @@ import { api } from '../api'
 import { useStore } from '../store'
 import { Button, Loader, EmptyState, Avatar, useToast } from '../components/ui'
 import { DishCard } from '../components/domain'
+import { useHintDismiss } from '../hooks/useHintDismiss'
 
 export default function GroupDetailPage() {
   const { id } = useParams()
@@ -16,9 +17,7 @@ export default function GroupDetailPage() {
   const [tab, setTab]       = useState('dishes')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
-  const [groupHintDismissed, setGroupHintDismissed] = useState(
-    () => !!localStorage.getItem('mealbot_hint_group_seen')
-  )
+  const [groupHintDismissed, dismissGroupHint] = useHintDismiss('mealbot_hint_group_seen')
 
   useEffect(() => {
     api.getGroup(id)
@@ -125,10 +124,7 @@ export default function GroupDetailPage() {
             </p>
             <button
               type="button"
-              onClick={() => {
-                localStorage.setItem('mealbot_hint_group_seen', '1')
-                setGroupHintDismissed(true)
-              }}
+              onClick={dismissGroupHint}
               className="shrink-0 text-text-3 text-lg leading-none mt-0.5"
             >✕</button>
           </div>
