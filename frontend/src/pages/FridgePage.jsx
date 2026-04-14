@@ -79,29 +79,22 @@ function TelegramBanner({ onLinked, onError }) {
 function GuestFridgeBlock() {
   const navigate = useNavigate()
   return (
-    <div>
-      <div className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-bg/95 backdrop-blur-md border-b border-border flex items-center px-4 max-w-app mx-auto">
-        <span className="font-serif text-[17px] font-bold">🧊 Холодильник</span>
-      </div>
-      <div className="pt-[52px]">
-        <EmptyState
-          icon="🧊"
-          title="Готовь из того, что есть дома"
-          description="Добавь продукты из холодильника — MealBot подберёт блюда, которые можно приготовить прямо сейчас."
-          action={
-            <div className="flex flex-col gap-2 w-full px-4">
-              <Button className="w-full" onClick={() => navigate('/auth?mode=register')}>
-                Создать свою кухню
-              </Button>
-              <Button variant="ghost" size="sm" className="text-text-2"
-                onClick={() => navigate('/auth')}>
-                Уже есть аккаунт? Войти
-              </Button>
-            </div>
-          }
-        />
-      </div>
-    </div>
+    <EmptyState
+      icon="🧊"
+      title="Готовь из того, что есть дома"
+      description="Добавь продукты из холодильника — MealBot подберёт блюда, которые можно приготовить прямо сейчас."
+      action={
+        <div className="flex flex-col gap-2 w-full px-4">
+          <Button className="w-full" onClick={() => navigate('/auth?mode=register')}>
+            Создать свою кухню
+          </Button>
+          <Button variant="ghost" size="sm" className="text-text-2"
+            onClick={() => navigate('/auth')}>
+            Уже есть аккаунт? Войти
+          </Button>
+        </div>
+      }
+    />
   )
 }
 
@@ -243,18 +236,19 @@ export default function FridgePage() {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div>
-      {/* Top bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-bg/95 backdrop-blur-md border-b border-border flex items-center px-3 gap-2 max-w-app mx-auto">
-        <span className="font-serif text-[17px] font-bold flex-1">
-          🧊 {familyGroupId ? 'Семейный холодильник' : 'Холодильник'}
-        </span>
-        {fridge.length > 0 && (
-          <Button variant="ghost" size="sm" className="text-text-3" onClick={clearAll}>Очистить</Button>
-        )}
-        <Button size="sm" onClick={() => setShowPicker(true)}>+ Добавить</Button>
-      </div>
-
-      <div className="pt-[68px] pb-8 px-4">
+      <div className="pt-0 pb-8 px-4">
+        {/* Page header */}
+        <div className="flex items-center justify-between pt-5 mb-4">
+          <h1 className="font-semibold text-[22px] text-text">
+            {familyGroupId ? 'Семейный холодильник' : 'Холодильник'}
+          </h1>
+          <div className="flex gap-2">
+            {fridge.length > 0 && (
+              <Button variant="ghost" size="sm" className="text-text-3" onClick={clearAll}>Очистить</Button>
+            )}
+            <Button size="sm" onClick={() => setShowPicker(true)}>+ Добавить</Button>
+          </div>
+        </div>
         {/* Telegram banner */}
         {telegramLinked === false && (
           <TelegramBanner
