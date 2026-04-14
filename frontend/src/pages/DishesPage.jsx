@@ -361,7 +361,7 @@ export default function DishesPage() {
         {/* Спиннер подгрузки */}
         {loadingMore && (
           <div className="flex justify-center py-5">
-            <div className="w-6 h-6 rounded-full border-2 border-[#C4704A] border-t-transparent animate-spin" />
+            <div className="w-6 h-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
           </div>
         )}
       </div>
@@ -372,7 +372,7 @@ export default function DishesPage() {
       {/* First-dish toast */}
       {showFirstDishToast && (
         <div className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-[9999] whitespace-nowrap
-          bg-[#1a1a1a] text-white text-[13px] px-[18px] py-[10px] rounded-[20px] shadow-md"
+          bg-neutral-900 text-white text-sm px-5 py-2.5 rounded-full shadow-md"
         >
           Отлично! Добавь ещё или включи 🧊 режим холодильника
         </div>
