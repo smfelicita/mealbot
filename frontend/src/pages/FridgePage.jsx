@@ -236,19 +236,7 @@ export default function FridgePage() {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div>
-      <div className="pt-0 pb-8 px-4">
-        {/* Page header */}
-        <div className="flex items-center justify-between pt-5 mb-4">
-          <h1 className="font-semibold text-[22px] text-text">
-            {familyGroupId ? 'Семейный холодильник' : 'Холодильник'}
-          </h1>
-          <div className="flex gap-2">
-            {fridge.length > 0 && (
-              <Button variant="ghost" size="sm" className="text-text-3" onClick={clearAll}>Очистить</Button>
-            )}
-            <Button size="sm" onClick={() => setShowPicker(true)}>+ Добавить</Button>
-          </div>
-        </div>
+      <div className="pt-5 pb-24 px-4">
         {/* Telegram banner */}
         {telegramLinked === false && (
           <TelegramBanner
@@ -276,12 +264,17 @@ export default function FridgePage() {
                   <span className="ml-2 text-accent font-semibold">· Общий с семьёй</span>
                 )}
               </p>
-              <Button
-                variant="secondary" size="sm" className="ml-auto"
-                onClick={() => navigate('/chat?prompt=' + encodeURIComponent('Что можно приготовить из продуктов в моём холодильнике?'))}
-              >
-                ✨ Что приготовить?
-              </Button>
+              <div className="flex gap-2 ml-auto">
+                <Button
+                  variant="secondary" size="sm"
+                  onClick={() => navigate('/chat?prompt=' + encodeURIComponent('Что можно приготовить из продуктов в моём холодильнике?'))}
+                >
+                  ✨ Что приготовить?
+                </Button>
+                <Button variant="ghost" size="sm" className="text-text-3" onClick={clearAll}>
+                  Очистить
+                </Button>
+              </div>
             </div>
 
             {/* Basic ingredients hint */}
@@ -461,6 +454,20 @@ export default function FridgePage() {
             )}
           </div>
         </Modal>
+      )}
+
+      {/* FAB */}
+      {!showPicker && (
+        <button
+          type="button"
+          onClick={() => setShowPicker(true)}
+          className="fixed bottom-[76px] right-4 w-13 h-13 flex items-center justify-center rounded-full text-white z-40 active:scale-95 transition-transform focus:outline-none bg-accent shadow-accent"
+          aria-label="Добавить продукты"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
       )}
 
       {Toast}
