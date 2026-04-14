@@ -7,10 +7,10 @@ import { Button, Loader, Avatar } from '../components/ui'
 function InfoRow({ label, value, note }) {
   return (
     <div>
-      <p className="text-[11px] text-text-3 mb-0.5">{label}</p>
+      <p className="text-2xs text-text-3 mb-0.5">{label}</p>
       <p className="text-sm font-semibold">
         {value}
-        {note && <span className="ml-2 text-[11px] text-text-3 font-normal">{note}</span>}
+        {note && <span className="ml-2 text-2xs text-text-3 font-normal">{note}</span>}
       </p>
     </div>
   )

@@ -22,7 +22,7 @@ function CommentItem({ comment, isOwner, isDishOwner, onDelete, onPin }) {
           <span className="text-xs text-accent font-bold">Закреплено</span>
         )}
         <span className="font-bold text-sm">{comment.user?.name || 'Участник'}</span>
-        <span className="text-[11px] text-text-3 ml-auto">{formatDate(comment.createdAt)}</span>
+        <span className="text-2xs text-text-3 ml-auto">{formatDate(comment.createdAt)}</span>
       </div>
       <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
       {(isDishOwner || isOwner) && (
@@ -32,7 +32,7 @@ function CommentItem({ comment, isOwner, isDishOwner, onDelete, onPin }) {
               type="button"
               onClick={() => onPin(comment.id)}
               className={[
-                'text-[11px] font-bold px-2 py-0.5 rounded focus:outline-none',
+                'text-2xs font-bold px-2 py-0.5 rounded focus:outline-none',
                 comment.isPinned ? 'text-accent' : 'text-text-2',
               ].join(' ')}
             >
@@ -43,7 +43,7 @@ function CommentItem({ comment, isOwner, isDishOwner, onDelete, onPin }) {
             <button
               type="button"
               onClick={() => onDelete(comment.id)}
-              className="text-[11px] font-bold text-red-400 px-2 py-0.5 rounded focus:outline-none"
+              className="text-2xs font-bold text-red-400 px-2 py-0.5 rounded focus:outline-none"
             >
               Удалить
             </button>

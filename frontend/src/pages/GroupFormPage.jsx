@@ -110,7 +110,7 @@ export default function GroupFormPage() {
                   >
                     <span className="text-[24px]">{opt.emoji}</span>
                     <span className={['text-[13px] font-bold', form.type === opt.value ? 'text-accent' : 'text-text'].join(' ')}>{opt.label}</span>
-                    <span className="text-[11px] text-text-3 leading-snug">{opt.hint}</span>
+                    <span className="text-2xs text-text-3 leading-snug">{opt.hint}</span>
                   </button>
                 ))}
               </div>

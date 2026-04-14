@@ -25,13 +25,13 @@ export default function PlanItem({ plan, currentUserId, onNavigate, onRemove }) 
         <p className="font-bold text-sm truncate text-text">{dish.nameRu || dish.name}</p>
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           {plan.groupId && (
-            <span className="text-[11px] text-teal font-semibold">🏠 Семейный</span>
+            <span className="text-2xs text-teal font-semibold">🏠 Семейный</span>
           )}
           {plan.note && (
-            <span className="text-[11px] text-text-2">{plan.note}</span>
+            <span className="text-2xs text-text-2">{plan.note}</span>
           )}
           {!isOwn && plan.user && (
-            <span className="text-[11px] text-text-3">· {plan.user.name}</span>
+            <span className="text-2xs text-text-3">· {plan.user.name}</span>
           )}
         </div>
       </button>

@@ -47,10 +47,10 @@ export default function GroupHeader({ group, isOwner, tab, onTabChange, onBack, 
       {group.type === 'REGULAR' && isOwner && group.joinCode && (
         <div className="mx-4 mb-2 bg-bg-3 border border-border rounded-xl px-4 py-3 flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold text-text-3 uppercase tracking-wider mb-0.5">Код вступления</p>
+            <p className="text-2xs font-bold text-text-3 uppercase tracking-wider mb-0.5">Код вступления</p>
             <p className="font-mono text-lg font-bold text-text tracking-widest">{group.joinCode}</p>
             {group.joinCodeExpiresAt && (
-              <p className="text-[11px] text-text-3 mt-0.5">
+              <p className="text-2xs text-text-3 mt-0.5">
                 до {new Date(group.joinCodeExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
               </p>
             )}

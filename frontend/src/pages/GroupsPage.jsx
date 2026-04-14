@@ -74,7 +74,7 @@ export default function GroupsPage() {
           <div className="flex flex-col gap-5">
             {familyGroups.length > 0 && (
               <div>
-                <p className="text-[11px] font-bold text-text-2 uppercase tracking-widest mb-2.5">Семейная группа</p>
+                <p className="text-2xs font-bold text-text-2 uppercase tracking-widest mb-2.5">Семейная группа</p>
                 <div className="flex flex-col gap-2">
                   {familyGroups.map((g, i) => (
                     <GroupCard key={g.id} group={g} delay={i * 0.04} onClick={() => navigate(`/groups/${g.id}`)} />
@@ -85,7 +85,7 @@ export default function GroupsPage() {
             {regularGroups.length > 0 && (
               <div>
                 {familyGroups.length > 0 && (
-                  <p className="text-[11px] font-bold text-text-2 uppercase tracking-widest mb-2.5">Обычные группы</p>
+                  <p className="text-2xs font-bold text-text-2 uppercase tracking-widest mb-2.5">Обычные группы</p>
                 )}
                 <div className="flex flex-col gap-2">
                   {regularGroups.map((g, i) => (

@@ -300,7 +300,7 @@ export default function FridgePage() {
             {/* Fridge items grouped by category */}
             {CAT_ORDER.filter(cat => grouped[cat]).map(cat => (
               <div key={cat} className="mb-5">
-                <p className="text-[11px] font-bold text-text-2 uppercase tracking-widest mb-2.5">
+                <p className="text-2xs font-bold text-text-2 uppercase tracking-widest mb-2.5">
                   {CAT_RU[cat] || cat}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -334,7 +334,7 @@ export default function FridgePage() {
                           <span className="text-2xs text-text-3 bg-bg-3 rounded px-1.5 py-0.5">базовый</span>
                         )}
                         {item.quantityValue != null && (
-                          <span className="text-[11px] text-text-3">
+                          <span className="text-2xs text-text-3">
                             {item.quantityValue} {item.quantityUnit}
                           </span>
                         )}

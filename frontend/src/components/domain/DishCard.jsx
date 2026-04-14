@@ -127,7 +127,7 @@ function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngred
             </button>
           )}
           {allInFridge && (
-            <div className="absolute bottom-2 left-2 bg-sage/90 text-white text-[11px] font-bold px-2 py-0.5 rounded-lg">
+            <div className="absolute bottom-2 left-2 bg-sage/90 text-white text-2xs font-bold px-2 py-0.5 rounded-lg">
               ✓ всё есть
             </div>
           )}

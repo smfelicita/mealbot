@@ -431,7 +431,7 @@ export default function DishFormPage() {
         {/* Фото — extended only */}
         {mode === 'extended' && (
           <div>
-            <Label>Фото блюда <span className="normal-case text-[11px] text-text-3 font-normal">до 10 штук</span></Label>
+            <Label>Фото блюда <span className="normal-case text-2xs text-text-3 font-normal">до 10 штук</span></Label>
             {images.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
                 {images.map((url, idx) => (
@@ -455,7 +455,7 @@ export default function DishFormPage() {
                     <button
                       type="button"
                       onClick={() => removeImage(idx)}
-                      className="absolute top-1 right-1 w-5 h-5 bg-black/65 text-white rounded-full flex items-center justify-center text-[11px] border-none cursor-pointer"
+                      className="absolute top-1 right-1 w-5 h-5 bg-black/65 text-white rounded-full flex items-center justify-center text-2xs border-none cursor-pointer"
                     >✕</button>
                   </div>
                 ))}
@@ -596,7 +596,7 @@ export default function DishFormPage() {
                 />
                 <div>
                   <div className="text-[13px] font-semibold">{opt.label}</div>
-                  <div className="text-[11px] text-text-2">{opt.desc}</div>
+                  <div className="text-2xs text-text-2">{opt.desc}</div>
                 </div>
               </label>
             ))}

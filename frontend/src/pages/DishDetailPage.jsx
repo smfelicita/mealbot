@@ -52,8 +52,8 @@ function NutritionBlock({ nutrition }) {
             <div key={item.label}
               className="rounded-xl px-2 py-2.5 text-center bg-white border border-border/50">
               <div className="text-sm font-semibold text-text tabular-nums">{item.value}</div>
-              <div className="text-[11px] text-text-3 leading-tight mt-0.5">{item.unit}</div>
-              <div className="text-[11px] text-text-2 leading-tight mt-0.5">{item.label}</div>
+              <div className="text-2xs text-text-3 leading-tight mt-0.5">{item.unit}</div>
+              <div className="text-2xs text-text-2 leading-tight mt-0.5">{item.label}</div>
             </div>
           ))}
         </div>
