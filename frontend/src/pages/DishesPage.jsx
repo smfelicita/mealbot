@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
-import { SearchInput } from '../components/ui'
+import { SearchInput, useToast } from '../components/ui'
 import { MealTypeChips, DishList, BulkAddModal } from '../components/domain'
 import { useHintDismiss } from '../hooks/useHintDismiss'
 
@@ -155,6 +155,7 @@ const LIMIT = 20
 export default function DishesPage() {
   const navigate = useNavigate()
   const { fridgeMode, toggleFridgeMode, token } = useStore()
+  const { show, Toast } = useToast()
 
   const [dishes, setDishes]       = useState([])
   const [loading, setLoading]     = useState(true)
@@ -204,13 +205,14 @@ export default function DishesPage() {
       setDishes(fetched)
       offsetRef.current = fetched.length
       setHasMore(fetched.length < total)
-    } catch {
+    } catch (e) {
       setDishes([])
       setHasMore(false)
+      show(e.message || 'Не удалось загрузить блюда', 'error')
     } finally {
       setLoading(false)
     }
-  }, [getParams])
+  }, [getParams, show])
 
   const loadMore = useCallback(async () => {
     if (!canLoadRef.current) return
@@ -377,6 +379,8 @@ export default function DishesPage() {
       )}
 
       {/* BulkAddModal */}
+      {Toast}
+
       {showBulkAdd && (
         <BulkAddModal
           onClose={() => setShowBulkAdd(false)}

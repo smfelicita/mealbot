@@ -5,6 +5,7 @@ import { useStore } from '../store'
 import { DishCard } from '../components/domain'
 import MealTypeChips from '../components/domain/MealTypeChips'
 import { useHintDismiss } from '../hooks/useHintDismiss'
+import { useToast } from '../components/ui'
 
 const CARD_GAP = 12 // gap-3 = 12px
 
@@ -78,6 +79,7 @@ export default function HomePage() {
   const navigate = useNavigate()
   const token    = useStore(s => s.token)
   const fridge   = useStore(s => s.fridge)
+  const { show, Toast } = useToast()
 
   const [dishes, setDishes]         = useState([])
   const [loading, setLoading]       = useState(true)
@@ -124,7 +126,7 @@ export default function HomePage() {
   useEffect(() => {
     api.getDishes({ limit: 50 })
       .then(data => setDishes(data.dishes ?? data))
-      .catch(() => {})
+      .catch(e => show(e.message || 'Не удалось загрузить блюда', 'error'))
       .finally(() => setLoading(false))
 
     if (token) {
@@ -260,6 +262,7 @@ export default function HomePage() {
           </button>
         </div>
       )}
+      {Toast}
     </div>
   )
 }

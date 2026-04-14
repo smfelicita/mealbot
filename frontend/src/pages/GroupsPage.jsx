@@ -48,7 +48,7 @@ export default function GroupsPage() {
   const [joining, setJoining]   = useState(false)
 
   useEffect(() => {
-    api.getGroups().then(setGroups).catch(() => {}).finally(() => setLoading(false))
+    api.getGroups().then(setGroups).catch(e => show(e.message || 'Не удалось загрузить группы', 'error')).finally(() => setLoading(false))
   }, [])
 
   async function handleJoin() {

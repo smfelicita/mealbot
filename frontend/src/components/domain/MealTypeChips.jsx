@@ -35,10 +35,9 @@ export default function MealTypeChips({ active, onChange, multi = false, showAll
               'shrink-0 px-4 py-1.5 rounded-xl text-[13px] font-medium transition-all',
               'focus:outline-none whitespace-nowrap border',
               isActive
-                ? 'text-white border-transparent'
+                ? 'bg-sage text-white border-transparent'
                 : 'bg-white text-text-2 border-border/60',
             ].join(' ')}
-            style={isActive ? { background: '#5C7A59' } : {}}
           >
             {mt.label}
           </button>

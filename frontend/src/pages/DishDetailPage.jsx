@@ -121,6 +121,7 @@ export default function DishDetailPage() {
 
   const [dish, setDish]               = useState(null)
   const [loading, setLoading]         = useState(true)
+  const [loadError, setLoadError]     = useState(null)
   const [activeImage, setActiveImage] = useState(null)
   const [recs, setRecs]               = useState(null)
   const [showPlanModal, setShowPlanModal]   = useState(false)
@@ -137,7 +138,7 @@ export default function DishDetailPage() {
           api.getComments(id).then(setComments).catch(() => {})
         }
       })
-      .catch(() => navigate('/dishes'))
+      .catch(e => setLoadError(e.message || 'Не удалось загрузить блюдо'))
       .finally(() => setLoading(false))
 
     api.getRecommendations(id).then(setRecs).catch(() => {})
@@ -182,6 +183,16 @@ export default function DishDetailPage() {
   if (loading) return (
     <div className="fixed inset-0 z-[150] bg-bg flex items-center justify-center">
       <Loader />
+    </div>
+  )
+  if (loadError) return (
+    <div className="fixed inset-0 z-[150] bg-bg flex flex-col items-center justify-center gap-4 px-8 text-center">
+      <p className="text-text-2">{loadError}</p>
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="px-5 py-2.5 rounded-2xl bg-bg-2 border border-border text-sm font-medium text-text"
+      >Назад</button>
     </div>
   )
   if (!dish) return null
