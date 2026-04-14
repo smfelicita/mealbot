@@ -75,7 +75,7 @@ function Label({ children, required }) {
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
-export default function RecipeFormPage() {
+export default function DishFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()

@@ -1,5 +1,5 @@
 // Единый словарь категорий блюд (MealCategory enum в Prisma)
-// Импортировать отсюда в RecipeCard, RecipeMeta и других компонентах
+// Импортировать отсюда в DishCard, DishMeta и других компонентах
 
 export const CAT_EMOJI = {
   SOUP:    '🍲',

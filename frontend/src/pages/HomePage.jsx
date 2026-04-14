@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
-import { RecipeCard } from '../components/domain'
+import { DishCard } from '../components/domain'
 import MealTypeChips from '../components/domain/MealTypeChips'
 
 const CARD_GAP = 12 // gap-3 = 12px
@@ -202,7 +202,7 @@ export default function HomePage() {
             <p className="text-[15px]" style={{ color: '#9e9e9e' }}>Нет подходящих блюд</p>
           </div>
         ) : visible.map((dish, idx) => (
-          <RecipeCard
+          <DishCard
             key={dish.id}
             ref={idx === 0 ? firstCardRef : undefined}
             variant="row"

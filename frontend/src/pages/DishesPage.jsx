@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { SearchInput } from '../components/ui'
-import { MealTypeChips, RecipeList } from '../components/domain'
+import { MealTypeChips, DishList } from '../components/domain'
 
 // ─── FilterChips (Все / Избранное / Семейные) ─────────────────────────────────
 function FilterChips({ active, onChange }) {
@@ -405,7 +405,7 @@ export default function DishesPage() {
         </div>
       )}
 
-      {/* RecipeList */}
+      {/* DishList */}
       <div className="px-4 mt-4">
         {loading ? (
           <div className="flex flex-col gap-3">
@@ -425,7 +425,7 @@ export default function DishesPage() {
             onReset={resetFilters}
           />
         ) : (
-          <RecipeList
+          <DishList
             variant="row"
             dishes={dishes}
             loading={false}

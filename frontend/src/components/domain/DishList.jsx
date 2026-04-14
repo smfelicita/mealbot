@@ -1,8 +1,8 @@
-import RecipeCard from './RecipeCard'
+import DishCard from './DishCard'
 import Loader from '../ui/Loader'
 import EmptyState from '../ui/EmptyState'
 
-export default function RecipeList({
+export default function DishList({
   dishes,
   loading,
   emptyIcon,
@@ -39,7 +39,7 @@ export default function RecipeList({
           className="fade-up"
           style={{ animationDelay: `${i * 0.04}s` }}
         >
-          <RecipeCard
+          <DishCard
             variant={variant}
             dish={dish}
             onClick={() => onDishClick(dish.id)}

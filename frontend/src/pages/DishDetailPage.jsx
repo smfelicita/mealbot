@@ -4,11 +4,11 @@ import { api } from '../api'
 import { useStore } from '../store'
 import { Loader, useToast } from '../components/ui'
 import {
-  RecipeMeta,
+  DishMeta,
   IngredientList,
-  RecipeSteps,
+  DishSteps,
   CommentsSection,
-  RecipeCard,
+  DishCard,
 } from '../components/domain'
 import AddToPlanModal from '../components/AddToPlanModal'
 
@@ -323,8 +323,8 @@ export default function DishDetailPage() {
           </div>
         )}
 
-        {/* ── RecipeMeta ── */}
-        <RecipeMeta dish={dish} />
+        {/* ── DishMeta ── */}
+        <DishMeta dish={dish} />
 
         {/* ── Tags ── */}
         {dish.tags?.length > 0 && (
@@ -342,7 +342,7 @@ export default function DishDetailPage() {
         {/* ── Content ── */}
         <div className="px-4 pt-5 flex flex-col divide-y divide-border/60">
           <div className="pb-2"><IngredientList ingredients={dish.ingredients} /></div>
-          <div className="pt-6 pb-2"><RecipeSteps recipe={dish.recipe} /></div>
+          <div className="pt-6 pb-2"><DishSteps recipe={dish.recipe} /></div>
           <div className="pt-6 pb-2"><NutritionBlock nutrition={dish.nutrition} /></div>
 
           {comments !== null && (
@@ -370,7 +370,7 @@ export default function DishDetailPage() {
                 <div className="flex overflow-x-auto px-4 gap-3 pb-1" style={{ scrollSnapType: 'x mandatory', scrollPaddingLeft: '1rem' }}>
                   {recs.nearMatch.map(({ dish: d, missing }) => (
                     <div key={d.id} className="shrink-0 w-full" style={{ scrollSnapAlign: 'start' }}>
-                      <RecipeCard
+                      <DishCard
                         variant="row"
                         dish={d}
                         onClick={() => navigate(`/dishes/${d.id}`)}
@@ -431,7 +431,7 @@ function RecsRow({ title, dishes, navigate }) {
       <div className="flex gap-3 overflow-x-auto pb-1">
         {dishes.map(d => (
           <div key={d.id} className="shrink-0 w-48">
-            <RecipeCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+            <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
           </div>
         ))}
       </div>

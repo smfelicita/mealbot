@@ -178,8 +178,8 @@ function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngred
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
-const RecipeCard = forwardRef(function RecipeCard({ variant = 'grid', ...props }, ref) {
+const DishCard = forwardRef(function DishCard({ variant = 'grid', ...props }, ref) {
   if (variant === 'row') return <RowCard ref={ref} {...props} />
   return <GridCard {...props} />
 })
-export default RecipeCard
+export default DishCard

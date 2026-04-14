@@ -13,7 +13,7 @@ function renderMarkdown(text) {
     .replace(/^(?!<[hul])/gm, '')
 }
 
-export default function RecipeSteps({ recipe }) {
+export default function DishSteps({ recipe }) {
   if (!recipe) return null
 
   return (

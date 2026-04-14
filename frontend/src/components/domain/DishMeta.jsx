@@ -1,6 +1,6 @@
 import { CAT_EMOJI, CAT_RU } from './dishCategories'
 
-export default function RecipeMeta({ dish }) {
+export default function DishMeta({ dish }) {
   const chips = []
 
   dish.categories?.forEach(cat => {

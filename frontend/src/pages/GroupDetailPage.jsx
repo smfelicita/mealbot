@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
 import { Button, Loader, EmptyState, Avatar, useToast } from '../components/ui'
-import { RecipeCard } from '../components/domain'
+import { DishCard } from '../components/domain'
 
 export default function GroupDetailPage() {
   const { id } = useParams()
@@ -214,7 +214,7 @@ export default function GroupDetailPage() {
             <div className="grid grid-cols-1 gap-3">
               {group.dishes.map((d, i) => (
                 <div key={d.id} className="fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
-                  <RecipeCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
+                  <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
                 </div>
               ))}
             </div>
