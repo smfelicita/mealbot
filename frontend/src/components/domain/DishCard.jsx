@@ -7,6 +7,13 @@ const VISIBILITY_BADGE = {
   ALL_GROUPS: { icon: '👥' },
 }
 
+function getDishMeta(dish) {
+  const img   = dish.images?.[0] || dish.imageUrl
+  const cat   = dish.categories?.[0] ?? dish.category
+  const emoji = CAT_EMOJI[cat] || '🍽️'
+  return { img, cat, emoji }
+}
+
 function Highlight({ text, query }) {
   if (!query || !text) return text
   const idx = text.toLowerCase().indexOf(query.toLowerCase())
@@ -24,9 +31,7 @@ function Highlight({ text, query }) {
 
 // ─── Horizontal row card (Home screen / Dishes list) ─────────────────────────
 const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav, hint }, ref) {
-  const img   = dish.images?.[0] || dish.imageUrl
-  const cat   = dish.categories?.[0] ?? dish.category
-  const emoji = CAT_EMOJI[cat] || '🍽️'
+  const { img, cat, emoji } = getDishMeta(dish)
   const isFamily = dish.visibility === 'FAMILY'
 
   return (
@@ -79,9 +84,7 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
 
 // ─── Vertical grid card (Search / Group detail) ───────────────────────────────
 function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngredientIds }) {
-  const img   = dish.images?.[0] || dish.imageUrl
-  const cat   = dish.categories?.[0] ?? dish.category
-  const emoji = CAT_EMOJI[cat] || '🍽️'
+  const { img, cat, emoji } = getDishMeta(dish)
   const visBadge = dish.visibility && dish.visibility !== 'PUBLIC'
     ? VISIBILITY_BADGE[dish.visibility]
     : null
@@ -177,9 +180,7 @@ function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngred
 
 // ─── Compact inline card (AI chat) ───────────────────────────────────────────
 function InlineCard({ dish, onClick }) {
-  const img = dish.images?.[0] || dish.imageUrl
-  const cat = dish.categories?.[0] ?? dish.category
-  const emoji = CAT_EMOJI[cat] || '🍽️'
+  const { img, emoji } = getDishMeta(dish)
   return (
     <button
       type="button"
