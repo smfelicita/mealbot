@@ -154,13 +154,51 @@ router.get('/:id', async (req, res, next) => {
           include: { user: { select: { id: true, name: true, email: true } } },
           orderBy: { joinedAt: 'asc' },
         },
-        dishes: {
-          include: { ingredients: { include: { ingredient: true } } },
-          orderBy: { createdAt: 'desc' },
-        },
       },
     })
     if (!group) return res.status(404).json({ error: 'Группа не найдена' })
+
+    // Собираем id участников группы
+    const memberIds = group.members.map(m => m.userId)
+
+    // Блюда видны в группе если:
+    // 1. Блюдо прикреплено к этой группе (groupId = group.id) и не PRIVATE (или автор — текущий пользователь)
+    // 2. Блюдо ALL_GROUPS и автор — участник группы
+    // 3. Для FAMILY-группы: блюдо FAMILY и автор — участник группы
+    const visibilityConditions = [
+      {
+        groupId: group.id,
+        OR: [
+          { visibility: { not: 'PRIVATE' } },
+          { authorId: req.userId },
+        ],
+      },
+      {
+        visibility: 'ALL_GROUPS',
+        authorId: { in: memberIds },
+      },
+    ]
+
+    if (group.type === 'FAMILY') {
+      visibilityConditions.push({
+        visibility: 'FAMILY',
+        authorId: { in: memberIds },
+      })
+    }
+
+    const rawDishes = await prisma.dish.findMany({
+      where: { OR: visibilityConditions },
+      include: { ingredients: { include: { ingredient: true } } },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // Дедупликация (блюдо может попасть по нескольким условиям)
+    const seen = new Set()
+    const dishes = rawDishes.filter(d => {
+      if (seen.has(d.id)) return false
+      seen.add(d.id)
+      return true
+    })
 
     res.json({
       id: group.id,
@@ -178,28 +216,26 @@ router.get('/:id', async (req, res, next) => {
         role: m.role,
         joinedAt: m.joinedAt,
       })),
-      dishes: group.dishes
-        .filter(d => d.visibility !== 'PRIVATE' || d.authorId === req.userId)
-        .map(d => ({
-          id: d.id,
-          name: d.nameRu,
-          description: d.description,
-          categories: d.categories,
-          cuisine: d.cuisine,
-          cookTime: d.cookTime,
-          calories: d.calories,
-          difficulty: d.difficulty,
-          imageUrl: d.imageUrl,
-          tags: d.tags,
-          authorId: d.authorId,
-          ingredients: d.ingredients.map(di => ({
-            id: di.ingredient.id,
-            name: di.ingredient.nameRu,
-            emoji: di.ingredient.emoji,
-            amount: di.amount,
-            optional: di.optional,
-          })),
+      dishes: dishes.map(d => ({
+        id: d.id,
+        name: d.nameRu,
+        description: d.description,
+        categories: d.categories,
+        cuisine: d.cuisine,
+        cookTime: d.cookTime,
+        calories: d.calories,
+        difficulty: d.difficulty,
+        imageUrl: d.imageUrl,
+        tags: d.tags,
+        authorId: d.authorId,
+        ingredients: d.ingredients.map(di => ({
+          id: di.ingredient.id,
+          name: di.ingredient.nameRu,
+          emoji: di.ingredient.emoji,
+          amount: di.amount,
+          optional: di.optional,
         })),
+      })),
     })
   } catch (e) { next(e) }
 })
