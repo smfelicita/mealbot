@@ -39,8 +39,8 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
   if (!hasActiveFilters && isGuest) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-sm">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C4704A" strokeWidth="1.6" strokeLinecap="round">
+        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-sm text-accent">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
             <path d="M12 2C8 2 4 6 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4-4-8-8-8z"/>
             <circle cx="12" cy="10" r="3"/>
           </svg>
@@ -68,8 +68,8 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
   if (!hasActiveFilters) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-sm">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C4704A" strokeWidth="1.6" strokeLinecap="round">
+        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-sm text-accent">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
             <path d="M12 2C8 2 4 6 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4-4-8-8-8z"/>
             <circle cx="12" cy="10" r="3"/>
           </svg>
@@ -89,8 +89,8 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
 
   return (
     <div className="flex flex-col items-center gap-3 py-10 px-6 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9e9e9e" strokeWidth="1.8" strokeLinecap="round">
+      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm text-text-3">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
         </svg>
       </div>
@@ -117,7 +117,7 @@ function AddRecipeButton({ onClick }) {
         active:scale-95 transition-transform focus:outline-none bg-accent shadow-accent"
       aria-label="Добавить блюдо"
     >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
         <path d="M12 5v14M5 12h14"/>
       </svg>
     </button>

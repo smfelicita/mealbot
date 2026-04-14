@@ -239,10 +239,10 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => { setFavOnly(f => !f); setFridgeOnly(false); setMealTime('') }}
-            className={`flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all shadow-card ${favOnly ? 'bg-accent' : 'bg-sage'}`}
+            className={`flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all shadow-card text-white/90 ${favOnly ? 'bg-accent' : 'bg-sage'}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 21C12 21 3 14.5 3 8.5C3 5.46 5.46 3 8.5 3C10.24 3 11.91 3.81 13 5.08C14.09 3.81 15.76 3 17.5 3C20.54 3 23 5.46 23 8.5C23 14.5 12 21 12 21Z" fill="rgba(255,255,255,0.9)"/>
+              <path d="M12 21C12 21 3 14.5 3 8.5C3 5.46 5.46 3 8.5 3C10.24 3 11.91 3.81 13 5.08C14.09 3.81 15.76 3 17.5 3C20.54 3 23 5.46 23 8.5C23 14.5 12 21 12 21Z" fill="currentColor"/>
             </svg>
             <span className="font-semibold text-sm text-white">Избранное</span>
           </button>
@@ -250,13 +250,13 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => { setFridgeOnly(f => !f); setFavOnly(false); setMealTime('') }}
-            className={`flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all shadow-card ${fridgeOnly ? 'bg-accent' : 'bg-sage'}`}
+            className={`flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all shadow-card text-white/90 ${fridgeOnly ? 'bg-accent' : 'bg-sage'}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="6" y="3" width="12" height="18" rx="2" stroke="rgba(255,255,255,0.9)" strokeWidth="2"/>
-              <line x1="6" y1="10" x2="18" y2="10" stroke="rgba(255,255,255,0.9)" strokeWidth="2"/>
-              <circle cx="10" cy="7" r="1.2" fill="rgba(255,255,255,0.9)"/>
-              <circle cx="10" cy="15" r="1.2" fill="rgba(255,255,255,0.9)"/>
+              <rect x="6" y="3" width="12" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+              <line x1="6" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="2"/>
+              <circle cx="10" cy="7" r="1.2" fill="currentColor"/>
+              <circle cx="10" cy="15" r="1.2" fill="currentColor"/>
             </svg>
             <span className="font-semibold text-sm text-white">Холодильник</span>
           </button>
