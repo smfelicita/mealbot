@@ -56,7 +56,7 @@ function InlineDishCard({ dish, onClick }) {
           : '🍽'}
       </div>
       <span className="flex-1 text-[13px] font-semibold truncate">{dish.nameRu || dish.name}</span>
-      <span className="text-text-3 text-[12px] shrink-0">→</span>
+      <span className="text-text-3 text-xs shrink-0">→</span>
     </button>
   )
 }
@@ -135,7 +135,7 @@ export default function ChatPage() {
       <div className="shrink-0 flex items-center px-3 h-11 border-b border-border gap-2">
         <span className="font-serif font-bold text-[15px] flex-1">✨ ИИ-помощник</span>
         {isGuest && !guestBlocked && (
-          <span className="text-[12px] text-text-2">
+          <span className="text-xs text-text-2">
             {guestLeft} из {GUEST_LIMIT} бесплатных
           </span>
         )}
@@ -154,7 +154,7 @@ export default function ChatPage() {
           <div className="fade-up flex flex-col gap-3">
             <div className="text-center py-5">
               <div className="text-[40px] mb-2">✨</div>
-              <h2 className="font-serif text-[20px] font-bold mb-2">ИИ-помощник</h2>
+              <h2 className="font-serif text-xl font-bold mb-2">ИИ-помощник</h2>
               <p className="text-[13px] text-text-2 leading-relaxed max-w-xs mx-auto">
                 {isGuest
                   ? `Расскажите что хотите съесть — подберу варианты из базы. Гостям доступно ${GUEST_LIMIT} сообщений в день.`
@@ -162,7 +162,7 @@ export default function ChatPage() {
               </p>
             </div>
             {SUGGESTIONS.map(s => (
-              <Card key={s} onClick={() => send(s)} className="px-4 py-3 text-[14px] text-text-2 text-left">
+              <Card key={s} onClick={() => send(s)} className="px-4 py-3 text-sm text-text-2 text-left">
                 {s} →
               </Card>
             ))}
@@ -174,7 +174,7 @@ export default function ChatPage() {
           <div
             key={msg.id}
             className={[
-              'max-w-[85%] rounded-[14px] px-3.5 py-2.5 text-[14px] leading-relaxed',
+              'max-w-[85%] rounded-[14px] px-3.5 py-2.5 text-sm leading-relaxed',
               msg.role === 'user'
                 ? 'self-end bg-accent text-white rounded-br-sm'
                 : 'self-start bg-bg-2 border border-border text-text rounded-bl-sm',
@@ -207,7 +207,7 @@ export default function ChatPage() {
           <div className="fade-up py-4">
             <div className="bg-bg-2 border border-border rounded-DEFAULT p-6 text-center">
               <div className="text-[36px] mb-3">✨</div>
-              <h3 className="font-extrabold text-[18px] mb-2">Лимит исчерпан</h3>
+              <h3 className="font-extrabold text-lg mb-2">Лимит исчерпан</h3>
               <p className="text-[13px] text-text-2 leading-relaxed mb-5">
                 Вы использовали все {GUEST_LIMIT} бесплатных сообщений на сегодня.
                 Зарегистрируйтесь — и получите безлимитный доступ к ИИ-помощнику с контекстом холодильника.
@@ -244,7 +244,7 @@ export default function ChatPage() {
           disabled={!input.trim() || loading || guestBlocked}
           onClick={() => send()}
           className={[
-            'w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-[18px]',
+            'w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg',
             'shrink-0 transition-all',
             (!input.trim() || loading || guestBlocked)
               ? 'bg-border cursor-not-allowed'

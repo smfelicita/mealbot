@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
-import { UNITS, DISH_CATEGORIES as CATEGORIES, MEAL_TIMES, DIFFICULTIES, CUISINES, ING_CATEGORIES, VISIBILITY_OPTIONS } from '../constants'
+import { UNITS, DISH_CATEGORIES as CATEGORIES, MEAL_TIMES, DIFFICULTIES, CUISINES, VISIBILITY_OPTIONS } from '../constants'
 import {
   Button, Loader, TextInput, Textarea, Chip, Toggle,
-  Modal, SearchInput, useToast,
+  useToast,
 } from '../components/ui'
+import { DishIngredientPicker } from '../components/domain'
 
 
 
@@ -37,13 +38,9 @@ export default function DishFormPage() {
   const [uploadingImage, setUploadingImage]   = useState(false)
   const [uploadingVideo, setUploadingVideo]   = useState(false)
   const [showIngPicker, setShowIngPicker]     = useState(false)
-  const [showAddIng, setShowAddIng]           = useState(false)
-  const [ingSearch, setIngSearch]             = useState('')
   const [allIngredients, setAllIngredients]   = useState([])
   const [ingredients, setIngredients]         = useState([])
   const [errors, setErrors]                   = useState({})
-  const [newIng, setNewIng]                   = useState({ nameRu: '', category: '' })
-  const [addingIng, setAddingIng]             = useState(false)
   const [cuisineInput, setCuisineInput]       = useState('')
   const [showCuisineSuggest, setShowCuisineSuggest] = useState(false)
   const [sourceDishName, setSourceDishName]   = useState('')
@@ -164,26 +161,6 @@ export default function DishFormPage() {
     }))
   }
 
-  async function handleAddCustomIngredient() {
-    if (!newIng.nameRu.trim() || !newIng.category) {
-      show('Укажите название и категорию', 'error')
-      return
-    }
-    setAddingIng(true)
-    try {
-      const created = await api.createIngredient(newIng)
-      setAllIngredients(prev => [...prev, created])
-      addIngredient(created)
-      setNewIng({ nameRu: '', category: '' })
-      setShowAddIng(false)
-      show(`"${created.nameRu}" добавлен`, 'success')
-    } catch (e) {
-      show(e.message, 'error')
-    } finally {
-      setAddingIng(false)
-    }
-  }
-
   // ── Image / video upload ─────────────────────────────────────────────────
   async function uploadImages(files) {
     const fileArr = Array.from(files).slice(0, 10 - images.length)
@@ -274,11 +251,6 @@ export default function DishFormPage() {
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────
-  const availableIngredients = allIngredients.filter(ing =>
-    !ingredients.find(i => i.id === ing.id) &&
-    ing.nameRu.toLowerCase().includes(ingSearch.toLowerCase())
-  )
-
   const cuisineSuggestions = CUISINES.filter(c =>
     c.toLowerCase().includes(cuisineInput.toLowerCase()) && c !== cuisineInput
   )
@@ -393,7 +365,7 @@ export default function DishFormPage() {
                 {cuisineSuggestions.map(c => (
                   <div
                     key={c}
-                    className="px-3.5 py-2.5 text-[14px] border-b border-border last:border-0 cursor-pointer hover:bg-bg-3"
+                    className="px-3.5 py-2.5 text-sm border-b border-border last:border-0 cursor-pointer hover:bg-bg-3"
                     onMouseDown={() => { setCuisineInput(c); setShowCuisineSuggest(false) }}
                   >
                     {c}
@@ -472,12 +444,12 @@ export default function DishFormPage() {
                       ].join(' ')}
                     />
                     {idx === 0 ? (
-                      <span className="absolute top-1 left-1 bg-accent text-white text-[10px] font-bold px-1 py-0.5 rounded">★</span>
+                      <span className="absolute top-1 left-1 bg-accent text-white text-2xs font-bold px-1 py-0.5 rounded">★</span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setMainImage(idx)}
-                        className="absolute top-1 left-1 bg-black/55 text-white text-[10px] font-bold px-1 py-0.5 rounded border-none cursor-pointer"
+                        className="absolute top-1 left-1 bg-black/55 text-white text-2xs font-bold px-1 py-0.5 rounded border-none cursor-pointer"
                       >★</button>
                     )}
                     <button
@@ -552,7 +524,7 @@ export default function DishFormPage() {
                         ing.toTaste ? 'translate-x-[14px]' : 'translate-x-0',
                       ].join(' ')} />
                     </button>
-                    <span className="text-[10px] text-text-2 whitespace-nowrap">вкус</span>
+                    <span className="text-2xs text-text-2 whitespace-nowrap">вкус</span>
                   </div>
 
                   {/* Amount + unit */}
@@ -563,12 +535,12 @@ export default function DishFormPage() {
                         placeholder="0"
                         value={ing.amountValue}
                         onChange={e => updateIngredient(ing.id, 'amountValue', e.target.value)}
-                        className="w-14 text-[12px] bg-bg-2 border border-border rounded-sm px-1.5 py-1 outline-none focus:border-accent text-center"
+                        className="w-14 text-xs bg-bg-2 border border-border rounded-sm px-1.5 py-1 outline-none focus:border-accent text-center"
                       />
                       <select
                         value={ing.unit}
                         onChange={e => updateIngredient(ing.id, 'unit', e.target.value)}
-                        className="w-16 text-[12px] bg-bg-2 border border-border rounded-sm px-1.5 py-1 outline-none focus:border-accent"
+                        className="w-16 text-xs bg-bg-2 border border-border rounded-sm px-1.5 py-1 outline-none focus:border-accent"
                       >
                         {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                       </select>
@@ -639,77 +611,14 @@ export default function DishFormPage() {
 
       {/* ─── Ingredient picker modal ─── */}
       {showIngPicker && (
-        <Modal
-          title="Добавить ингредиент"
-          onClose={() => { setShowIngPicker(false); setShowAddIng(false); setIngSearch('') }}
-        >
-          <SearchInput
-            value={ingSearch}
-            onChange={e => setIngSearch(e.target.value)}
-            placeholder="Найти ингредиент..."
-            className="mb-3"
-          />
-
-          <div className="max-h-60 overflow-y-auto flex flex-col divide-y divide-border">
-            {availableIngredients.length === 0 ? (
-              <p className="py-5 text-center text-[13px] text-text-2">Ничего не найдено</p>
-            ) : availableIngredients.map(ing => (
-              <button
-                key={ing.id}
-                type="button"
-                onClick={() => { addIngredient(ing); setIngSearch('') }}
-                className="flex items-center gap-2.5 px-2 py-2.5 text-left hover:bg-bg-3 transition-colors"
-              >
-                {ing.emoji && <span className="text-lg shrink-0">{ing.emoji}</span>}
-                <span className="flex-1 text-[14px]">{ing.nameRu}</span>
-                {!ing.isPublic && (
-                  <span className="text-[10px] text-accent font-bold">✏️ Мой</span>
-                )}
-                <span className="text-accent font-bold text-lg">+</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Добавить свой */}
-          {!showAddIng ? (
-            <Button variant="ghost" size="sm" className="w-full mt-3 text-accent"
-              onClick={() => setShowAddIng(true)}>
-              + Нет нужного? Добавить свой
-            </Button>
-          ) : (
-            <div className="mt-3 p-3 bg-bg-3 border border-accent rounded-sm flex flex-col gap-2">
-              <p className="text-[12px] text-text-2">
-                Ваш ингредиент будет виден только вам. После проверки может стать публичным.
-              </p>
-              <TextInput
-                placeholder="Название ингредиента"
-                value={newIng.nameRu}
-                onChange={e => setNewIng(n => ({ ...n, nameRu: e.target.value }))}
-              />
-              <select
-                className="w-full bg-bg-2 border border-border rounded-sm text-text text-[14px] px-3 py-2 outline-none focus:border-accent"
-                value={newIng.category}
-                onChange={e => setNewIng(n => ({ ...n, category: e.target.value }))}
-              >
-                <option value="">Категория</option>
-                {ING_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-              <div className="flex gap-2">
-                <Button size="sm" className="flex-1" loading={addingIng}
-                  onClick={handleAddCustomIngredient}>Добавить</Button>
-                <Button variant="ghost" size="sm"
-                  onClick={() => { setShowAddIng(false); setNewIng({ nameRu: '', category: '' }) }}>
-                  Отмена
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <Button variant="secondary" className="w-full mt-3"
-            onClick={() => { setShowIngPicker(false); setShowAddIng(false); setIngSearch('') }}>
-            Готово
-          </Button>
-        </Modal>
+        <DishIngredientPicker
+          allIngredients={allIngredients}
+          selected={ingredients}
+          onAdd={addIngredient}
+          onIngredientCreated={ing => setAllIngredients(prev => [...prev, ing])}
+          onClose={() => setShowIngPicker(false)}
+          show={show}
+        />
       )}
 
       {Toast}

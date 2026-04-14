@@ -8,7 +8,7 @@ function InfoRow({ label, value, note }) {
   return (
     <div>
       <p className="text-[11px] text-text-3 mb-0.5">{label}</p>
-      <p className="text-[14px] font-semibold">
+      <p className="text-sm font-semibold">
         {value}
         {note && <span className="ml-2 text-[11px] text-text-3 font-normal">{note}</span>}
       </p>
@@ -87,7 +87,7 @@ export default function ProfilePage() {
       {!profile?.telegramId && (
         <div className="bg-bg-2 border border-border rounded-DEFAULT p-5 mb-3 fade-up">
           <p className="font-bold mb-2">✈️ Подключить Telegram-бот</p>
-          <p className="text-[14px] text-text-2 leading-relaxed mb-4">
+          <p className="text-sm text-text-2 leading-relaxed mb-4">
             После подключения холодильник, план питания и рецепты будут доступны прямо в боте.
           </p>
           {!tgLink ? (

@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Outlet, useNavigate, NavLink } from 'react-router-dom'
 import { useStore } from '../store'
 import { api } from '../api'
-import { Avatar, Modal } from './ui'
-import InstallPrompt from './InstallPrompt'
+import { Avatar, Modal, InstallPrompt } from './ui'
 
 // ─── Tab icons ────────────────────────────────────────────────────────────────
 const IconHome = () => (
@@ -73,47 +72,39 @@ function ProfileModal({ onClose }) {
   function handleLogout() { logout(); onClose(); navigate('/auth') }
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 z-[200] flex items-start justify-end pt-[64px] px-4 animate-[fadeIn_.15s_ease]"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl py-3 px-2 w-[272px] shadow-md overflow-y-auto max-h-[80dvh] animate-[fadeUp_.2s_ease]"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center gap-3 px-3 pb-3 mb-1 border-b border-border">
-          <Avatar name={user?.name} size="md" />
-          <div className="min-w-0">
-            <p className="font-bold text-[15px] truncate">{user?.name || 'Пользователь'}</p>
-            <p className="text-xs text-text-2 truncate">
-              {user?.email || (user?.telegramUsername ? `@${user.telegramUsername}` : '')}
-            </p>
-          </div>
+    <Modal onClose={onClose}>
+      {/* Header */}
+      <div className="flex items-center gap-3 pb-4 mb-1 border-b border-border">
+        <Avatar name={user?.name} size="md" />
+        <div className="min-w-0">
+          <p className="font-bold text-[15px] truncate">{user?.name || 'Пользователь'}</p>
+          <p className="text-xs text-text-2 truncate">
+            {user?.email || (user?.telegramUsername ? `@${user.telegramUsername}` : '')}
+          </p>
         </div>
-
-        <MenuItem onClick={() => go('/groups')} icon={<IcoGroups />}>Мои группы</MenuItem>
-        <MenuItem onClick={() => go('/groups?action=create')} icon={<IcoPlus />}>Создать группу</MenuItem>
-        <Divider />
-
-        {!tgLink ? (
-          <MenuItem onClick={connectTelegram} disabled={tgLoading} icon={<IcoTelegram />}>
-            {tgLoading ? '...' : 'Telegram-бот'}
-          </MenuItem>
-        ) : (
-          <a href={tgLink} target="_blank" rel="noopener noreferrer" onClick={onClose}
-            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] bg-sage/10 text-sage font-semibold">
-            <IcoTelegram /><span>Открыть бота →</span>
-          </a>
-        )}
-        {tgError && <p className="text-xs text-red-400 px-3 mt-1">{tgError}</p>}
-
-        <Divider />
-        <MenuItem onClick={() => go('/profile')} icon={<IcoUser />}>Профиль</MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogout} className="text-red-400" icon={<IcoLogout />}>Выйти</MenuItem>
       </div>
-    </div>
+
+      <MenuItem onClick={() => go('/groups')} icon={<IcoGroups />}>Мои группы</MenuItem>
+      <MenuItem onClick={() => go('/groups?action=create')} icon={<IcoPlus />}>Создать группу</MenuItem>
+      <Divider />
+
+      {!tgLink ? (
+        <MenuItem onClick={connectTelegram} disabled={tgLoading} icon={<IcoTelegram />}>
+          {tgLoading ? '...' : 'Telegram-бот'}
+        </MenuItem>
+      ) : (
+        <a href={tgLink} target="_blank" rel="noopener noreferrer" onClick={onClose}
+          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm bg-sage/10 text-sage font-semibold">
+          <IcoTelegram /><span>Открыть бота →</span>
+        </a>
+      )}
+      {tgError && <p className="text-xs text-red-400 px-3 mt-1">{tgError}</p>}
+
+      <Divider />
+      <MenuItem onClick={() => go('/profile')} icon={<IcoUser />}>Профиль</MenuItem>
+      <Divider />
+      <MenuItem onClick={handleLogout} className="text-red-400" icon={<IcoLogout />}>Выйти</MenuItem>
+    </Modal>
   )
 }
 
@@ -128,7 +119,7 @@ function MenuItem({ children, onClick, disabled, className = '', icon }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled}
       className={[
-        'w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[14px] font-medium',
+        'w-full text-left flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium',
         'transition-colors hover:bg-bg-3 disabled:opacity-40',
         className,
       ].join(' ')}>
@@ -166,8 +157,7 @@ export default function Layout() {
             <>
               {/* Bell */}
               <button type="button"
-                className="w-8 h-8 flex items-center justify-center rounded-full focus:outline-none text-[16px]"
-                style={{ color: '#9e9e9e' }}>
+                className="w-8 h-8 flex items-center justify-center rounded-full focus:outline-none text-[16px] text-text-3">
                 🔔
               </button>
               {/* Avatar */}
@@ -179,8 +169,7 @@ export default function Layout() {
             </>
           ) : (
             <button type="button" onClick={() => navigate('/auth')}
-              className="w-8 h-8 flex items-center justify-center rounded-full focus:outline-none"
-              style={{ color: '#9e9e9e' }}
+              className="w-8 h-8 flex items-center justify-center rounded-full focus:outline-none text-text-3"
               aria-label="Войти">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="8" r="4"/>
@@ -208,7 +197,7 @@ export default function Layout() {
             end={t.to === '/'}
             className={({ isActive }) => [
               'flex-1 flex flex-col items-center justify-center gap-1 py-2.5',
-              'text-[10px] font-semibold tracking-wide focus:outline-none transition-colors',
+              'text-2xs font-semibold tracking-wide focus:outline-none transition-colors',
               isActive ? 'text-accent' : 'text-text-3',
             ].join(' ')}
           >

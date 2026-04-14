@@ -21,35 +21,31 @@ function GuestHeroBanner({ onNavigate }) {
   }
 
   return (
-    <div className="relative bg-white rounded-2xl px-5 py-4 shrink-0"
-      style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+    <div className="relative bg-white rounded-2xl px-5 py-4 shrink-0 shadow-sm">
       <button
         type="button"
         onClick={dismiss}
         aria-label="Закрыть"
-        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-text-3 hover:text-text transition-colors"
-        style={{ fontSize: 18, lineHeight: 1 }}
+        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-text-3 hover:text-text transition-colors text-lg leading-none"
       >✕</button>
 
-      <p className="font-semibold text-[17px] leading-snug pr-6" style={{ color: '#1a1a1a' }}>
+      <p className="font-semibold text-[17px] leading-snug pr-6 text-text">
         Добавь свои блюда —<br />и больше не думай, что готовить
       </p>
-      <p className="text-[12px] mt-1 mb-3" style={{ color: '#9e9e9e' }}>Займёт меньше минуты</p>
+      <p className="text-xs mt-1 mb-3 text-text-3">Займёт меньше минуты</p>
 
       <div className="flex flex-col gap-2">
         <button
           type="button"
           onClick={() => onNavigate('/auth?mode=register')}
-          className="w-full py-2.5 rounded-xl text-[14px] font-semibold text-white transition-opacity active:opacity-80"
-          style={{ background: '#C4704A' }}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity active:opacity-80 bg-accent"
         >
           Создать свою кухню
         </button>
         <button
           type="button"
           onClick={() => onNavigate('/auth')}
-          className="w-full py-2 rounded-xl text-[13px] font-medium transition-colors"
-          style={{ color: '#9e9e9e' }}
+          className="w-full py-2 rounded-xl text-[13px] font-medium transition-colors text-text-3"
         >
           Уже есть аккаунт? Войти
         </button>
@@ -68,8 +64,7 @@ function defaultMealTime() {
 
 function SkeletonCard() {
   return (
-    <div className="w-full flex items-center justify-between bg-white rounded-2xl p-4 animate-pulse"
-      style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+    <div className="w-full flex items-center justify-between bg-white rounded-2xl p-4 animate-pulse shadow-sm">
       <div className="flex-1 pr-3 space-y-2">
         <div className="h-4 bg-bg-3 rounded-full w-3/4" />
         <div className="h-3 bg-bg-3 rounded-full w-1/2" />
@@ -156,10 +151,10 @@ export default function HomePage() {
   const visible = filtered.slice(0, visibleCount)
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 px-5 pt-6 pb-6 gap-5" style={{ background: '#F5F3EF' }}>
+    <div className="flex flex-col flex-1 min-h-0 px-5 pt-6 pb-6 gap-5 bg-bg">
 
       {/* Heading */}
-      <h1 className="text-[26px] font-semibold leading-[1.35] shrink-0" style={{ color: '#1a1a1a' }}>
+      <h1 className="text-[26px] font-semibold leading-[1.35] shrink-0 text-text">
         Что приготовить<br />сегодня?
       </h1>
 
@@ -184,21 +179,20 @@ export default function HomePage() {
         {loading ? (
           [1, 2, 3, 4].map(i => <SkeletonCard key={i} />)
         ) : visible.length === 0 && fridgeOnly && fridge.length === 0 ? (
-          <div className="bg-white rounded-2xl p-5 flex flex-col gap-3" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-            <p className="font-semibold text-[15px]" style={{ color: '#1a1a1a' }}>Холодильник пуст</p>
-            <p className="text-[13px]" style={{ color: '#9e9e9e' }}>Добавь продукты чтобы видеть блюда из того, что есть дома</p>
+          <div className="bg-white rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
+            <p className="font-semibold text-[15px] text-text">Холодильник пуст</p>
+            <p className="text-[13px] text-text-3">Добавь продукты чтобы видеть блюда из того, что есть дома</p>
             <button
               type="button"
               onClick={() => navigate('/fridge')}
-              className="self-start px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
-              style={{ background: '#5C7A59' }}
+              className="self-start px-4 py-2 rounded-xl text-[13px] font-semibold text-white bg-sage"
             >
               Заполнить холодильник
             </button>
           </div>
         ) : visible.length === 0 ? (
-          <div className="bg-white rounded-2xl p-6 text-center" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-            <p className="text-[15px]" style={{ color: '#9e9e9e' }}>Нет подходящих блюд</p>
+          <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+            <p className="text-[15px] text-text-3">Нет подходящих блюд</p>
           </div>
         ) : visible.map((dish, idx) => (
           <DishCard
@@ -214,9 +208,8 @@ export default function HomePage() {
 
       {/* Однократный hint: fridge mode включён, холодильник пуст */}
       {token && fridgeOnly && fridge.length === 0 && !fridgeModeHintDismissed && (
-        <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 shrink-0"
-          style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-          <p className="text-[13px]" style={{ color: '#666' }}>
+        <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 shrink-0 shadow-sm">
+          <p className="text-[13px] text-text-2">
             Сначала добавь продукты в холодильник →
           </p>
           <button
@@ -232,8 +225,7 @@ export default function HomePage() {
         <button
           type="button"
           onClick={() => navigate(token ? '/dishes/new' : '/auth?mode=register')}
-          className="shrink-0 w-full py-3 rounded-2xl text-[14px] font-semibold transition-opacity active:opacity-75"
-          style={{ background: '#fff', color: '#C4704A', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' }}
+          className="shrink-0 w-full py-3 rounded-2xl text-sm font-semibold transition-opacity active:opacity-75 bg-white text-accent shadow-sm"
         >
           + Добавить своё блюдо
         </button>
@@ -245,26 +237,18 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => { setFavOnly(f => !f); setFridgeOnly(false); setMealTime('') }}
-            className="flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all"
-            style={{
-              background: favOnly ? '#C4704A' : '#5C7A59',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-            }}
+            className={`flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all shadow-card ${favOnly ? 'bg-accent' : 'bg-sage'}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M12 21C12 21 3 14.5 3 8.5C3 5.46 5.46 3 8.5 3C10.24 3 11.91 3.81 13 5.08C14.09 3.81 15.76 3 17.5 3C20.54 3 23 5.46 23 8.5C23 14.5 12 21 12 21Z" fill="rgba(255,255,255,0.9)"/>
             </svg>
-            <span className="font-semibold text-[14px] text-white">Избранное</span>
+            <span className="font-semibold text-sm text-white">Избранное</span>
           </button>
 
           <button
             type="button"
             onClick={() => { setFridgeOnly(f => !f); setFavOnly(false); setMealTime('') }}
-            className="flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all"
-            style={{
-              background: fridgeOnly ? '#C4704A' : '#5C7A59',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-            }}
+            className={`flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all shadow-card ${fridgeOnly ? 'bg-accent' : 'bg-sage'}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <rect x="6" y="3" width="12" height="18" rx="2" stroke="rgba(255,255,255,0.9)" strokeWidth="2"/>
@@ -272,7 +256,7 @@ export default function HomePage() {
               <circle cx="10" cy="7" r="1.2" fill="rgba(255,255,255,0.9)"/>
               <circle cx="10" cy="15" r="1.2" fill="rgba(255,255,255,0.9)"/>
             </svg>
-            <span className="font-semibold text-[14px] text-white">Холодильник</span>
+            <span className="font-semibold text-sm text-white">Холодильник</span>
           </button>
         </div>
       )}

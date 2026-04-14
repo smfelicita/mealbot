@@ -26,10 +26,10 @@ class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6 text-center">
-          <p className="text-[18px] font-bold">Что-то пошло не так</p>
-          <p className="text-text-2 text-[14px]">Перезагрузите страницу — данные в порядке</p>
+          <p className="text-lg font-bold">Что-то пошло не так</p>
+          <p className="text-text-2 text-sm">Перезагрузите страницу — данные в порядке</p>
           <button
-            className="mt-2 px-5 py-2 bg-accent text-white rounded-lg text-[14px] font-semibold"
+            className="mt-2 px-5 py-2 bg-accent text-white rounded-lg text-sm font-semibold"
             onClick={() => window.location.reload()}
           >
             Перезагрузить

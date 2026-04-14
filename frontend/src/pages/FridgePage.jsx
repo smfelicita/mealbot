@@ -68,7 +68,7 @@ function TelegramBanner({ onLinked, onError }) {
       <span className="text-[13px] text-text-2 flex-1 leading-snug">
         Подключите бота — управляйте холодильником в Telegram
       </span>
-      <Button size="sm" onClick={connect} disabled={status !== 'idle'} className="shrink-0 text-[12px]">
+      <Button size="sm" onClick={connect} disabled={status !== 'idle'} className="shrink-0 text-xs">
         {label}
       </Button>
     </div>
@@ -292,7 +292,7 @@ export default function FridgePage() {
 
             {/* Basic ingredients hint */}
             {fridge.some(i => i.isBasic) && (
-              <div className="bg-bg-2 border border-border rounded-sm px-3 py-2 mb-4 text-[12px] text-text-3 leading-relaxed">
+              <div className="bg-bg-2 border border-border rounded-sm px-3 py-2 mb-4 text-xs text-text-3 leading-relaxed">
                 🧂 Продукты с меткой <strong>базовый</strong> всегда считаются доступными при подборе блюд.
               </div>
             )}
@@ -331,7 +331,7 @@ export default function FridgePage() {
                       {/* Badges row */}
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                         {item.isBasic && (
-                          <span className="text-[10px] text-text-3 bg-bg-3 rounded px-1.5 py-0.5">базовый</span>
+                          <span className="text-2xs text-text-3 bg-bg-3 rounded px-1.5 py-0.5">базовый</span>
                         )}
                         {item.quantityValue != null && (
                           <span className="text-[11px] text-text-3">
@@ -350,23 +350,23 @@ export default function FridgePage() {
                             value={editQty}
                             onChange={e => setEditQty(e.target.value)}
                             autoFocus
-                            className="flex-1 min-w-0 text-[12px] bg-bg-3 border border-border rounded-sm px-2 py-1 outline-none focus:border-accent"
+                            className="flex-1 min-w-0 text-xs bg-bg-3 border border-border rounded-sm px-2 py-1 outline-none focus:border-accent"
                           />
                           <select
                             value={editUnit}
                             onChange={e => setEditUnit(e.target.value)}
-                            className="w-16 text-[12px] bg-bg-3 border border-border rounded-sm px-1 py-1 outline-none focus:border-accent"
+                            className="w-16 text-xs bg-bg-3 border border-border rounded-sm px-1 py-1 outline-none focus:border-accent"
                           >
                             {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                           </select>
                           <button
                             type="button"
-                            className="px-2 py-1 bg-accent text-white text-[12px] rounded-sm font-bold"
+                            className="px-2 py-1 bg-accent text-white text-xs rounded-sm font-bold"
                             onClick={() => saveEdit(item.ingredientId)}
                           >✓</button>
                           <button
                             type="button"
-                            className="px-2 py-1 text-text-3 text-[12px] rounded-sm"
+                            className="px-2 py-1 text-text-3 text-xs rounded-sm"
                             onClick={() => setEditingId(null)}
                           >✕</button>
                         </div>
@@ -408,7 +408,7 @@ export default function FridgePage() {
                     ].join(' ')}
                   >
                     {ing.emoji && <span className="text-lg shrink-0">{ing.emoji}</span>}
-                    <span className="flex-1 text-[14px]">{ing.nameRu}</span>
+                    <span className="flex-1 text-sm">{ing.nameRu}</span>
                     <span className={['text-lg font-bold', sel ? 'text-accent' : 'text-text-3'].join(' ')}>
                       {sel ? '✓' : '+'}
                     </span>
@@ -425,7 +425,7 @@ export default function FridgePage() {
                 </p>
               ) : groupedAvailable.map(({ cat, items }) => (
                 <div key={cat} className="mb-3">
-                  <p className="text-[10px] font-bold text-text-2 uppercase tracking-widest mb-2">
+                  <p className="text-2xs font-bold text-text-2 uppercase tracking-widest mb-2">
                     {CAT_RU[cat] || cat}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -437,7 +437,7 @@ export default function FridgePage() {
                           type="button"
                           onClick={() => togglePending(ing.id)}
                           className={[
-                            'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[12px] font-semibold border transition-all',
+                            'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
                             sel
                               ? 'bg-accent/15 border-accent text-accent'
                               : 'bg-bg-3 border-border text-text-2 hover:border-accent',

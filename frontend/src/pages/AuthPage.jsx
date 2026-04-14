@@ -138,7 +138,7 @@ export default function AuthPage() {
       {/* Logo */}
       <div className="text-[40px] mb-1">🍽️</div>
       <h1 className="font-serif text-[26px] font-extrabold mb-1">MealBot</h1>
-      <p className="text-[14px] text-text-2 mb-8">Умный помощник для выбора блюд</p>
+      <p className="text-sm text-text-2 mb-8">Умный помощник для выбора блюд</p>
 
       {/* Card */}
       <div className="w-full max-w-[360px] bg-bg-2 border border-border rounded-DEFAULT p-6 fade-up">
@@ -146,10 +146,10 @@ export default function AuthPage() {
         {/* ── Verify email ── */}
         {step === 'verify-email' && (
           <>
-            <h2 className="font-serif text-[20px] font-extrabold mb-1">Подтверди email</h2>
+            <h2 className="font-serif text-xl font-extrabold mb-1">Подтверди email</h2>
             <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
               Код отправлен на <strong>{pendingEmail}</strong><br />
-              <span className="text-text-3 text-[12px]">Не нашли? Проверьте папку «Спам»</span>
+              <span className="text-text-3 text-xs">Не нашли? Проверьте папку «Спам»</span>
             </p>
             <form onSubmit={submitVerifyEmail} className="flex flex-col gap-4">
               <div>
@@ -169,7 +169,7 @@ export default function AuthPage() {
         {/* ── Phone enter ── */}
         {step === 'phone-enter' && (
           <>
-            <h2 className="font-serif text-[20px] font-extrabold mb-4">Вход по телефону</h2>
+            <h2 className="font-serif text-xl font-extrabold mb-4">Вход по телефону</h2>
             <form onSubmit={submitSendPhone} className="flex flex-col gap-4">
               <div>
                 <FieldLabel>Номер телефона</FieldLabel>
@@ -187,7 +187,7 @@ export default function AuthPage() {
         {/* ── Phone code ── */}
         {step === 'phone-code' && (
           <>
-            <h2 className="font-serif text-[20px] font-extrabold mb-1">Введи код</h2>
+            <h2 className="font-serif text-xl font-extrabold mb-1">Введи код</h2>
             <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
               Код отправлен на <strong>{pendingPhone}</strong>
             </p>
@@ -236,7 +236,7 @@ export default function AuthPage() {
               ))}
             </div>
 
-            <h2 className="font-serif text-[20px] font-extrabold mb-4">
+            <h2 className="font-serif text-xl font-extrabold mb-4">
               {step === 'login' ? 'Войти' : 'Создать аккаунт'}
             </h2>
 
@@ -279,7 +279,7 @@ export default function AuthPage() {
               <>
                 <div className="flex items-center gap-3 my-5">
                   <div className="flex-1 h-px bg-border" />
-                  <span className="text-[12px] text-text-3">или</span>
+                  <span className="text-xs text-text-3">или</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
                 <div className="flex justify-center">

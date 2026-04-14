@@ -48,7 +48,7 @@ export default function OnboardingModal({ onClose }) {
             <button
               type="button"
               onClick={finish}
-              className="w-full py-2.5 rounded-2xl text-[14px] text-text-3"
+              className="w-full py-2.5 rounded-2xl text-sm text-text-3"
             >
               Посмотреть что уже есть
             </button>
@@ -56,7 +56,7 @@ export default function OnboardingModal({ onClose }) {
         </>
       ) : (
         <>
-          <h2 className="text-[20px] font-bold text-text">Какие блюда ты готовишь?</h2>
+          <h2 className="text-xl font-bold text-text">Какие блюда ты готовишь?</h2>
           <p className="text-[13px] text-text-3 mt-1 mb-4">
             Перечисли через запятую — хоть 20 сразу
           </p>
@@ -82,7 +82,7 @@ export default function OnboardingModal({ onClose }) {
             <button
               type="button"
               onClick={finish}
-              className="w-full py-2.5 rounded-2xl text-[14px] text-text-3"
+              className="w-full py-2.5 rounded-2xl text-sm text-text-3"
             >
               Пропустить
             </button>

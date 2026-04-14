@@ -36,22 +36,21 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
         type="button"
         onClick={onClick}
         className="w-full flex items-center justify-between bg-white rounded-2xl p-4 text-left
-          active:scale-[0.98] transition-transform shrink-0"
-        style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}
+          active:scale-[0.98] transition-transform shrink-0 shadow-sm"
       >
         {/* Left */}
         <div className="flex-1 min-w-0 pr-3">
-          <p className="font-semibold text-[15px] leading-snug truncate" style={{ color: '#1a1a1a' }}>
+          <p className="font-semibold text-[15px] leading-snug truncate text-text">
             {dish.name}
           </p>
-          <div className="flex items-center gap-1.5 mt-1 text-[13px]" style={{ color: '#9e9e9e' }}>
+          <div className="flex items-center gap-1.5 mt-1 text-[13px] text-text-3">
             {dish.cookTime && <span>{dish.cookTime} мин</span>}
             {dish.cookTime && dish.categories?.[0] && <span>·</span>}
             {dish.categories?.[0] && <span>{CAT_RU[cat] || cat}</span>}
             {isFamily && (
               <>
                 {(dish.cookTime || dish.categories?.[0]) && <span>·</span>}
-                <span className="font-semibold" style={{ color: '#5C7A59' }}>👨‍👩‍👧 Семья</span>
+                <span className="font-semibold text-sage">👨‍👩‍👧 Семья</span>
               </>
             )}
           </div>
@@ -65,15 +64,14 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
             className="w-16 h-16 rounded-xl object-cover shrink-0"
           />
         ) : (
-          <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl shrink-0"
-            style={{ background: '#F5EFE6' }}>
+          <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl shrink-0 bg-bg-3">
             {emoji}
           </div>
         )}
       </button>
 
       {hint && (
-        <p className="text-[12px] px-1 pt-1.5" style={{ color: '#b0b0b0' }}>{hint}</p>
+        <p className="text-xs px-1 pt-1.5 text-text-3">{hint}</p>
       )}
     </div>
   )
@@ -160,15 +158,15 @@ function GridCard({ dish, onClick, searchQuery, isFav, onToggleFav, fridgeIngred
         )}
 
         {matchHint && (
-          <p className="text-[12px] text-accent font-semibold mb-1.5">🔍 {matchHint}</p>
+          <p className="text-xs text-accent font-semibold mb-1.5">🔍 {matchHint}</p>
         )}
 
         <div className="flex flex-wrap gap-2">
           {dish.cookTime && (
-            <span className="text-[12px] text-text-2">⏱️ {dish.cookTime} мин</span>
+            <span className="text-xs text-text-2">⏱️ {dish.cookTime} мин</span>
           )}
           {dish.calories && (
-            <span className="text-[12px] text-text-2">🔥 {dish.calories} ккал</span>
+            <span className="text-xs text-text-2">🔥 {dish.calories} ккал</span>
           )}
         </div>
       </div>

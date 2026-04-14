@@ -22,12 +22,8 @@ function FilterChips({ active, onChange }) {
           onClick={() => onChange(o.value)}
           className={[
             'px-4 py-1.5 rounded-full text-[13px] font-medium transition-all focus:outline-none',
-            active === o.value ? 'text-white' : 'bg-white text-text-2',
+            active === o.value ? 'bg-accent text-white shadow-accent' : 'bg-white text-text-2 shadow-sm',
           ].join(' ')}
-          style={active === o.value
-            ? { background: '#C4704A', boxShadow: '0 1px 6px rgba(196,112,74,0.3)' }
-            : { boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
-          }
         >
           {o.label}
         </button>
@@ -43,8 +39,7 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
   if (!hasActiveFilters && isGuest) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center"
-          style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-sm">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C4704A" strokeWidth="1.6" strokeLinecap="round">
             <path d="M12 2C8 2 4 6 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4-4-8-8-8z"/>
             <circle cx="12" cy="10" r="3"/>
@@ -55,16 +50,14 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
         <button
           type="button"
           onClick={() => onNavigate('/auth?mode=register')}
-          className="mt-1 px-5 py-2.5 rounded-full text-[14px] font-semibold text-white"
-          style={{ background: '#C4704A' }}
+          className="mt-1 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-accent"
         >
           Создать свою кухню
         </button>
         <button
           type="button"
           onClick={() => onNavigate('/auth')}
-          className="text-[13px]"
-          style={{ color: '#9e9e9e' }}
+          className="text-[13px] text-text-3"
         >
           Уже есть аккаунт? Войти
         </button>
@@ -75,8 +68,7 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
   if (!hasActiveFilters) {
     return (
       <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center"
-          style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-sm">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C4704A" strokeWidth="1.6" strokeLinecap="round">
             <path d="M12 2C8 2 4 6 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4-4-8-8-8z"/>
             <circle cx="12" cy="10" r="3"/>
@@ -87,8 +79,7 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
         <button
           type="button"
           onClick={onAddRecipe}
-          className="mt-1 px-5 py-2.5 rounded-full text-[14px] font-semibold text-white"
-          style={{ background: '#C4704A' }}
+          className="mt-1 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-accent"
         >
           Добавить блюдо
         </button>
@@ -98,8 +89,7 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
 
   return (
     <div className="flex flex-col items-center gap-3 py-10 px-6 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center"
-        style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9e9e9e" strokeWidth="1.8" strokeLinecap="round">
           <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
         </svg>
@@ -109,8 +99,7 @@ function RecipesEmptyState({ filter, mealTime, q, onAddRecipe, onReset, isGuest,
       <button
         type="button"
         onClick={onReset}
-        className="mt-1 px-5 py-2 rounded-full text-[13px] font-semibold bg-white"
-        style={{ color: '#C4704A', boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}
+        className="mt-1 px-5 py-2 rounded-full text-[13px] font-semibold bg-white text-accent shadow-sm"
       >
         Сбросить фильтры
       </button>
@@ -125,8 +114,7 @@ function AddRecipeButton({ onClick }) {
       type="button"
       onClick={onClick}
       className="fixed bottom-[76px] right-4 w-13 h-13 flex items-center justify-center rounded-full text-white z-40
-        active:scale-95 transition-transform focus:outline-none"
-      style={{ background: '#C4704A', boxShadow: '0 4px 16px rgba(196,112,74,0.35)', width: 52, height: 52 }}
+        active:scale-95 transition-transform focus:outline-none bg-accent shadow-accent"
       aria-label="Добавить блюдо"
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
@@ -140,18 +128,14 @@ function AddRecipeButton({ onClick }) {
 function RecipesHeader({ fridgeMode, onToggleFridge }) {
   return (
     <div className="flex items-center justify-between px-4 pt-5 pb-2">
-      <h1 className="font-semibold text-[22px]" style={{ color: '#1a1a1a' }}>Мои блюда</h1>
+      <h1 className="font-semibold text-[22px] text-text">Мои блюда</h1>
       <button
         type="button"
         onClick={onToggleFridge}
         className={[
           'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all',
-          fridgeMode ? 'text-white' : 'bg-white text-text-2',
+          fridgeMode ? 'bg-sage text-white shadow-sage' : 'bg-white text-text-2 shadow-sm',
         ].join(' ')}
-        style={fridgeMode
-          ? { background: '#5C7A59', boxShadow: '0 1px 6px rgba(92,122,89,0.3)' }
-          : { boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
-        }
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <rect x="6" y="3" width="12" height="18" rx="2"/><line x1="6" y1="10" x2="18" y2="10"/>
@@ -289,7 +273,7 @@ export default function DishesPage() {
   }
 
   return (
-    <div className="flex flex-col pb-24" style={{ background: '#F5F3EF', minHeight: '100%' }}>
+    <div className="flex flex-col pb-24 bg-bg min-h-full">
 
       {/* RecipesHeader */}
       <RecipesHeader fridgeMode={fridgeMode} onToggleFridge={toggleFridgeMode} />
@@ -324,9 +308,8 @@ export default function DishesPage() {
 
           {/* Однократный hint про запятые */}
           {!bulkAddHintDismissed && dishes.length > 0 && (
-            <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3"
-              style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-              <p className="text-[12px]" style={{ color: '#666' }}>
+            <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 shadow-sm">
+              <p className="text-xs text-text-2">
                 Используй <strong>Добавить несколько блюд</strong> — можно перечислить список через запятую
               </p>
               <button
@@ -344,8 +327,7 @@ export default function DishesPage() {
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="w-full h-[76px] bg-white rounded-2xl animate-pulse"
-                style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }} />
+              <div key={i} className="w-full h-[76px] bg-white rounded-2xl animate-pulse shadow-sm" />
             ))}
           </div>
         ) : dishes.length === 0 ? (
@@ -388,8 +370,7 @@ export default function DishesPage() {
       {/* First-dish toast */}
       {showFirstDishToast && (
         <div className="fixed bottom-[88px] left-1/2 -translate-x-1/2 z-[9999] whitespace-nowrap
-          bg-[#1a1a1a] text-white text-[13px] px-[18px] py-[10px] rounded-[20px]"
-          style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}
+          bg-[#1a1a1a] text-white text-[13px] px-[18px] py-[10px] rounded-[20px] shadow-md"
         >
           Отлично! Добавь ещё или включи 🧊 режим холодильника
         </div>

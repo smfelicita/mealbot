@@ -56,7 +56,7 @@ function PlanItem({ plan, currentUserId, onNavigate, onRemove }) {
         onClick={onNavigate}
         className="flex-1 min-w-0 text-left"
       >
-        <p className="font-bold text-[14px] truncate">{dish.nameRu || dish.name}</p>
+        <p className="font-bold text-sm truncate">{dish.nameRu || dish.name}</p>
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           {plan.groupId && (
             <span className="text-[11px] text-teal font-semibold">🏠 Семейный</span>
@@ -177,7 +177,7 @@ export default function MealPlanPage() {
         return (
           <div key={dateKey} className="mb-7">
             {/* Day header */}
-            <p className="text-[12px] font-bold text-text-2 uppercase tracking-widest pb-2 mb-3 border-b border-border">
+            <p className="text-xs font-bold text-text-2 uppercase tracking-widest pb-2 mb-3 border-b border-border">
               {dateLabel}
             </p>
 

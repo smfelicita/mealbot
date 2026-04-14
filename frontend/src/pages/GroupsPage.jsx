@@ -21,13 +21,13 @@ function GroupCard({ group, onClick, delay }) {
         <div className="flex items-center gap-2 mb-0.5">
           <span className="font-extrabold text-[15px] truncate">{group.name}</span>
           {group.type === 'FAMILY' && (
-            <span className="text-[10px] font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded shrink-0">СЕМЬЯ</span>
+            <span className="text-2xs font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded shrink-0">СЕМЬЯ</span>
           )}
         </div>
         {group.description && (
           <p className="text-[13px] text-text-2 truncate">{group.description}</p>
         )}
-        <div className="flex gap-3 mt-1.5 text-[12px] text-text-3">
+        <div className="flex gap-3 mt-1.5 text-xs text-text-3">
           <span>👤 {group.membersCount} участн.</span>
           <span>🍽️ {group.dishesCount} рецептов</span>
           {group.type === 'FAMILY' && <span>🧊 Общий холодильник</span>}
@@ -74,16 +74,16 @@ export default function GroupsPage() {
       <div className="px-4 pt-5 pb-8 flex flex-col gap-5">
         {/* Заголовок */}
         <div className="flex items-center justify-between">
-          <h1 className="font-semibold text-[22px]" style={{ color: '#1a1a1a' }}>Мои группы</h1>
+          <h1 className="font-semibold text-[22px] text-text">Мои группы</h1>
           <Button size="sm" onClick={() => navigate('/groups/new')}>+ Создать</Button>
         </div>
         {/* Вступить по коду */}
         <div className="bg-bg-2 border border-border rounded-sm p-3.5">
-          <p className="text-[12px] font-bold text-text-2 uppercase tracking-wider mb-2">Вступить по коду</p>
+          <p className="text-xs font-bold text-text-2 uppercase tracking-wider mb-2">Вступить по коду</p>
           <div className="flex gap-2">
             <input
               type="text"
-              className="flex-1 bg-bg-3 border border-border rounded-sm text-text text-[14px] px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3 uppercase tracking-widest"
+              className="flex-1 bg-bg-3 border border-border rounded-sm text-text text-sm px-3 py-2 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3 uppercase tracking-widest"
               placeholder="A3F7D2E9"
               value={joinCode}
               maxLength={8}

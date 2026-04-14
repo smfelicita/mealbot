@@ -42,7 +42,7 @@ function NutritionBlock({ nutrition }) {
         className="flex items-center gap-2 w-full text-left mb-3 focus:outline-none"
         onClick={() => setOpen(v => !v)}
       >
-        <span className="text-[14px] font-medium text-text-2 flex-1">Пищевая ценность</span>
+        <span className="text-sm font-medium text-text-2 flex-1">Пищевая ценность</span>
         <span className="text-text-3"><IcoChevron open={open} /></span>
       </button>
 
@@ -51,7 +51,7 @@ function NutritionBlock({ nutrition }) {
           {items.map(item => (
             <div key={item.label}
               className="rounded-xl px-2 py-2.5 text-center bg-white border border-border/50">
-              <div className="text-[14px] font-semibold text-text tabular-nums">{item.value}</div>
+              <div className="text-sm font-semibold text-text tabular-nums">{item.value}</div>
               <div className="text-[11px] text-text-3 leading-tight mt-0.5">{item.unit}</div>
               <div className="text-[11px] text-text-2 leading-tight mt-0.5">{item.label}</div>
             </div>
@@ -70,8 +70,7 @@ function ActionsMenu({ onClose, onEdit, onCopy, onDelete, isOwner, hasUser }) {
       onClick={onClose}
     >
       <div
-        className="w-full bg-white rounded-t-3xl px-4 pt-5 pb-8 flex flex-col gap-1"
-        style={{ boxShadow: '0 -4px 24px rgba(0,0,0,0.12)' }}
+        className="w-full bg-white rounded-t-3xl px-4 pt-5 pb-8 flex flex-col gap-1 shadow-top"
         onClick={e => e.stopPropagation()}
       >
         {hasUser && (
@@ -273,8 +272,7 @@ export default function DishDetailPage() {
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2 shrink-0"
-                style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2 shrink-0 shadow-sm"
               >
                 <IcoBack />
               </button>
@@ -282,8 +280,7 @@ export default function DishDetailPage() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2"
-                style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2 shadow-sm"
               >
                 <IcoShare />
               </button>
@@ -291,10 +288,9 @@ export default function DishDetailPage() {
                 <button
                   type="button"
                   onClick={toggleFav}
-                  className={['w-9 h-9 flex items-center justify-center rounded-full transition-colors',
+                  className={['w-9 h-9 flex items-center justify-center rounded-full transition-colors shadow-sm',
                     isFav ? 'bg-accent text-white' : 'bg-white text-text-2',
                   ].join(' ')}
-                  style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}
                 >
                   <IcoHeart filled={isFav} />
                 </button>
@@ -302,8 +298,7 @@ export default function DishDetailPage() {
               <button
                 type="button"
                 onClick={() => setShowMenu(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2"
-                style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2 shadow-sm"
               >
                 <IcoDots />
               </button>
@@ -311,7 +306,7 @@ export default function DishDetailPage() {
 
             <h1 className="text-[24px] font-bold text-text leading-tight">{dish.name}</h1>
             {dish.description && (
-              <p className="text-[14px] text-text-2 mt-2 leading-relaxed">{dish.description}</p>
+              <p className="text-sm text-text-2 mt-2 leading-relaxed">{dish.description}</p>
             )}
           </div>
         )}
@@ -319,7 +314,7 @@ export default function DishDetailPage() {
         {/* ── Description (if had hero image) ── */}
         {displayImage && dish.description && (
           <div className="px-4 pt-4">
-            <p className="text-[14px] text-text-2 leading-relaxed">{dish.description}</p>
+            <p className="text-sm text-text-2 leading-relaxed">{dish.description}</p>
           </div>
         )}
 
@@ -331,8 +326,7 @@ export default function DishDetailPage() {
           <div className="flex flex-wrap gap-2 px-4 pb-2">
             {dish.tags.map(t => (
               <span key={t}
-                className="text-[12px] text-text-2 bg-white rounded-full px-3 py-1"
-                style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                className="text-xs text-text-2 bg-white rounded-full px-3 py-1 shadow-sm">
                 #{t}
               </span>
             ))}

@@ -47,7 +47,7 @@ export default function InvitePage() {
         {error ? (
           <>
             <p className="text-[32px] text-center mb-3">❌</p>
-            <h2 className="font-serif text-[20px] font-extrabold mb-2 text-center">Ссылка недействительна</h2>
+            <h2 className="font-serif text-xl font-extrabold mb-2 text-center">Ссылка недействительна</h2>
             <p className="text-[13px] text-text-2 text-center mb-5">{error}</p>
             <Button className="w-full" onClick={() => navigate('/')}>На главную</Button>
           </>
@@ -56,11 +56,11 @@ export default function InvitePage() {
             <div className="text-[48px] text-center mb-3">
               {invite.groupType === 'FAMILY' ? '👨‍👩‍👧' : '👥'}
             </div>
-            <h2 className="font-serif text-[20px] font-extrabold mb-1 text-center">
+            <h2 className="font-serif text-xl font-extrabold mb-1 text-center">
               {invite.groupName}
             </h2>
             {invite.groupType === 'FAMILY' && (
-              <p className="text-[12px] text-accent text-center mb-1">Семейная группа · Общий холодильник</p>
+              <p className="text-xs text-accent text-center mb-1">Семейная группа · Общий холодильник</p>
             )}
             <p className="text-[13px] text-text-2 text-center mb-1">
               {invite.membersCount} {invite.membersCount === 1 ? 'участник' : 'участников'}
@@ -70,7 +70,7 @@ export default function InvitePage() {
             </p>
 
             {!user && (
-              <p className="text-[12px] text-text-3 text-center mb-4">
+              <p className="text-xs text-text-3 text-center mb-4">
                 Для вступления нужно войти или зарегистрироваться
               </p>
             )}

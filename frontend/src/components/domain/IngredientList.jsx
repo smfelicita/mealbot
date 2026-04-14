@@ -47,11 +47,11 @@ export default function IngredientList({ ingredients }) {
               <span className="text-[15px] text-text leading-snug">
                 {ing.name}
                 {ing.optional && (
-                  <span className="text-text-3 text-[12px] ml-1.5">необязательно</span>
+                  <span className="text-text-3 text-xs ml-1.5">необязательно</span>
                 )}
               </span>
               {amountStr && (
-                <span className="text-[14px] text-text-2 shrink-0 ml-4 tabular-nums">{amountStr}</span>
+                <span className="text-sm text-text-2 shrink-0 ml-4 tabular-nums">{amountStr}</span>
               )}
             </div>
           )
