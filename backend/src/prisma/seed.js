@@ -7,6 +7,7 @@ const dishes = [
   {
     name: 'syrniki_home',
     nameRu: 'Сырники без сахара',
+    imageUrl: 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images/syrniki.jpg',
     description: 'пышные, почти без сахара. со сметаной обязательно',
     categories: ['MAIN'],
     cuisine: 'Русская',
@@ -28,6 +29,7 @@ const dishes = [
   {
     name: 'chicken_soup_home',
     nameRu: 'Тот куриный суп',
+    imageUrl: 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images/sup-kurinyj.jpg',
     description: 'варю когда никто не болеет — просто потому что вкусно',
     categories: ['SOUP'],
     cuisine: 'Русская',
@@ -50,6 +52,7 @@ const dishes = [
   {
     name: 'fried_potatoes_home',
     nameRu: 'Жареная картошка с луком',
+    imageUrl: 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images/kartoshka.png',
     description: 'то самое. главное — не мешать слишком часто и дать подрумяниться',
     categories: ['SIDE'],
     cuisine: 'Русская',
@@ -70,6 +73,7 @@ const dishes = [
   {
     name: 'blinchiki_home',
     nameRu: 'Любимые блинчики',
+    imageUrl: 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images/blinchiki.png',
     description: 'тонкие, по маминому рецепту. с чем угодно — со сметаной, с вареньем, просто так',
     categories: ['BAKERY'],
     cuisine: 'Русская',
