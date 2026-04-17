@@ -54,16 +54,14 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
         ref={ref}
         className="w-full flex bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform"
       >
-        {/* Photo — 38% */}
-        <button type="button" onClick={onClick} className="w-[38%] shrink-0 focus:outline-none">
-          {img ? (
+        {/* Photo — 38%, only if image exists */}
+        {img && (
+          <button type="button" onClick={onClick} className="w-[38%] shrink-0 focus:outline-none">
             <img src={img} alt={dish.name} className="w-full h-full object-cover min-h-[120px]" />
-          ) : (
-            <div className="w-full min-h-[120px] h-full bg-bg-3" />
-          )}
-        </button>
+          </button>
+        )}
 
-        {/* Right content */}
+        {/* Content — full width if no photo */}
         <div className="flex-1 min-w-0 px-3 py-3 flex flex-col gap-1">
           {/* Title */}
           <button type="button" onClick={onClick} className="text-left focus:outline-none">
