@@ -47,8 +47,9 @@ function RequireAuth({ children }) {
 }
 
 export default function App() {
-  const token   = useStore(s => s.token)
-  const setAuth = useStore(s => s.setAuth)
+  const token          = useStore(s => s.token)
+  const setAuth        = useStore(s => s.setAuth)
+  const setPlanDishIds = useStore(s => s.setPlanDishIds)
 
   const [showOnboarding, setShowOnboarding] = useState(
     () => localStorage.getItem('mealbot_show_onboarding') === '1'
@@ -56,9 +57,8 @@ export default function App() {
 
   useEffect(() => {
     if (!token) return
-    // 401 обрабатывается глобальным обработчиком в api/index.js (forceLogout + редирект).
-    // Для сбоев сети / 5xx — оставляем пользователя залогиненным, не выходим.
     api.me().then(user => setAuth(user, token)).catch(() => {})
+    api.getMealPlans().then(plans => setPlanDishIds(plans.map(p => p.dishId))).catch(() => {})
   }, [token])
 
   useEffect(() => {

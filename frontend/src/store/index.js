@@ -38,6 +38,12 @@ export const useStore = create((set, get) => ({
   updateFridgeItem: (ingredientId, data) =>
     set(s => ({ fridge: s.fridge.map(f => f.ingredientId === ingredientId ? { ...f, ...data } : f) })),
 
+  // Plan
+  planDishIds: new Set(),
+  setPlanDishIds: (ids) => set({ planDishIds: new Set(ids) }),
+  addPlanDishId: (dishId) => set(s => { const next = new Set(s.planDishIds); next.add(dishId); return { planDishIds: next } }),
+  removePlanDishId: (dishId) => set(s => { const next = new Set(s.planDishIds); next.delete(dishId); return { planDishIds: next } }),
+
   // Chat
   chatMessages: [],
   addChatMessage: (msg) => set(s => ({ chatMessages: [...s.chatMessages, msg] })),

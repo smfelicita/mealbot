@@ -1,5 +1,6 @@
-import { forwardRef, useState } from 'react'
+import { forwardRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useStore } from '../../store'
 import { CAT_EMOJI, CAT_RU } from './dishCategories'
 
 const VISIBILITY_BADGE = {
@@ -42,8 +43,10 @@ function Highlight({ text, query }) {
 // ─── Horizontal row card (Home screen / Dishes list) ─────────────────────────
 const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav, fridgeIngredientIds, onAddToPlan, hint }, ref) {
   const { img, cat, emoji } = getDishMeta(dish)
-  const navigate = useNavigate()
-  const [addedToPlan, setAddedToPlan] = useState(false)
+  const navigate      = useNavigate()
+  const planDishIds   = useStore(s => s.planDishIds)
+  const addPlanDishId = useStore(s => s.addPlanDishId)
+  const isInPlan      = planDishIds.has(dish.id)
 
   const visInfo = dish.visibility && dish.visibility !== 'PUBLIC'
     ? VISIBILITY_LABEL[dish.visibility]
@@ -108,18 +111,18 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
                 type="button"
                 onClick={e => {
                   e.stopPropagation()
-                  if (addedToPlan) { navigate('/plan'); return }
+                  if (isInPlan) { navigate('/plan'); return }
                   onAddToPlan(dish)
-                  setAddedToPlan(true)
+                  addPlanDishId(dish.id)
                 }}
                 className={[
                   'mt-auto pt-2 w-full py-1.5 rounded-xl text-[13px] font-medium border transition-all focus:outline-none',
-                  addedToPlan
+                  isInPlan
                     ? 'bg-sage/10 border-sage/40 text-sage'
                     : 'bg-white border-border/60 text-text-2',
                 ].join(' ')}
               >
-                {addedToPlan ? '✓ В плане' : 'Буду готовить'}
+                {isInPlan ? '✓ В плане' : 'Буду готовить'}
               </button>
             )}
           </button>
