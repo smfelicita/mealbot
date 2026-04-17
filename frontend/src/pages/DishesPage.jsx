@@ -13,8 +13,8 @@ function QuickFilters({ fridgeActive, favActive, filtersActive, onToggleFridge, 
       type="button"
       onClick={onClick}
       className={[
-        'px-4 py-1.5 rounded-full text-[13px] font-medium transition-all focus:outline-none shrink-0',
-        active ? 'bg-sage text-white' : 'bg-white text-text-2 shadow-sm',
+        'px-4 py-1.5 rounded-xl text-[13px] font-medium transition-all focus:outline-none shrink-0 border whitespace-nowrap',
+        active ? 'bg-sage text-white border-transparent' : 'bg-white text-text-2 border-border/60',
       ].join(' ')}
     >
       {label}
@@ -22,8 +22,8 @@ function QuickFilters({ fridgeActive, favActive, filtersActive, onToggleFridge, 
   )
   return (
     <div className="flex items-center gap-2">
-      {chip(fridgeActive, '🧊 Холодильник', onToggleFridge)}
-      {chip(favActive,    '❤️ Избранное',   onToggleFav)}
+      {chip(fridgeActive, 'Холодильник', onToggleFridge)}
+      {chip(favActive,    'Избранное',   onToggleFav)}
       <div className="flex-1" />
       <button
         type="button"

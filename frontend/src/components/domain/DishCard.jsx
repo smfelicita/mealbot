@@ -59,9 +59,7 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
           {img ? (
             <img src={img} alt={dish.name} className="w-full h-full object-cover min-h-[120px]" />
           ) : (
-            <div className="w-full min-h-[120px] h-full bg-bg-3 flex items-center justify-center text-3xl">
-              {emoji}
-            </div>
+            <div className="w-full min-h-[120px] h-full bg-bg-3" />
           )}
         </button>
 
@@ -91,36 +89,43 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
 
           {/* Fridge status */}
           {missing !== null && (
-            <div className="flex items-start gap-1 text-[12px]">
-              <span className="shrink-0">🧊</span>
+            <div className="flex flex-col gap-0.5 text-[12px]">
               {allInFridge ? (
-                <span className="text-sage font-semibold">Всё есть</span>
+                <span className="text-sage font-semibold">🧊 Всё есть в холодильнике</span>
               ) : (
-                <span className="text-text-3">
-                  {missing.slice(0, 2).map(i => i.name).join(', ')}
-                  {missing.length > 2 && ` и ещё ${missing.length - 2}`}
-                </span>
+                <>
+                  <span className="text-text-3 font-medium">🧊 Надо докупить:</span>
+                  <span className="text-text-3">
+                    {missing.slice(0, 2).map(i => i.name).join(', ')}
+                    {missing.length > 2 && ` и ещё ${missing.length - 2}`}
+                  </span>
+                </>
               )}
             </div>
           )}
 
           {/* Actions */}
           {(onToggleFav || onAddToPlan) && (
-            <div className="flex items-center gap-3 mt-auto pt-1.5">
+            <div className="flex gap-2 mt-auto pt-2">
               {onToggleFav && (
                 <button
                   type="button"
                   onClick={e => { e.stopPropagation(); onToggleFav(dish.id) }}
-                  className="text-[18px] leading-none focus:outline-none"
+                  className={[
+                    'flex-1 py-1.5 rounded-xl text-[13px] font-medium border transition-all focus:outline-none',
+                    isFav
+                      ? 'bg-red-50 border-red-200 text-red-500'
+                      : 'bg-white border-border/60 text-text-2',
+                  ].join(' ')}
                 >
-                  {isFav ? '❤️' : '🤍'}
+                  {isFav ? '❤️ В избранном' : '🤍 В избранное'}
                 </button>
               )}
               {onAddToPlan && (
                 <button
                   type="button"
                   onClick={e => { e.stopPropagation(); onAddToPlan(dish) }}
-                  className="text-[12px] font-semibold text-accent border border-accent/30 rounded-full px-2.5 py-0.5 hover:bg-accent/10 transition-colors"
+                  className="flex-1 py-1.5 rounded-xl text-[13px] font-medium border border-border/60 bg-white text-text-2 transition-all focus:outline-none"
                 >
                   Буду готовить
                 </button>
