@@ -52,85 +52,77 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
     <div className="flex flex-col">
       <div
         ref={ref}
-        className="w-full flex bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform"
+        className="w-full flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform"
       >
-        {/* Photo — 38%, only if image exists */}
-        {img && (
-          <button type="button" onClick={onClick} className="w-[38%] shrink-0 focus:outline-none">
-            <img src={img} alt={dish.name} className="w-full h-full object-cover min-h-[120px]" />
+        {/* Top: photo + content */}
+        <div className="flex relative">
+          {/* Photo — 38%, only if image exists */}
+          {img && (
+            <button type="button" onClick={onClick} className="w-[38%] shrink-0 focus:outline-none">
+              <img src={img} alt={dish.name} className="w-full h-full object-cover min-h-[120px]" />
+            </button>
+          )}
+
+          {/* Content */}
+          <button type="button" onClick={onClick} className="flex-1 min-w-0 px-3 py-3 flex flex-col gap-1 text-left focus:outline-none">
+            <p className="font-bold text-[15px] leading-snug text-text pr-6">{dish.name}</p>
+
+            {(cat || dish.cookTime) && (
+              <div className="flex items-center gap-1 text-[13px] text-text-2">
+                {cat && <span>{CAT_RU[cat] || cat}</span>}
+                {cat && dish.cookTime && <span>·</span>}
+                {dish.cookTime && <span>⏱ {dish.cookTime} мин</span>}
+              </div>
+            )}
+
+            {visInfo && (
+              <div className="flex items-center gap-1 text-[12px] text-text-3">
+                <span>{visInfo.icon}</span>
+                <span>{visInfo.label}</span>
+              </div>
+            )}
+
+            {missing !== null && (
+              <div className="flex flex-col gap-0.5 text-[12px]">
+                {allInFridge ? (
+                  <span className="text-sage font-semibold">🧊 Всё есть в холодильнике</span>
+                ) : (
+                  <>
+                    <span className="text-text-3 font-medium">🧊 Надо докупить:</span>
+                    <span className="text-text-3">
+                      {missing.slice(0, 2).map(i => i.name).join(', ')}
+                      {missing.length > 2 && ` и ещё ${missing.length - 2}`}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </button>
-        )}
 
-        {/* Content — full width if no photo */}
-        <div className="flex-1 min-w-0 px-3 py-3 flex flex-col gap-1">
-          {/* Title */}
-          <button type="button" onClick={onClick} className="text-left focus:outline-none">
-            <p className="font-bold text-[15px] leading-snug text-text">{dish.name}</p>
-          </button>
-
-          {/* Category · cookTime */}
-          {(cat || dish.cookTime) && (
-            <div className="flex items-center gap-1 text-[13px] text-text-2">
-              {cat && <span>{CAT_RU[cat] || cat}</span>}
-              {cat && dish.cookTime && <span>·</span>}
-              {dish.cookTime && <span>⏱ {dish.cookTime} мин</span>}
-            </div>
-          )}
-
-          {/* Visibility */}
-          {visInfo && (
-            <div className="flex items-center gap-1 text-[12px] text-text-3">
-              <span>{visInfo.icon}</span>
-              <span>{visInfo.label}</span>
-            </div>
-          )}
-
-          {/* Fridge status */}
-          {missing !== null && (
-            <div className="flex flex-col gap-0.5 text-[12px]">
-              {allInFridge ? (
-                <span className="text-sage font-semibold">🧊 Всё есть в холодильнике</span>
-              ) : (
-                <>
-                  <span className="text-text-3 font-medium">🧊 Надо докупить:</span>
-                  <span className="text-text-3">
-                    {missing.slice(0, 2).map(i => i.name).join(', ')}
-                    {missing.length > 2 && ` и ещё ${missing.length - 2}`}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Actions */}
-          {(onToggleFav || onAddToPlan) && (
-            <div className="flex gap-2 mt-auto pt-2">
-              {onToggleFav && (
-                <button
-                  type="button"
-                  onClick={e => { e.stopPropagation(); onToggleFav(dish.id) }}
-                  className={[
-                    'flex-1 py-1.5 rounded-xl text-[13px] font-medium border transition-all focus:outline-none',
-                    isFav
-                      ? 'bg-red-50 border-red-200 text-red-500'
-                      : 'bg-white border-border/60 text-text-2',
-                  ].join(' ')}
-                >
-                  {isFav ? '❤️ В избранном' : '🤍 В избранное'}
-                </button>
-              )}
-              {onAddToPlan && (
-                <button
-                  type="button"
-                  onClick={e => { e.stopPropagation(); onAddToPlan(dish) }}
-                  className="flex-1 py-1.5 rounded-xl text-[13px] font-medium border border-border/60 bg-white text-text-2 transition-all focus:outline-none"
-                >
-                  Буду готовить
-                </button>
-              )}
-            </div>
+          {/* Heart — top-right corner */}
+          {onToggleFav && (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onToggleFav(dish.id) }}
+              className="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center focus:outline-none"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={isFav ? 'text-red-500' : 'text-text-3'}>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </button>
           )}
         </div>
+
+        {/* Bottom: full-width button */}
+        {onAddToPlan && (
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); onAddToPlan(dish) }}
+            className="w-full py-2 text-[13px] font-medium text-text-2 border-t border-border/60 bg-white hover:bg-bg-3 transition-colors focus:outline-none"
+          >
+            Буду готовить
+          </button>
+        )}
       </div>
 
       {hint && (
