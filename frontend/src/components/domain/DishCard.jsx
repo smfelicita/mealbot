@@ -97,6 +97,15 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
                 )}
               </div>
             )}
+            {onAddToPlan && (
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); onAddToPlan(dish) }}
+                className="mt-auto pt-2 w-full py-1.5 rounded-xl text-[13px] font-medium border border-border/60 bg-white text-text-2 transition-all focus:outline-none"
+              >
+                Буду готовить
+              </button>
+            )}
           </button>
 
           {/* Heart — top-right corner */}
@@ -113,16 +122,6 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
           )}
         </div>
 
-        {/* Bottom: full-width button */}
-        {onAddToPlan && (
-          <button
-            type="button"
-            onClick={e => { e.stopPropagation(); onAddToPlan(dish) }}
-            className="w-full py-2 text-[13px] font-medium text-text-2 border-t border-border/60 bg-white hover:bg-bg-3 transition-colors focus:outline-none"
-          >
-            Буду готовить
-          </button>
-        )}
       </div>
 
       {hint && (
