@@ -1,6 +1,7 @@
 const prisma = require('./prisma')
 
 const USER_LIMIT = 10
+const PRO_LIMIT  = 100
 
 /**
  * Проверяет и увеличивает счётчик ИИ-сообщений для авторизованного пользователя.
@@ -17,21 +18,23 @@ async function checkAiLimit(userId) {
   if (!user) return { allowed: false, left: 0 }
   if (user.role === 'ADMIN') return { allowed: true, left: 999 }
 
+  const limit = user.role === 'PRO' ? PRO_LIMIT : USER_LIMIT
+
   const isToday = user.aiMessagesDate &&
     new Date(user.aiMessagesDate).toDateString() === today
   const count = isToday ? user.aiMessagesDay : 0
 
-  if (count >= USER_LIMIT) return { allowed: false, left: 0 }
+  if (count >= limit) return { allowed: false, left: 0 }
 
   await prisma.user.update({
     where: { id: userId },
     data: {
-      aiMessagesDay: isToday ? { increment: 1 } : 1,
+      aiMessagesDay:  isToday ? { increment: 1 } : 1,
       aiMessagesDate: new Date(),
     },
   })
 
-  return { allowed: true, left: USER_LIMIT - count - 1 }
+  return { allowed: true, left: limit - count - 1 }
 }
 
-module.exports = { checkAiLimit, USER_LIMIT }
+module.exports = { checkAiLimit, USER_LIMIT, PRO_LIMIT }

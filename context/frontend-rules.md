@@ -18,7 +18,7 @@ frontend/src/
 Button, Loader, EmptyState, Modal, Avatar, Toast, SearchInput, InstallPrompt, TextInput
 
 **`/components/domain` — что здесь:**
-DishCard, DishIngredientPicker, CommentsSection, MealTypeChips, IngredientList, OnboardingModal
+DishCard, DishIngredientPicker, CommentsSection, MealTypeChips, IngredientList, OnboardingModal, GroupHeader, GroupCard, PlanItem
 
 ## 2. Как вносить изменения в UI
 
@@ -69,7 +69,14 @@ shadow-top    — нижние оверлеи
 
 - Единственная карточка блюда: `<DishCard>`
 - Не создавать альтернативных карточек
-- Варианты: `variant="row"` (горизонтальная), по умолчанию — вертикальная
+- Варианты: `variant="grid"` (дефолт, вертикальная), `variant="row"` (горизонтальная), `variant="inline"` (компактная для чата)
+
+## 4а. SVG иконки
+
+- Всегда `stroke="currentColor"` (не hardcoded `#HEX` и не `rgba(...)`)
+- Цвет задаётся Tailwind-классом на родительском элементе: `<div className="text-accent"><svg ...>`)
+- `fill="currentColor"` — для заливочных иконок
+- Никаких `style={{ color: ... }}` на SVG
 
 ## 5. Формы
 

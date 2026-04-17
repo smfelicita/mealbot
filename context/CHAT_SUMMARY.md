@@ -56,6 +56,12 @@
 - **Infinite scroll**: DishesPage — 20 блюд за запрос, IntersectionObserver
 - **Zod-валидация**: добавлена на fridge (POST, PATCH, bulk) и meal-plans (POST)
 - **CORS фикс**: FRONTEND_URL на сервере должен быть `https://smarussya.ru` (домен), не IP — иначе Google OAuth и другие запросы с домена блокируются
+- **Фронтенд-аудит (10 задач)**: MealTypeChips bg-sage, useToast на всех страницах, DishesPage Tailwind-only, SVG currentColor, TelegramAuthPage переписан без легаси CSS, GroupHeader извлечён в domain-компонент, email-валидация приглашений, DishCard getDishMeta + variant=inline, PlanItem/GroupCard извлечены, text-[11px]→text-2xs
+- **Аудит-система**: context/audits/ (7 файлов), context/frontend-rules.md — документация стандартов
+- **Баг видимости блюд в группах**: ALL_GROUPS и FAMILY блюда теперь корректно возвращаются (явный prisma.dish.findMany с OR-условиями вместо include через relation)
+- **FridgePage**: убран дублирующий топбар (оставлен стандартный от Layout), добавлен FAB для открытия пикера
+- **Комментарии расширены**: доступ по принципу "видишь блюдо в группе — можешь комментировать". PRIVATE/PUBLIC — только автор, FAMILY — семейная группа, ALL_GROUPS — любая общая группа с автором, REGULAR-группа — участники группы. `canComment()` в comments.js переработан, фронтенд показывает секцию для всех visibility кроме PUBLIC
+- **seed.js**: добавлены imageUrl для 4 дефолтных блюд (syrniki, sup-kurinyj, kartoshka, blinchiki)
 
 ## Важные детали
 

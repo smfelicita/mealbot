@@ -118,8 +118,8 @@ export const api = {
   acceptInvite: (token) => request(`/invites/${token}/accept`, { method: 'POST' }),
 
   // Chat
-  sendMessage: (message, platform = 'web') =>
-    request('/chat', { method: 'POST', body: { message, platform } }),
+  sendMessage: (message, history = [], role = 'USER', fridge = []) =>
+    request('/chat', { method: 'POST', body: { message, history, role, fridge } }),
   clearChat: () => request('/chat', { method: 'DELETE' }),
 
   // Meal plans

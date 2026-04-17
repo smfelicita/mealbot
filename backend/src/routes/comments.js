@@ -6,19 +6,46 @@ const validate = require('../middleware/validate')
 const { commentCreate } = require('../lib/schemas')
 const { logger } = require('../lib/logger')
 
-// Проверка доступа к комментариям блюда:
-// - автор блюда (личные заметки)
-// - ИЛИ участник семейной группы блюда (visibility=FAMILY)
+// Пользователь может комментировать если видит блюдо в контексте группы:
+// - автор блюда (всегда)
+// - участник группы, к которой прикреплено блюдо (groupId + visibility != PRIVATE)
+// - ALL_GROUPS: состоит в любой общей группе с автором
+// - FAMILY: состоит в семейной группе вместе с автором
+// PUBLIC — комментарии только автору (публичные без группового обсуждения)
 async function canComment(userId, dish) {
   if (dish.authorId === userId) return true
-  // FAMILY с groupId — проверяем членство
-  if (dish.visibility === 'FAMILY' && dish.groupId) {
+  if (dish.visibility === 'PRIVATE' || dish.visibility === 'PUBLIC') return false
+
+  // Блюдо прикреплено к конкретной группе — проверяем членство
+  if (dish.groupId) {
     const member = await prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId: dish.groupId, userId } },
     })
-    return Boolean(member)
+    if (member) return true
   }
-  // PRIVATE / FAMILY без groupId / ALL_GROUPS / PUBLIC — только автор (уже проверен выше)
+
+  // ALL_GROUPS — есть хотя бы одна общая группа с автором
+  if (dish.visibility === 'ALL_GROUPS' && dish.authorId) {
+    const shared = await prisma.groupMember.findFirst({
+      where: {
+        userId,
+        group: { members: { some: { userId: dish.authorId } } },
+      },
+    })
+    if (shared) return true
+  }
+
+  // FAMILY — состоит в семейной группе вместе с автором
+  if (dish.visibility === 'FAMILY' && dish.authorId) {
+    const shared = await prisma.groupMember.findFirst({
+      where: {
+        userId,
+        group: { type: 'FAMILY', members: { some: { userId: dish.authorId } } },
+      },
+    })
+    if (shared) return true
+  }
+
   return false
 }
 

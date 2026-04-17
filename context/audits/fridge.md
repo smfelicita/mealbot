@@ -39,7 +39,7 @@
 - `backend/prisma/schema.prisma` — FridgeItem без старого unique
 
 **Фронтенд:**
-- `frontend/src/pages/FridgePage.jsx` — показывает "Семейный холодильник · Общий с семьёй" если `familyGroupId` не null
+- `frontend/src/pages/FridgePage.jsx` — нет дублирующего топбара (использует стандартный Layout), FAB внизу для "+ Добавить", "· Общий с семьёй" в summary row если `familyGroupId` не null
 - `frontend/src/store/index.js` — `fridge` в Zustand-сторе, используется в `HomePage` для фильтрации
 
 ## 5. Открытые вопросы

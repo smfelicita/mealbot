@@ -7,6 +7,12 @@ const VISIBILITY_BADGE = {
   ALL_GROUPS: { icon: '👥' },
 }
 
+const VISIBILITY_LABEL = {
+  PRIVATE:    { icon: '🔒', label: 'Личный' },
+  FAMILY:     { icon: '👨‍👩‍👧', label: 'Семья' },
+  ALL_GROUPS: { icon: '👥', label: 'Группы' },
+}
+
 function getDishMeta(dish) {
   const img   = dish.images?.[0] || dish.imageUrl
   const cat   = dish.categories?.[0] ?? dish.category
@@ -30,50 +36,99 @@ function Highlight({ text, query }) {
 }
 
 // ─── Horizontal row card (Home screen / Dishes list) ─────────────────────────
-const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav, hint }, ref) {
+const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav, fridgeIngredientIds, onAddToPlan, hint }, ref) {
   const { img, cat, emoji } = getDishMeta(dish)
-  const isFamily = dish.visibility === 'FAMILY'
+
+  const visInfo = dish.visibility && dish.visibility !== 'PUBLIC'
+    ? VISIBILITY_LABEL[dish.visibility]
+    : null
+
+  const missing = fridgeIngredientIds && dish.ingredients?.length > 0
+    ? dish.ingredients.filter(i => !i.toTaste && !i.isBasic && !fridgeIngredientIds.has(i.id))
+    : null
+  const allInFridge = missing !== null && missing.length === 0
 
   return (
     <div className="flex flex-col">
-      <button
+      <div
         ref={ref}
-        type="button"
-        onClick={onClick}
-        className="w-full flex items-center justify-between bg-white rounded-2xl p-4 text-left
-          active:scale-[0.98] transition-transform shrink-0 shadow-sm"
+        className="w-full flex bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform"
       >
-        {/* Left */}
-        <div className="flex-1 min-w-0 pr-3">
-          <p className="font-semibold text-[15px] leading-snug truncate text-text">
-            {dish.name}
-          </p>
-          <div className="flex items-center gap-1.5 mt-1 text-[13px] text-text-3">
-            {dish.cookTime && <span>{dish.cookTime} мин</span>}
-            {dish.cookTime && dish.categories?.[0] && <span>·</span>}
-            {dish.categories?.[0] && <span>{CAT_RU[cat] || cat}</span>}
-            {isFamily && (
-              <>
-                {(dish.cookTime || dish.categories?.[0]) && <span>·</span>}
-                <span className="font-semibold text-sage">👨‍👩‍👧 Семья</span>
-              </>
-            )}
-          </div>
-        </div>
+        {/* Photo — 38% */}
+        <button type="button" onClick={onClick} className="w-[38%] shrink-0 focus:outline-none">
+          {img ? (
+            <img src={img} alt={dish.name} className="w-full h-full object-cover min-h-[120px]" />
+          ) : (
+            <div className="w-full min-h-[120px] h-full bg-bg-3 flex items-center justify-center text-3xl">
+              {emoji}
+            </div>
+          )}
+        </button>
 
-        {/* Right: image */}
-        {img ? (
-          <img
-            src={img}
-            alt={dish.name}
-            className="w-16 h-16 rounded-xl object-cover shrink-0"
-          />
-        ) : (
-          <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl shrink-0 bg-bg-3">
-            {emoji}
-          </div>
-        )}
-      </button>
+        {/* Right content */}
+        <div className="flex-1 min-w-0 px-3 py-3 flex flex-col gap-1">
+          {/* Title */}
+          <button type="button" onClick={onClick} className="text-left focus:outline-none">
+            <p className="font-bold text-[15px] leading-snug text-text">{dish.name}</p>
+          </button>
+
+          {/* Category · cookTime */}
+          {(cat || dish.cookTime) && (
+            <div className="flex items-center gap-1 text-[13px] text-text-2">
+              {cat && <span>{CAT_RU[cat] || cat}</span>}
+              {cat && dish.cookTime && <span>·</span>}
+              {dish.cookTime && <span>⏱ {dish.cookTime} мин</span>}
+            </div>
+          )}
+
+          {/* Visibility */}
+          {visInfo && (
+            <div className="flex items-center gap-1 text-[12px] text-text-3">
+              <span>{visInfo.icon}</span>
+              <span>{visInfo.label}</span>
+            </div>
+          )}
+
+          {/* Fridge status */}
+          {missing !== null && (
+            <div className="flex items-start gap-1 text-[12px]">
+              <span className="shrink-0">🧊</span>
+              {allInFridge ? (
+                <span className="text-sage font-semibold">Всё есть</span>
+              ) : (
+                <span className="text-text-3">
+                  {missing.slice(0, 2).map(i => i.name).join(', ')}
+                  {missing.length > 2 && ` и ещё ${missing.length - 2}`}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Actions */}
+          {(onToggleFav || onAddToPlan) && (
+            <div className="flex items-center gap-3 mt-auto pt-1.5">
+              {onToggleFav && (
+                <button
+                  type="button"
+                  onClick={e => { e.stopPropagation(); onToggleFav(dish.id) }}
+                  className="text-[18px] leading-none focus:outline-none"
+                >
+                  {isFav ? '❤️' : '🤍'}
+                </button>
+              )}
+              {onAddToPlan && (
+                <button
+                  type="button"
+                  onClick={e => { e.stopPropagation(); onAddToPlan(dish) }}
+                  className="text-[12px] font-semibold text-accent border border-accent/30 rounded-full px-2.5 py-0.5 hover:bg-accent/10 transition-colors"
+                >
+                  Буду готовить
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {hint && (
         <p className="text-xs px-1 pt-1.5 text-text-3">{hint}</p>

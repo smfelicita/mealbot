@@ -50,8 +50,7 @@
 
 ## 5. Открытые вопросы
 
-- Нужны именованные токены для `text-[11px]`, `text-[13px]`, `text-[15px]`, `text-[17px]`, `text-[22px]`, `text-[24px]`, `text-[26px]` — сейчас нет Tailwind-аналогов
-- `TelegramAuthPage` — использует легаси `var(--text2)`, не на Tailwind
+- Нужны именованные токены для `text-[13px]`, `text-[15px]`, `text-[17px]`, `text-[22px]`, `text-[24px]`, `text-[26px]` в tailwind.config (`text-[11px]` уже заменён на `text-2xs`, `TelegramAuthPage` переписан)
 
 ## 6. Договорённости
 

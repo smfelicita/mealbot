@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../../api'
+import { useToast } from '../ui'
 import SectionTitle from '../ui/SectionTitle'
 import Button from '../ui/Button'
 
@@ -57,6 +58,7 @@ function CommentItem({ comment, isOwner, isDishOwner, onDelete, onPin }) {
 export default function CommentsSection({ comments, setComments, dishId, currentUser, dishAuthorId }) {
   const [text, setText]       = useState('')
   const [sending, setSending] = useState(false)
+  const { show, Toast }       = useToast()
 
   async function handleAdd() {
     if (!text.trim()) return
@@ -65,25 +67,35 @@ export default function CommentsSection({ comments, setComments, dishId, current
       const created = await api.addComment(dishId, text.trim())
       setComments(prev => [...prev, created])
       setText('')
+    } catch (e) {
+      show(e.message || 'Не удалось отправить комментарий', 'error')
     } finally {
       setSending(false)
     }
   }
 
   async function handleDelete(id) {
-    await api.deleteComment(id)
-    setComments(prev => prev.filter(c => c.id !== id))
+    try {
+      await api.deleteComment(id)
+      setComments(prev => prev.filter(c => c.id !== id))
+    } catch (e) {
+      show(e.message || 'Не удалось удалить комментарий', 'error')
+    }
   }
 
   async function handlePin(id) {
-    const updated = await api.pinComment(id)
-    setComments(prev => {
-      const next = prev.map(c => c.id === id ? updated : c)
-      return [...next].sort((a, b) => {
-        if (a.isPinned !== b.isPinned) return b.isPinned ? 1 : -1
-        return new Date(a.createdAt) - new Date(b.createdAt)
+    try {
+      const updated = await api.pinComment(id)
+      setComments(prev => {
+        const next = prev.map(c => c.id === id ? updated : c)
+        return [...next].sort((a, b) => {
+          if (a.isPinned !== b.isPinned) return b.isPinned ? 1 : -1
+          return new Date(a.createdAt) - new Date(b.createdAt)
+        })
       })
-    })
+    } catch (e) {
+      show(e.message || 'Не удалось закрепить комментарий', 'error')
+    }
   }
 
   return (
@@ -109,7 +121,7 @@ export default function CommentsSection({ comments, setComments, dishId, current
 
       <div className="flex flex-col gap-2">
         <textarea
-          className="w-full bg-bg-3 border border-border rounded-sm text-text text-[15px]
+          className="w-full bg-bg-3 border border-border rounded-sm text-text text-sm
             px-3.5 py-2.5 outline-none transition-colors resize-y
             placeholder:text-text-3 focus:border-accent focus:ring-2 focus:ring-accent/20"
           rows={3}
@@ -127,6 +139,8 @@ export default function CommentsSection({ comments, setComments, dishId, current
           Отправить
         </Button>
       </div>
+
+      {Toast}
     </div>
   )
 }

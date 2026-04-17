@@ -42,6 +42,26 @@
 
 Хелпер `getFamilyGroupId(userId)` — во всех роутах, где нужен общий холодильник.
 
+**Баг видимости блюд (исправлен апрель 2026):**
+`GET /api/groups/:id` использовал Prisma relation `include: { dishes: ... }` — возвращал только блюда с `groupId = group.id`. Блюда с `visibility=ALL_GROUPS` и `visibility=FAMILY` не отображались.
+
+Исправление: явный `prisma.dish.findMany()` с OR-условиями:
+```js
+const visibilityConditions = [
+  { groupId: group.id, OR: [{ visibility: { not: 'PRIVATE' } }, { authorId: req.userId }] },
+  { visibility: 'ALL_GROUPS', authorId: { in: memberIds } },
+]
+if (group.type === 'FAMILY') {
+  visibilityConditions.push({ visibility: 'FAMILY', authorId: { in: memberIds } })
+}
+```
+Плюс дедупликация через `Set` (блюдо может попасть по нескольким условиям).
+
+**Фронтенд групп:**
+- `GroupHeader` вынесен в `frontend/src/components/domain/GroupHeader.jsx`
+- `GroupCard` вынесен в `frontend/src/components/domain/GroupCard.jsx`
+- Email-валидация добавлена в форму приглашения (клиентская сторона)
+
 ## 5. Открытые вопросы
 
 - Бизнес-решение: когда и как открывать REGULAR группы (платно? бесплатно?)

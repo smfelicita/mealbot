@@ -6,7 +6,7 @@ React + Vite + PWA. Tailwind v4. Тема: светлая, фон `#F6F4EF`.
 
 **Структура компонентов:**
 - `/components/ui` — базовые: Button, Loader, EmptyState, Modal, Avatar, Toast, SearchInput, InstallPrompt
-- `/components/domain` — бизнес: DishCard, DishIngredientPicker, CommentsSection, MealTypeChips, IngredientList, OnboardingModal
+- `/components/domain` — бизнес: DishCard (grid/row/inline), DishIngredientPicker, CommentsSection, MealTypeChips, IngredientList, OnboardingModal, GroupHeader, GroupCard, PlanItem
 - `/pages` — экраны
 - `/hooks` — useToast, useHintDismiss
 - `/api/index.js` — все API-вызовы через единую функцию `request()`
@@ -41,16 +41,27 @@ React + Vite + PWA. Tailwind v4. Тема: светлая, фон `#F6F4EF`.
 
 ## 4. Реализация
 
-Выполнено в аудите phases 3–5 (коммит `b464d92`):
+Фаза 1 (аудит 3–5, коммит `b464d92`):
 - Удалены: `TopBar.jsx`, `BottomTabBar.jsx`, `components/InstallPrompt.jsx`
 - Созданы: `components/ui/InstallPrompt.jsx`, `components/domain/DishIngredientPicker.jsx`
 - Исправлены: 23 файла, −408/+322 строк
 - Добавлены токены в `tailwind.config.js`: sage, teal, shadows, text-2xs
 
+Фаза 2 (фронтенд-аудит 10 задач, апрель 2026):
+- `TelegramAuthPage` переписан на Tailwind, нет легаси CSS
+- `GroupHeader` вынесен в `/components/domain`
+- `GroupCard` вынесен в `/components/domain`
+- `PlanItem` вынесен в `/components/domain`
+- `DishCard`: добавлен `getDishMeta()` хелпер, добавлен `variant="inline"` (InlineCard для чата)
+- `MealTypeChips`: `bg-sage` вместо inline style `background: #5C7A59`
+- SVG: все hardcoded цвета → `currentColor`, цвет задаётся через Tailwind класс на wrapper
+- `text-[11px]` → `text-2xs` (массовая замена)
+- `useToast` + error states на HomePage, DishesPage, DishDetailPage, GroupsPage
+- Email-валидация в форме приглашения в группу (regex на клиенте)
+
 ## 5. Открытые вопросы
 
-- `TelegramAuthPage` — использует легаси CSS-классы (`auth-page`, `var(--text2)`) — требует переработки
-- Размеры `text-[11px]`, `text-[13px]`, `text-[15px]`, `text-[17px]`, `text-[22px]`, `text-[24px]`, `text-[26px]` — нет Tailwind-эквивалента, нужны именованные токены
+- Размеры `text-[13px]`, `text-[15px]`, `text-[17px]`, `text-[22px]`, `text-[24px]`, `text-[26px]` — нужны именованные токены в tailwind.config (text-[11px] уже заменён на text-2xs)
 
 ## 6. Договорённости
 
@@ -58,5 +69,6 @@ React + Vite + PWA. Tailwind v4. Тема: светлая, фон `#F6F4EF`.
 - **Никаких новых CSS-переменных** — только токены из `tailwind.config.js`.
 - **Компонент одной отвечает за одно.** Логика пикера не живёт в форме.
 - `InstallPrompt` — только из `/components/ui`.
-- `DishCard` — единственная карточка блюда, альтернативы не создавать.
+- `DishCard` — единственная карточка блюда. Варианты: `grid` (дефолт), `row`, `inline`.
 - `Modal` — единственный способ делать оверлеи и bottom sheet.
+- SVG — всегда `stroke="currentColor"`, цвет через Tailwind на обёртке.

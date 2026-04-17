@@ -6,28 +6,47 @@ import { SearchInput, useToast } from '../components/ui'
 import { MealTypeChips, DishList, BulkAddModal } from '../components/domain'
 import { useHintDismiss } from '../hooks/useHintDismiss'
 
-// ─── FilterChips (Все / Избранное / Семейные) ─────────────────────────────────
-function FilterChips({ active, onChange }) {
-  const options = [
-    { value: 'all',      label: 'Все'       },
-    { value: 'favorites', label: 'Избранное' },
-    { value: 'family',   label: '👨‍👩‍👧 Семья'  },
-  ]
+// ─── QuickFilters ─────────────────────────────────────────────────────────────
+function QuickFilters({ fridgeActive, favActive, filtersActive, onToggleFridge, onToggleFav, onOpenFilters }) {
+  const chip = (active, label, onClick) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'px-4 py-1.5 rounded-full text-[13px] font-medium transition-all focus:outline-none shrink-0',
+        active ? 'bg-sage text-white' : 'bg-white text-text-2 shadow-sm',
+      ].join(' ')}
+    >
+      {label}
+    </button>
+  )
   return (
-    <div className="flex gap-2">
-      {options.map(o => (
-        <button
-          key={o.value}
-          type="button"
-          onClick={() => onChange(o.value)}
-          className={[
-            'px-4 py-1.5 rounded-full text-[13px] font-medium transition-all focus:outline-none',
-            active === o.value ? 'bg-accent text-white shadow-accent' : 'bg-white text-text-2 shadow-sm',
-          ].join(' ')}
-        >
-          {o.label}
-        </button>
-      ))}
+    <div className="flex items-center gap-2">
+      {chip(fridgeActive, '🧊 Холодильник', onToggleFridge)}
+      {chip(favActive,    '❤️ Избранное',   onToggleFav)}
+      <div className="flex-1" />
+      <button
+        type="button"
+        title="Сортировка"
+        className="w-9 h-9 flex items-center justify-center rounded-full bg-white shadow-sm text-text-3"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M3 6h18M7 12h10M11 18h2"/>
+        </svg>
+      </button>
+      <button
+        type="button"
+        title="Фильтры"
+        onClick={onOpenFilters}
+        className={[
+          'w-9 h-9 flex items-center justify-center rounded-full shadow-sm relative',
+          filtersActive ? 'bg-accent text-white' : 'bg-white text-text-3',
+        ].join(' ')}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+        </svg>
+      </button>
     </div>
   )
 }
@@ -124,29 +143,6 @@ function AddRecipeButton({ onClick }) {
   )
 }
 
-// ─── RecipesHeader ────────────────────────────────────────────────────────────
-function RecipesHeader({ fridgeMode, onToggleFridge }) {
-  return (
-    <div className="flex items-center justify-between px-4 pt-5 pb-2">
-      <h1 className="font-semibold text-[22px] text-text">Мои блюда</h1>
-      <button
-        type="button"
-        onClick={onToggleFridge}
-        className={[
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all',
-          fridgeMode ? 'bg-sage text-white shadow-sage' : 'bg-white text-text-2 shadow-sm',
-        ].join(' ')}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <rect x="6" y="3" width="12" height="18" rx="2"/><line x1="6" y1="10" x2="18" y2="10"/>
-          <circle cx="10" cy="7" r="1.2" fill="currentColor" stroke="none"/>
-          <circle cx="10" cy="15" r="1.2" fill="currentColor" stroke="none"/>
-        </svg>
-        Холодильник
-      </button>
-    </div>
-  )
-}
 
 
 const LIMIT = 20
@@ -154,7 +150,7 @@ const LIMIT = 20
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DishesPage() {
   const navigate = useNavigate()
-  const { fridgeMode, toggleFridgeMode, token } = useStore()
+  const { token } = useStore()
   const { show, Toast } = useToast()
 
   const [dishes, setDishes]       = useState([])
@@ -163,7 +159,9 @@ export default function DishesPage() {
   const [hasMore, setHasMore]     = useState(false)
   const [q, setQ]                 = useState('')
   const [mealTime, setMealTime]   = useState('')
-  const [filter, setFilter]       = useState('all')   // 'all' | 'favorites' | 'family'
+  const [fridgeFilter, setFridgeFilter] = useState(false)
+  const [favFilter, setFavFilter]       = useState(false)
+  const [showFilters, setShowFilters]   = useState(false)
   const [favIds, setFavIds]       = useState(new Set())
   const [fridgeIngredientIds, setFridgeIngredientIds] = useState(new Set())
   const [showBulkAdd, setShowBulkAdd] = useState(false)
@@ -185,14 +183,13 @@ export default function DishesPage() {
   }, [token])
 
   const getParams = useCallback(() => ({
-    q:           q || undefined,
-    mealTime:    mealTime || undefined,
-    fridgeMode:  fridgeMode ? 'true' : undefined,
-    myKitchen:   (token && filter === 'all')      ? 'true' : undefined,
-    favorites:   (token && filter === 'favorites') ? 'true' : undefined,
-    familyOnly:  (token && filter === 'family')    ? 'true' : undefined,
-    limit:       LIMIT,
-  }), [q, mealTime, fridgeMode, token, filter])
+    q:          q || undefined,
+    mealTime:   mealTime || undefined,
+    fridgeMode: fridgeFilter ? 'true' : undefined,
+    myKitchen:  token ? 'true' : undefined,
+    favorites:  (token && favFilter) ? 'true' : undefined,
+    limit:      LIMIT,
+  }), [q, mealTime, fridgeFilter, favFilter, token])
 
   const load = useCallback(async () => {
     canLoadRef.current = false
@@ -268,20 +265,30 @@ export default function DishesPage() {
     isFav ? api.removeFavorite(dishId).catch(() => {}) : api.addFavorite(dishId).catch(() => {})
   }
 
+  async function handleAddToPlan(dish) {
+    try {
+      await api.addMealPlan({ dishId: dish.id })
+      show(`«${dish.name}» добавлено на сегодня`, 'success')
+    } catch (e) {
+      show(e.message || 'Не удалось добавить', 'error')
+    }
+  }
+
   function resetFilters() {
     setQ('')
     setMealTime('')
-    setFilter('all')
+    setFridgeFilter(false)
+    setFavFilter(false)
   }
 
   return (
     <div className="flex flex-col pb-24 bg-bg min-h-full">
 
-      {/* RecipesHeader */}
-      <RecipesHeader fridgeMode={fridgeMode} onToggleFridge={toggleFridgeMode} />
+      {/* Title */}
+      <h1 className="font-semibold text-[22px] text-text px-4 pt-5 pb-2">Мои блюда</h1>
 
       {/* SearchInput */}
-      <div className="px-4 mt-3">
+      <div className="px-4">
         <SearchInput
           value={q}
           onChange={e => setQ(e.target.value)}
@@ -289,13 +296,26 @@ export default function DishesPage() {
         />
       </div>
 
-      {/* FilterChips + MealTypeChips */}
-      <div className="flex flex-col gap-3 px-4 mt-4">
-        {token && (
-          <FilterChips active={filter} onChange={v => { setFilter(v); setMealTime('') }} />
-        )}
-        <MealTypeChips active={mealTime} onChange={setMealTime} />
-      </div>
+      {/* Quick filters */}
+      {token && (
+        <div className="px-4 mt-3">
+          <QuickFilters
+            fridgeActive={fridgeFilter}
+            favActive={favFilter}
+            filtersActive={!!mealTime}
+            onToggleFridge={() => setFridgeFilter(v => !v)}
+            onToggleFav={() => setFavFilter(v => !v)}
+            onOpenFilters={() => setShowFilters(v => !v)}
+          />
+        </div>
+      )}
+
+      {/* Filter panel — mealTime */}
+      {showFilters && (
+        <div className="px-4 mt-3">
+          <MealTypeChips active={mealTime} onChange={v => setMealTime(prev => prev === v ? '' : v)} />
+        </div>
+      )}
 
       {/* Быстрое добавление */}
       {token && (
@@ -334,7 +354,7 @@ export default function DishesPage() {
           </div>
         ) : dishes.length === 0 ? (
           <RecipesEmptyState
-            filter={filter}
+            filter={favFilter || fridgeFilter ? 'filtered' : 'all'}
             mealTime={mealTime}
             q={q}
             isGuest={!token}
@@ -351,6 +371,7 @@ export default function DishesPage() {
             isFavSet={favIds}
             onToggleFav={token ? handleToggleFav : undefined}
             fridgeIngredientIds={fridgeIngredientIds}
+            onAddToPlan={token ? handleAddToPlan : undefined}
             onDishClick={id => navigate(`/dishes/${id}`)}
           />
         )}

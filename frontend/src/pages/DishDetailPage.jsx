@@ -134,7 +134,7 @@ export default function DishDetailPage() {
     api.getDish(id)
       .then(d => {
         setDish(d)
-        if (user && (d.authorId === user.id || d.visibility === 'FAMILY')) {
+        if (user && d.visibility !== 'PUBLIC') {
           api.getComments(id).then(setComments).catch(() => {})
         }
       })

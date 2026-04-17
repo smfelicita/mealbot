@@ -136,6 +136,26 @@ export default function HomePage() {
 
   const fridgeIds = new Set(fridge.map(f => f.ingredientId))
 
+  function handleToggleFav(dishId) {
+    if (!token) return
+    const isFav = favIds.has(dishId)
+    setFavIds(prev => {
+      const next = new Set(prev)
+      isFav ? next.delete(dishId) : next.add(dishId)
+      return next
+    })
+    isFav ? api.removeFavorite(dishId).catch(() => {}) : api.addFavorite(dishId).catch(() => {})
+  }
+
+  async function handleAddToPlan(dish) {
+    try {
+      await api.addMealPlan({ dishId: dish.id })
+      show(`«${dish.name}» добавлено на сегодня`, 'success')
+    } catch (e) {
+      show(e.message || 'Не удалось добавить', 'error')
+    }
+  }
+
   const filtered = dishes.filter(dish => {
     if (mealTime) {
       const mt = mealTime.toUpperCase()
@@ -203,6 +223,9 @@ export default function HomePage() {
             variant="row"
             dish={dish}
             isFav={favIds.has(dish.id)}
+            onToggleFav={token ? handleToggleFav : undefined}
+            fridgeIngredientIds={token ? fridgeIds : undefined}
+            onAddToPlan={token ? handleAddToPlan : undefined}
             onClick={() => navigate(`/dishes/${dish.id}`)}
           />
         ))}

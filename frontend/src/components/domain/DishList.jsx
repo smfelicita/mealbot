@@ -13,6 +13,7 @@ export default function DishList({
   isFavSet,
   onToggleFav,
   fridgeIngredientIds,
+  onAddToPlan,
   onDishClick,
   variant = 'grid',
 }) {
@@ -47,6 +48,7 @@ export default function DishList({
             isFav={isFavSet?.has(dish.id)}
             onToggleFav={onToggleFav}
             fridgeIngredientIds={fridgeIngredientIds}
+            onAddToPlan={onAddToPlan}
           />
         </div>
       ))}
