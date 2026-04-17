@@ -13,10 +13,13 @@ const VISIBILITY_LABEL = {
   ALL_GROUPS: { icon: '👥', label: 'Группы' },
 }
 
+const SUPABASE_IMG = 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images'
+
 function getDishMeta(dish) {
-  const img   = dish.images?.[0] || dish.imageUrl
-  const cat   = dish.categories?.[0] ?? dish.category
-  const emoji = CAT_EMOJI[cat] || '🍽️'
+  const cat      = dish.categories?.[0] ?? dish.category
+  const emoji    = CAT_EMOJI[cat] || '🍽️'
+  const uploaded = dish.images?.[0] || dish.imageUrl
+  const img      = uploaded || (cat ? `${SUPABASE_IMG}/${cat.toLowerCase()}.jpg` : null)
   return { img, cat, emoji }
 }
 
