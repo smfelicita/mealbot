@@ -370,18 +370,17 @@ export default function DishDetailPage() {
               <RecsRow title="Из холодильника" dishes={recs.fromFridge} navigate={navigate} />
             )}
             {user && recs.nearMatch?.length > 0 && (
-              <div className="pt-6">
-                <p className="text-[17px] font-semibold text-text px-4 mb-3">Осталось докупить</p>
-                <div className="flex overflow-x-auto px-4 gap-3 pb-1" style={{ scrollSnapType: 'x mandatory', scrollPaddingLeft: '1rem' }}>
+              <div className="pt-6 px-4">
+                <p className="text-[17px] font-semibold text-text mb-3">Осталось докупить</p>
+                <div className="flex flex-col gap-3">
                   {recs.nearMatch.map(({ dish: d, missing }) => (
-                    <div key={d.id} className="shrink-0 w-full" style={{ scrollSnapAlign: 'start' }}>
-                      <DishCard
-                        variant="row"
-                        dish={d}
-                        onClick={() => navigate(`/dishes/${d.id}`)}
-                        hint={`Докупить: ${missing.map(m => m.name).join(', ')}`}
-                      />
-                    </div>
+                    <DishCard
+                      key={d.id}
+                      variant="row"
+                      dish={d}
+                      onClick={() => navigate(`/dishes/${d.id}`)}
+                      hint={missing.length ? `Докупить: ${missing.map(m => m.name).join(', ')}` : undefined}
+                    />
                   ))}
                 </div>
               </div>
