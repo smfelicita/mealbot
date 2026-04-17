@@ -119,7 +119,7 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
                     : 'bg-white border-border/60 text-text-2',
                 ].join(' ')}
               >
-                {addedToPlan ? '✓ В плане — перейти' : 'Буду готовить'}
+                {addedToPlan ? '✓ В плане' : 'Буду готовить'}
               </button>
             )}
           </button>
