@@ -69,9 +69,9 @@ const RowCard = forwardRef(function RowCard({ dish, onClick, isFav, onToggleFav,
 
             {(cat || dish.cookTime) && (
               <div className="flex items-center gap-1 text-[13px] text-text-2">
-                {dish.cookTime && <span>⏱ {dish.cookTime} мин</span>}
+                {cat && <span>{CAT_EMOJI[cat]} {CAT_RU[cat] || cat}</span>}
                 {cat && dish.cookTime && <span>·</span>}
-                {cat && <span>{CAT_RU[cat] || cat}</span>}
+                {dish.cookTime && <span>⏱ {dish.cookTime} мин</span>}
               </div>
             )}
 
