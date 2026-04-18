@@ -292,7 +292,13 @@ export default function DishDetailPage() {
   if (!dish) return null
 
   const isOwner    = user && dish.authorId === user.id
-  const dishImages = dish.images?.length ? dish.images : (dish.imageUrl ? [dish.imageUrl] : [])
+  const SUPABASE_IMG = 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images'
+  const cat = dish.categories?.[0]
+  const fallbackImg = cat ? `${SUPABASE_IMG}/${cat.toLowerCase()}.jpg` : null
+  const dishImages = dish.images?.length ? dish.images
+    : dish.imageUrl ? [dish.imageUrl]
+    : fallbackImg ? [fallbackImg]
+    : []
 
   return (
     <div className="fixed inset-0 z-[150] flex flex-col bg-bg">
@@ -407,14 +413,14 @@ export default function DishDetailPage() {
         <DishMeta dish={dish} />
 
         {/* ── Content ── */}
-        <div className="px-4 pt-5 flex flex-col divide-y divide-border/60">
-          <div className="pb-2"><IngredientList ingredients={dish.ingredients} /></div>
-          <div className="pt-6 pb-2"><DishSteps recipe={dish.recipe} /></div>
-          <div className="pt-6 pb-2"><NutritionBlock nutrition={dish.nutrition} /></div>
+        <div className="px-4 flex flex-col divide-y divide-border/60 border-t border-border/60 mt-4">
+          <div className="py-6"><IngredientList ingredients={dish.ingredients} /></div>
+          <div className="py-6"><DishSteps recipe={dish.recipe} /></div>
+          <div className="py-6"><NutritionBlock nutrition={dish.nutrition} /></div>
 
           {/* ── Clickable meta: categories, cuisine, tags ── */}
           {(dish.categories?.length > 0 || dish.cuisine || dish.tags?.length > 0) && (
-            <div className="pt-5 pb-2 flex flex-wrap gap-2">
+            <div className="py-5 flex flex-wrap gap-2">
               {dish.categories?.map(cat => (
                 <button
                   key={cat}
@@ -448,7 +454,7 @@ export default function DishDetailPage() {
           )}
 
           {comments !== null && (
-            <div className="pt-6">
+            <div className="py-6">
               <CommentsSection
                 comments={comments}
                 setComments={setComments}

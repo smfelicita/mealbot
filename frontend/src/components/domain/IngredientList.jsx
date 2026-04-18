@@ -18,12 +18,12 @@ export default function IngredientList({ ingredients }) {
   const token  = useStore(s => s.token)
 
   const fridgeIds = new Set(fridge.map(f => f.ingredientId))
-  const showFridgeToggle = Boolean(token && fridge.length > 0)
+  const showFridgeToggle = Boolean(token)
 
   if (!ingredients?.length) return null
 
   return (
-    <div className="mb-8">
+    <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-[17px] font-semibold text-text">Ингредиенты</h2>
