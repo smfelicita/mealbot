@@ -11,6 +11,7 @@ import {
   DishCard,
 } from '../components/domain'
 import AddToPlanModal from '../components/domain/AddToPlanModal'
+import { CAT_RU } from '../components/domain/dishCategories'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const IcoBack   = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -421,7 +422,7 @@ export default function DishDetailPage() {
                   onClick={() => navigate(`/dishes?category=${cat}`)}
                   className="text-xs text-text-2 bg-white rounded-full px-3 py-1.5 border border-border/60 active:bg-bg-2"
                 >
-                  {cat}
+                  {CAT_RU[cat] || cat}
                 </button>
               ))}
               {dish.cuisine && (
