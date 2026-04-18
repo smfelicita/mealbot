@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useStore } from '../store'
@@ -22,6 +22,99 @@ const IcoCopy   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 const IcoDelete = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
 const IcoChevron = ({ open }) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d={open ? 'M18 15l-6-6-6 6' : 'M6 9l6 6 6-6'}/></svg>
 const IcoShare   = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+
+// ─── ImageSlider ─────────────────────────────────────────────────────────────
+function ImageSlider({ images, onImageClick }) {
+  const scrollRef = useRef(null)
+  const timerRef  = useRef(null)
+  const items = images.length > 1 ? [images[images.length - 1], ...images, images[0]] : images
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el && images.length > 1) el.scrollLeft = el.offsetWidth
+  }, [])
+
+  function handleScroll() {
+    if (images.length <= 1) return
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      const el = scrollRef.current
+      if (!el) return
+      const w = el.offsetWidth
+      const pos = Math.round(el.scrollLeft / w)
+      if (pos === 0) el.scrollTo({ left: images.length * w, behavior: 'instant' })
+      if (pos === images.length + 1) el.scrollTo({ left: w, behavior: 'instant' })
+    }, 50)
+  }
+
+  return (
+    <div
+      ref={scrollRef}
+      onScroll={handleScroll}
+      onClick={onImageClick}
+      className="w-full h-full flex overflow-x-auto scrollbar-hide cursor-pointer"
+      style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
+    >
+      {items.map((url, i) => (
+        <div key={i} className="w-full h-full shrink-0" style={{ scrollSnapAlign: 'start' }}>
+          <img src={url} alt="" className="w-full h-full object-cover" draggable={false} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── ImageGallery (fullscreen lightbox) ───────────────────────────────────────
+function ImageGallery({ images, onClose }) {
+  const scrollRef = useRef(null)
+  const timerRef  = useRef(null)
+  const items = images.length > 1 ? [images[images.length - 1], ...images, images[0]] : images
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el && images.length > 1) el.scrollLeft = el.offsetWidth
+  }, [])
+
+  function handleScroll() {
+    if (images.length <= 1) return
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      const el = scrollRef.current
+      if (!el) return
+      const w = el.offsetWidth
+      const pos = Math.round(el.scrollLeft / w)
+      if (pos === 0) el.scrollTo({ left: images.length * w, behavior: 'instant' })
+      if (pos === images.length + 1) el.scrollTo({ left: w, behavior: 'instant' })
+    }, 50)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[500] bg-black flex flex-col" onClick={onClose}>
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-12 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        onClick={e => e.stopPropagation()}
+        className="flex-1 flex overflow-x-auto scrollbar-hide"
+        style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
+      >
+        {items.map((url, i) => (
+          <div key={i} className="w-full h-full shrink-0 flex items-center justify-center" style={{ scrollSnapAlign: 'start' }}>
+            <img src={url} alt="" className="max-w-full max-h-full object-contain" draggable={false} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // ─── NutritionBlock ───────────────────────────────────────────────────────────
 function NutritionBlock({ nutrition }) {
@@ -122,7 +215,7 @@ export default function DishDetailPage() {
   const [dish, setDish]               = useState(null)
   const [loading, setLoading]         = useState(true)
   const [loadError, setLoadError]     = useState(null)
-  const [activeImage, setActiveImage] = useState(null)
+  const [showGallery, setShowGallery] = useState(false)
   const [recs, setRecs]               = useState(null)
   const [showPlanModal, setShowPlanModal]   = useState(false)
   const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
@@ -199,7 +292,6 @@ export default function DishDetailPage() {
 
   const isOwner    = user && dish.authorId === user.id
   const dishImages = dish.images?.length ? dish.images : (dish.imageUrl ? [dish.imageUrl] : [])
-  const displayImage = activeImage || dishImages[0] || null
 
   return (
     <div className="fixed inset-0 z-[150] flex flex-col bg-bg">
@@ -208,14 +300,14 @@ export default function DishDetailPage() {
       <div className="flex-1 overflow-y-auto pb-[72px]">
 
         {/* ── Hero image or plain header ── */}
-        {displayImage ? (
+        {dishImages.length > 0 ? (
           <div className="relative">
-            <div className="relative h-64 overflow-hidden">
-              <img src={displayImage} alt={dish.name} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+            <div className="relative h-[250px] overflow-hidden">
+              <ImageSlider images={dishImages} onImageClick={() => setShowGallery(true)} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
 
               {/* Top action row over image */}
-              <div className="absolute top-0 left-0 right-0 flex items-center gap-2 px-4 pt-12 pb-3">
+              <div className="absolute top-0 left-0 right-0 flex items-center gap-2 px-4 pt-12 pb-3" onClick={e => e.stopPropagation()}>
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
@@ -252,29 +344,10 @@ export default function DishDetailPage() {
               </div>
 
               {/* Title over image */}
-              <div className="absolute bottom-4 left-4 right-4">
+              <div className="absolute bottom-4 left-4 right-4 pointer-events-none">
                 <h1 className="text-[22px] font-bold text-white leading-tight">{dish.name}</h1>
               </div>
             </div>
-
-            {/* Thumbnail strip */}
-            {dishImages.length > 1 && (
-              <div className="flex gap-2 px-4 py-3 overflow-x-auto bg-white border-b border-border">
-                {dishImages.map(url => (
-                  <button
-                    key={url}
-                    type="button"
-                    onClick={() => setActiveImage(url)}
-                    className={[
-                      'shrink-0 w-14 h-14 rounded-xl overflow-hidden',
-                      (activeImage || dishImages[0]) === url ? 'ring-2 ring-accent' : 'ring-1 ring-border',
-                    ].join(' ')}
-                  >
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         ) : (
           /* No image — own top bar */
@@ -323,32 +396,55 @@ export default function DishDetailPage() {
         )}
 
         {/* ── Description (if had hero image) ── */}
-        {displayImage && dish.description && (
+        {dishImages.length > 0 && dish.description && (
           <div className="px-4 pt-4">
             <p className="text-sm text-text-2 leading-relaxed">{dish.description}</p>
           </div>
         )}
 
-        {/* ── DishMeta ── */}
+        {/* ── DishMeta (cook time) ── */}
         <DishMeta dish={dish} />
-
-        {/* ── Tags ── */}
-        {dish.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-4 pb-2">
-            {dish.tags.map(t => (
-              <span key={t}
-                className="text-xs text-text-2 bg-white rounded-full px-3 py-1 shadow-sm">
-                #{t}
-              </span>
-            ))}
-          </div>
-        )}
 
         {/* ── Content ── */}
         <div className="px-4 pt-5 flex flex-col divide-y divide-border/60">
           <div className="pb-2"><IngredientList ingredients={dish.ingredients} /></div>
           <div className="pt-6 pb-2"><DishSteps recipe={dish.recipe} /></div>
           <div className="pt-6 pb-2"><NutritionBlock nutrition={dish.nutrition} /></div>
+
+          {/* ── Clickable meta: categories, cuisine, tags ── */}
+          {(dish.categories?.length > 0 || dish.cuisine || dish.tags?.length > 0) && (
+            <div className="pt-5 pb-2 flex flex-wrap gap-2">
+              {dish.categories?.map(cat => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => navigate(`/dishes?category=${cat}`)}
+                  className="text-xs text-text-2 bg-white rounded-full px-3 py-1.5 border border-border/60 active:bg-bg-2"
+                >
+                  {cat}
+                </button>
+              ))}
+              {dish.cuisine && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/dishes?cuisine=${encodeURIComponent(dish.cuisine)}`)}
+                  className="text-xs text-text-2 bg-white rounded-full px-3 py-1.5 border border-border/60 active:bg-bg-2"
+                >
+                  {dish.cuisine}
+                </button>
+              )}
+              {dish.tags?.map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => navigate(`/dishes?tag=${encodeURIComponent(t)}`)}
+                  className="text-xs text-text-2 bg-white rounded-full px-3 py-1.5 border border-border/60 active:bg-bg-2"
+                >
+                  #{t}
+                </button>
+              ))}
+            </div>
+          )}
 
           {comments !== null && (
             <div className="pt-6">
@@ -404,6 +500,10 @@ export default function DishDetailPage() {
       </div>
 
       {/* ── Modals ── */}
+      {showGallery && dishImages.length > 0 && (
+        <ImageGallery images={dishImages} onClose={() => setShowGallery(false)} />
+      )}
+
       {showMenu && (
         <ActionsMenu
           onClose={() => setShowMenu(false)}
