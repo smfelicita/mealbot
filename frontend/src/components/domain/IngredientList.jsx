@@ -18,7 +18,7 @@ export default function IngredientList({ ingredients }) {
   const token  = useStore(s => s.token)
 
   const fridgeIds = new Set(fridge.map(f => f.ingredientId))
-  const showFridgeToggle = Boolean(token)
+  const showFridgeToggle = Boolean(token && fridge.length > 0)
 
   if (!ingredients?.length) return null
 
