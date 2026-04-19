@@ -81,7 +81,8 @@ router.get('/', authMiddleware, async (req, res) => {
 // POST /api/meal-plans — добавить блюдо в план
 router.post('/', authMiddleware, validate(mealPlanCreate), async (req, res) => {
   try {
-    const { dishId, mealType = 'ANYTIME', date, note, shared = false } = req.body
+    const { dishId, date, note, shared = false } = req.body
+    const mealType = 'ANYTIME'
     if (!dishId) return res.status(400).json({ error: 'dishId обязателен' })
 
     const dish = await prisma.dish.findUnique({ where: { id: dishId }, select: { id: true, nameRu: true } })
