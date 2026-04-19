@@ -15,7 +15,8 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
     e.preventDefault()
     setLoading(true)
     try {
-      await api.addMealPlan({ dishId: dish.id, mealType, date: date || null, note: note || null, shared })
+      const dateIso = date ? new Date(date + 'T00:00:00').toISOString() : null
+      await api.addMealPlan({ dishId: dish.id, mealType, date: dateIso, note: note || null, shared })
       onAdded?.()
       onClose()
     } catch (err) {
