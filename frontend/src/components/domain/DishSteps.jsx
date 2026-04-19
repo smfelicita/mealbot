@@ -1,4 +1,4 @@
-import SectionTitle from '../ui/SectionTitle'
+import { useState } from 'react'
 import Card from '../ui/Card'
 
 function renderInline(text) {
@@ -57,14 +57,20 @@ function parseMarkdown(text) {
 }
 
 export default function DishSteps({ recipe }) {
+  const [visible, setVisible] = useState(true)
   if (!recipe) return null
 
   const nodes = parseMarkdown(recipe)
 
   return (
-    <div className="mb-0">
-      <SectionTitle>Приготовление</SectionTitle>
-      <Card>
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[17px] font-semibold text-text">Приготовление</h2>
+        <button type="button" onClick={() => setVisible(v => !v)} className="text-[13px] text-text-3 focus:outline-none">
+          {visible ? 'Скрыть' : 'Показать'}
+        </button>
+      </div>
+      {visible && <Card>
         <div className="p-4 flex flex-col gap-3">
           {nodes.map((node, idx) => {
             if (node.type === 'ol') {
@@ -112,7 +118,7 @@ export default function DishSteps({ recipe }) {
             )
           })}
         </div>
-      </Card>
+      </Card>}
     </div>
   )
 }
