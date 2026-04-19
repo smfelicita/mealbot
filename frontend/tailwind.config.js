@@ -31,7 +31,7 @@ export default {
       },
       fontFamily: {
         sans:  ['Nunito', 'system-ui', 'sans-serif'],
-        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+        serif: ['Nunito', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         '2xs': ['10px', { lineHeight: '1.3' }],
