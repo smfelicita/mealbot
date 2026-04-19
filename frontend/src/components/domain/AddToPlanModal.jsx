@@ -2,6 +2,20 @@ import { useState } from 'react'
 import { api } from '../../api'
 import { Modal, Button, Chip, useToast } from '../ui'
 import { PLAN_MEAL_TYPES } from '../../constants'
+import { CAT_EMOJI } from './dishCategories'
+
+const SUPABASE_IMG = 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images'
+
+function getDishImg(dish) {
+  const cat = dish.categories?.[0] ?? dish.category
+  const uploaded = dish.images?.[0] || dish.imageUrl
+  return uploaded || (cat ? `${SUPABASE_IMG}/${cat.toLowerCase()}.jpg` : null)
+}
+
+function getDishEmoji(dish) {
+  const cat = dish.categories?.[0] ?? dish.category
+  return CAT_EMOJI[cat] || '🍽️'
+}
 
 export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded }) {
   const { show, Toast } = useToast()
@@ -25,15 +39,16 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
     }
   }
 
-  const img = dish.images?.[0] || dish.imageUrl
+  const img   = getDishImg(dish)
+  const emoji = getDishEmoji(dish)
 
   return (
-    <Modal onClose={onClose} title="📅 Буду готовить">
+    <Modal onClose={onClose} title="Буду готовить">
       <div className="flex items-center gap-3 bg-bg-3 rounded-sm px-3 py-2.5 mb-5">
         <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-bg-2 flex items-center justify-center text-xl">
           {img
             ? <img src={img} alt="" className="w-full h-full object-cover" />
-            : '🍽'
+            : <span>{emoji}</span>
           }
         </div>
         <strong className="text-[15px]">{dish.nameRu || dish.name}</strong>
