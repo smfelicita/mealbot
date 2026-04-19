@@ -30,8 +30,8 @@ export default {
         full:    '9999px',
       },
       fontFamily: {
-        sans:  ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Georgia', 'serif'],
+        sans:  ['Nunito', 'system-ui', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
       },
       fontSize: {
         '2xs': ['10px', { lineHeight: '1.3' }],
