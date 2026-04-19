@@ -37,7 +37,7 @@ function GuestMealPlanBlock() {
   const navigate = useNavigate()
   return (
     <div className="px-4 pt-5 pb-24">
-      <h1 className="font-serif text-[22px] font-extrabold mb-5">📅 Буду готовить</h1>
+      <h1 className="font-serif text-[22px] font-extrabold mb-5">Буду готовить</h1>
       <EmptyState
         icon="📅"
         title="Планируй меню заранее"
@@ -102,13 +102,13 @@ export default function MealPlanPage() {
 
   return (
     <div className="px-4 pt-5 pb-24 fade-in">
-      <h1 className="font-serif text-[22px] font-extrabold mb-5">📅 Буду готовить</h1>
+      <h1 className="font-serif text-[22px] font-extrabold mb-5">Буду готовить</h1>
 
       {plans.length === 0 ? (
         <EmptyState
           icon="📋"
           title="Список пуст"
-          description="Добавляй блюда в план прямо из карточки рецепта — кнопка 📅 Буду готовить"
+          description="Добавляй блюда в план прямо из карточки рецепта — кнопка Буду готовить"
           action={
             <Button onClick={() => navigate('/dishes')}>Посмотреть блюда</Button>
           }
