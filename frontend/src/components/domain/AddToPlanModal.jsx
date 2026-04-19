@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { api } from '../../api'
-import { Modal, Button, Chip, useToast } from '../ui'
-import { PLAN_MEAL_TYPES } from '../../constants'
+import { Modal, Button, useToast } from '../ui'
 import { CAT_EMOJI } from './dishCategories'
 
 const SUPABASE_IMG = 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images'
@@ -19,7 +18,6 @@ function getDishEmoji(dish) {
 
 export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded }) {
   const { show, Toast } = useToast()
-  const [mealType, setMealType] = useState('ANYTIME')
   const [date, setDate]         = useState('')
   const [note, setNote]         = useState('')
   const [shared, setShared]     = useState(false)
@@ -30,7 +28,7 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
     setLoading(true)
     try {
       const dateIso = date ? new Date(date + 'T00:00:00').toISOString() : null
-      await api.addMealPlan({ dishId: dish.id, mealType, date: dateIso, note: note || null, shared })
+      await api.addMealPlan({ dishId: dish.id, mealType: 'ANYTIME', date: dateIso, note: note || null, shared })
       onAdded?.()
       onClose()
     } catch (err) {
@@ -55,17 +53,6 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <p className="text-xs font-bold text-text-2 uppercase tracking-widest mb-2">Приём пищи</p>
-          <div className="flex flex-wrap gap-1.5">
-            {PLAN_MEAL_TYPES.map(t => (
-              <Chip key={t.value} active={mealType === t.value} onClick={() => setMealType(t.value)}>
-                {t.label}
-              </Chip>
-            ))}
-          </div>
-        </div>
-
         <div>
           <p className="text-xs font-bold text-text-2 uppercase tracking-widest mb-2">Дата (необязательно)</p>
           <input
