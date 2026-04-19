@@ -323,7 +323,7 @@ export default function DishesPage() {
           <button
             type="button"
             onClick={() => setShowBulkAdd(true)}
-            className="text-[13px] font-medium text-text-2 hover:text-text transition-colors self-start"
+            className="text-[13px] font-bold text-accent hover:text-accent/80 transition-colors self-start"
           >
             Добавить несколько блюд →
           </button>
