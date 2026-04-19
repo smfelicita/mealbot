@@ -333,7 +333,7 @@ export default function DishDetailPage() {
                     type="button"
                     onClick={toggleFav}
                     className={['w-9 h-9 flex items-center justify-center rounded-full transition-colors',
-                      isFav ? 'bg-accent text-white' : 'bg-black/40 text-white',
+                      isFav ? 'bg-sage text-white' : 'bg-black/40 text-white',
                     ].join(' ')}
                   >
                     <IcoHeart filled={isFav} />
@@ -378,7 +378,7 @@ export default function DishDetailPage() {
                   type="button"
                   onClick={toggleFav}
                   className={['w-9 h-9 flex items-center justify-center rounded-full transition-colors shadow-sm',
-                    isFav ? 'bg-accent text-white' : 'bg-white text-text-2',
+                    isFav ? 'bg-sage text-white' : 'bg-white text-text-2',
                   ].join(' ')}
                 >
                   <IcoHeart filled={isFav} />
@@ -516,10 +516,9 @@ export default function DishDetailPage() {
       <button
         type="button"
         onClick={() => setShowPlanModal(true)}
-        className="fixed bottom-6 right-4 z-[140] flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-accent text-white text-[15px] font-semibold shadow-lg active:opacity-90 transition-opacity"
+        className="fixed bottom-6 right-4 z-[140] w-14 h-14 rounded-full bg-sage text-white flex items-center justify-center shadow-lg active:opacity-90 transition-opacity"
       >
         <IcoPlan />
-        Буду готовить
       </button>
 
       {/* ── Modals ── */}
