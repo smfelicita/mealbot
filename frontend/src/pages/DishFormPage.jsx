@@ -349,32 +349,7 @@ export default function DishFormPage() {
           )}
         </div>
 
-        {/* Кухня — extended only */}
-        {mode === 'extended' && (
-          <div className="relative">
-            <TextInput
-              label="Кухня"
-              placeholder="Итальянская, Русская..."
-              value={cuisineInput}
-              onChange={e => { setCuisineInput(e.target.value); setShowCuisineSuggest(true) }}
-              onFocus={() => setShowCuisineSuggest(true)}
-              onBlur={() => setTimeout(() => setShowCuisineSuggest(false), 150)}
-            />
-            {showCuisineSuggest && cuisineSuggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 z-50 bg-bg-2 border border-border rounded-sm overflow-hidden mt-0.5">
-                {cuisineSuggestions.map(c => (
-                  <div
-                    key={c}
-                    className="px-3.5 py-2.5 text-sm border-b border-border last:border-0 cursor-pointer hover:bg-bg-3"
-                    onMouseDown={() => { setCuisineInput(c); setShowCuisineSuggest(false) }}
-                  >
-                    {c}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Кухня — временно отключена */}
 
         {/* Время приёма пищи */}
         <div>
@@ -393,29 +368,16 @@ export default function DishFormPage() {
           {errors.mealTime && <p className="text-red-400 text-xs mt-1.5">{errors.mealTime}</p>}
         </div>
 
-        {/* Сложность + Время — extended only */}
+        {/* Сложность — временно отключена. Время — extended only */}
         {mode === 'extended' && (
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Сложность</Label>
-              <select
-                className="w-full bg-bg-3 border border-border rounded-sm text-text text-[15px] px-3.5 py-2.5 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-                value={form.difficulty}
-                onChange={e => setField('difficulty', e.target.value)}
-              >
-                <option value="">—</option>
-                {DIFFICULTIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-              </select>
-            </div>
-            <TextInput
-              label="Время (мин)"
-              type="number"
-              placeholder="30"
-              min="1"
-              value={form.cookTime}
-              onChange={e => setField('cookTime', e.target.value)}
-            />
-          </div>
+          <TextInput
+            label="Время (мин)"
+            type="number"
+            placeholder="30"
+            min="1"
+            value={form.cookTime}
+            onChange={e => setField('cookTime', e.target.value)}
+          />
         )}
 
         {/* Теги — extended only */}

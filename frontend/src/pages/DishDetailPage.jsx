@@ -417,7 +417,7 @@ export default function DishDetailPage() {
           <div className="py-6"><NutritionBlock nutrition={dish.nutrition} /></div>
 
           {/* ── Clickable meta: categories, cuisine, tags ── */}
-          {(dish.categories?.length > 0 || dish.cuisine || dish.tags?.length > 0) && (
+          {(dish.categories?.length > 0 || dish.tags?.length > 0) && (
             <div className="py-5 flex flex-wrap gap-2">
               {dish.categories?.map(cat => (
                 <button
@@ -429,15 +429,6 @@ export default function DishDetailPage() {
                   {CAT_RU[cat] || cat}
                 </button>
               ))}
-              {dish.cuisine && (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/dishes?cuisine=${encodeURIComponent(dish.cuisine)}`)}
-                  className="text-xs text-text-2 bg-white rounded-full px-3 py-1.5 border border-border/60 active:bg-bg-2"
-                >
-                  {dish.cuisine}
-                </button>
-              )}
               {dish.tags?.map(t => (
                 <button
                   key={t}
