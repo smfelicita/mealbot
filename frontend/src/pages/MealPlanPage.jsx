@@ -10,7 +10,7 @@ const MEAL_RU = {
   LUNCH:     'Обед',
   DINNER:    'Ужин',
   SNACK:     'Перекус',
-  ANYTIME:   'Без привязки',
+  ANYTIME:   null,
 }
 
 const MEAL_ORDER = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'ANYTIME']
@@ -133,7 +133,7 @@ export default function MealPlanPage() {
             {/* Meal groups */}
             {MEAL_ORDER.filter(mt => byMeal[mt]).map(mt => (
               <div key={mt} className="mb-4">
-                <p className="text-[13px] font-bold text-text mb-2">{MEAL_RU[mt]}</p>
+                {MEAL_RU[mt] && <p className="text-[13px] font-bold text-text mb-2">{MEAL_RU[mt]}</p>}
                 <div className="flex flex-col gap-2">
                   {byMeal[mt].map(plan => (
                     <PlanItem
