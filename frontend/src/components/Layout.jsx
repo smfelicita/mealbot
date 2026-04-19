@@ -147,7 +147,7 @@ export default function Layout() {
         {/* Logo + name */}
         <button type="button" onClick={() => navigate('/')}
           className="flex items-center gap-2 focus:outline-none">
-          <img src="/favicon.svg" alt="" width="28" height="28" className="rounded-[6px]" />
+          <img src="/favicon.png" alt="" width="28" height="28" className="rounded-[6px]" />
           <span className="font-bold text-[16px] text-text tracking-[-0.2px]">Моя кухня</span>
         </button>
 
