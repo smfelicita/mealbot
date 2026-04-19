@@ -78,7 +78,7 @@ export default function DishSteps({ recipe }) {
                 <ol key={idx} className="flex flex-col gap-3">
                   {node.items.map(item => (
                     <li key={item.num} className="flex items-start gap-3">
-                      <span className="shrink-0 w-6 h-6 rounded-full bg-sage/15 text-sage text-xs font-bold flex items-center justify-center mt-0.5">
+                      <span className="shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center mt-0.5">
                         {item.num}
                       </span>
                       <span className="text-[15px] text-text leading-snug flex-1">
