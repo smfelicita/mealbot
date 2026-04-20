@@ -43,7 +43,7 @@ async function buildMyKitchenFilter(userId) {
 
 // Строит фильтр видимости с учётом групп и DishVisibility
 async function buildVisibilityFilter(userId) {
-  if (!userId) return { OR: [{ visibility: 'PUBLIC' }] }
+  if (!userId) return { OR: [{ visibility: 'PUBLIC', status: 'APPROVED' }] }
 
   // Один запрос: всё членство с типом группы
   const memberships = await prisma.groupMember.findMany({
@@ -69,7 +69,7 @@ async function buildVisibilityFilter(userId) {
 
   return {
     OR: [
-      { visibility: 'PUBLIC' },
+      { visibility: 'PUBLIC', status: 'APPROVED' },
       { authorId: userId },
       ...(familyGroupIds.length ? [{ visibility: 'FAMILY', groupId: { in: familyGroupIds } }] : []),
       ...allGroupsCondition,
@@ -79,7 +79,7 @@ async function buildVisibilityFilter(userId) {
 
 // Проверка доступа к блюду по visibility — возвращает true если доступ разрешён
 async function checkDishAccess(dish, userId) {
-  if (dish.visibility === 'PUBLIC') return true
+  if (dish.visibility === 'PUBLIC' && dish.status === 'APPROVED') return true
   if (dish.authorId === userId) return true
   const groupIds = await getMemberGroupIds(userId)
   if (dish.visibility === 'FAMILY' && dish.groupId) {
@@ -280,6 +280,8 @@ router.post('/', auth, validate(dishCreate), async (req, res, next) => {
       resolvedGroupId = (await getFamilyGroupIds(req.userId))[0] || null
     }
 
+    const status = (visibility === 'PUBLIC' && req.userRole !== 'ADMIN') ? 'PENDING' : 'APPROVED'
+
     const dish = await prisma.dish.create({
       data: {
         name: nameRu.trim(),
@@ -297,6 +299,7 @@ router.post('/', auth, validate(dishCreate), async (req, res, next) => {
         videoUrl: videoUrl || null,
         recipe: recipe || null,
         visibility,
+        status,
         authorId: req.userId,
         groupId: resolvedGroupId,
         ...(ingredients?.length ? {
@@ -386,12 +389,18 @@ router.put('/:id', auth, validate(dishUpdate), async (req, res, next) => {
       recipe, ingredients, visibility,
     } = req.body
 
-    // Если меняется visibility — пересчитываем groupId
+    // Если меняется visibility — пересчитываем groupId и status
     let resolvedGroupId = undefined
+    let resolvedStatus = undefined
     if (visibility !== undefined) {
       resolvedGroupId = visibility === 'FAMILY'
         ? ((await getFamilyGroupIds(req.userId))[0] || null)
         : null
+      if (visibility === 'PUBLIC' && req.userRole !== 'ADMIN') {
+        resolvedStatus = 'PENDING'
+      } else if (visibility !== 'PUBLIC') {
+        resolvedStatus = 'APPROVED'
+      }
     }
 
     if (ingredients !== undefined) {
@@ -415,6 +424,7 @@ router.put('/:id', auth, validate(dishUpdate), async (req, res, next) => {
         ...(videoUrl !== undefined && { videoUrl: videoUrl || null }),
         ...(recipe !== undefined && { recipe: recipe || null }),
         ...(visibility !== undefined && { visibility }),
+        ...(resolvedStatus !== undefined && { status: resolvedStatus }),
         ...(resolvedGroupId !== undefined && { groupId: resolvedGroupId }),
         ...(ingredients?.length ? {
           ingredients: {

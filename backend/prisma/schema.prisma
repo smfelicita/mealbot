@@ -36,6 +36,12 @@ enum DishVisibility {
   ALL_GROUPS
 }
 
+enum DishStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum MealCategory {
   SOUP
   SALAD
@@ -180,6 +186,7 @@ model Dish {
 
   // Видимость
   visibility DishVisibility @default(PRIVATE)
+  status     DishStatus     @default(APPROVED)
 
   // Группа: к какой группе принадлежит рецепт
   groupId String?
