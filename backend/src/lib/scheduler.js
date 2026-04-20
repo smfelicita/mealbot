@@ -114,7 +114,7 @@ async function tryDailySuggest(user, now, tz) {
         ...(familyMembership ? [{ visibility: 'FAMILY', groupId: familyMembership.groupId }] : []),
       ],
     },
-    select: { nameRu: true },
+    select: { name: true },
   })
   if (myDishes.length < 5) return false
 
