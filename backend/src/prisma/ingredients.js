@@ -20,6 +20,18 @@ const ingredients = [
   { name: 'condensed_milk',   nameRu: 'Сгущённое молоко',     category: 'dairy',     protein: 7.2,  fat: 8.5,  carbs: 55.5, defaultQuantity: 400, defaultUnit: 'г'    },
   { name: 'ryazhenka',        nameRu: 'Ряженка',              category: 'dairy',     protein: 2.8,  fat: 4.0,  carbs: 4.2,  defaultQuantity: 1,   defaultUnit: 'л'    },
   { name: 'processed_cheese', nameRu: 'Плавленый сыр',        category: 'dairy',     protein: 16.0, fat: 19.0, carbs: 3.5,  defaultQuantity: 90,  defaultUnit: 'г'    },
+  { name: 'mascarpone',       nameRu: 'Маскарпоне',           category: 'dairy',     protein: 4.0,  fat: 42.0, carbs: 4.0,  defaultQuantity: 250, defaultUnit: 'г'    },
+  { name: 'bryndza',          nameRu: 'Брынза',               category: 'dairy',     protein: 17.9, fat: 20.1, carbs: 0.0,  defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'adygei_cheese',    nameRu: 'Адыгейский сыр',       category: 'dairy',     protein: 18.5, fat: 14.0, carbs: 0.0,  defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'suluguni',         nameRu: 'Сулугуни',             category: 'dairy',     protein: 20.0, fat: 22.0, carbs: 0.0,  defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'ricotta',          nameRu: 'Рикотта',              category: 'dairy',     protein: 11.0, fat: 13.0, carbs: 3.0,  defaultQuantity: 250, defaultUnit: 'г'    },
+  { name: 'camembert',        nameRu: 'Камамбер',             category: 'dairy',     protein: 19.8, fat: 24.3, carbs: 0.1,  defaultQuantity: 125, defaultUnit: 'г'    },
+  { name: 'brie',             nameRu: 'Бри',                  category: 'dairy',     protein: 20.0, fat: 28.0, carbs: 0.5,  defaultQuantity: 125, defaultUnit: 'г'    },
+  { name: 'goat_cheese',      nameRu: 'Козий сыр',            category: 'dairy',     protein: 21.6, fat: 21.0, carbs: 0.0,  defaultQuantity: 150, defaultUnit: 'г'    },
+  { name: 'prostokvasha',     nameRu: 'Простокваша',          category: 'dairy',     protein: 2.7,  fat: 3.2,  carbs: 4.1,  defaultQuantity: 500, defaultUnit: 'мл'   },
+  { name: 'coconut_milk',     nameRu: 'Кокосовое молоко',     category: 'dairy',     protein: 2.3,  fat: 24.0, carbs: 6.0,  defaultQuantity: 400, defaultUnit: 'мл'   },
+  { name: 'almond_milk',      nameRu: 'Миндальное молоко',    category: 'dairy',     protein: 0.4,  fat: 1.1,  carbs: 0.7,  defaultQuantity: 1,   defaultUnit: 'л'    },
+  { name: 'oat_milk',         nameRu: 'Овсяное молоко',       category: 'dairy',     protein: 0.5,  fat: 1.5,  carbs: 7.0,  defaultQuantity: 1,   defaultUnit: 'л'    },
 
   // --- МЯСО ---
   { name: 'chicken_breast',   nameRu: 'Куриная грудка',       category: 'meat',      protein: 23.0, fat: 1.8,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
@@ -37,6 +49,16 @@ const ingredients = [
   { name: 'sausage',          nameRu: 'Колбаса',              category: 'meat',      protein: 14.0, fat: 32.0, carbs: 2.0,  defaultQuantity: 500, defaultUnit: 'г'    },
   { name: 'ham',              nameRu: 'Ветчина',              category: 'meat',      protein: 22.0, fat: 14.0, carbs: 0.0,  defaultQuantity: 300, defaultUnit: 'г'    },
   { name: 'pork_ribs',        nameRu: 'Свиные рёбра',         category: 'meat',      protein: 20.0, fat: 25.0, carbs: 0.0,  defaultQuantity: 1,   defaultUnit: 'кг'   },
+  { name: 'chicken_fillet',   nameRu: 'Куриное филе',         category: 'meat',      protein: 23.0, fat: 1.8,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'chicken_liver',    nameRu: 'Куриная печень',       category: 'meat',      protein: 20.4, fat: 5.9,  carbs: 0.7,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'chicken_drumstick',nameRu: 'Куриные голени',       category: 'meat',      protein: 20.0, fat: 9.0,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'duck',             nameRu: 'Утка',                 category: 'meat',      protein: 16.0, fat: 38.0, carbs: 0.0,  defaultQuantity: 1,   defaultUnit: 'кг'   },
+  { name: 'rabbit',           nameRu: 'Кролик',               category: 'meat',      protein: 21.0, fat: 11.0, carbs: 0.0,  defaultQuantity: 1,   defaultUnit: 'кг'   },
+  { name: 'veal',             nameRu: 'Телятина',             category: 'meat',      protein: 20.0, fat: 2.0,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'beef_liver',       nameRu: 'Говяжья печень',       category: 'meat',      protein: 17.9, fat: 3.7,  carbs: 5.3,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'pork_tenderloin',  nameRu: 'Свиная вырезка',       category: 'meat',      protein: 22.0, fat: 6.0,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'sausages',         nameRu: 'Сосиски',              category: 'meat',      protein: 11.0, fat: 28.0, carbs: 1.0,  defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'hunting_sausages', nameRu: 'Охотничьи колбаски',   category: 'meat',      protein: 16.0, fat: 32.0, carbs: 0.5,  defaultQuantity: 300, defaultUnit: 'г'    },
 
   // --- РЫБА И МОРЕПРОДУКТЫ ---
   { name: 'salmon',           nameRu: 'Лосось',               category: 'fish',      protein: 20.0, fat: 13.0, carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
@@ -51,6 +73,15 @@ const ingredients = [
   { name: 'mussels',          nameRu: 'Мидии',                category: 'fish',      protein: 11.0, fat: 2.7,  carbs: 3.3,  defaultQuantity: 300, defaultUnit: 'г'    },
   { name: 'crab_sticks',      nameRu: 'Крабовые палочки',     category: 'fish',      protein: 8.0,  fat: 1.0,  carbs: 14.0, defaultQuantity: 200, defaultUnit: 'г'    },
   { name: 'red_caviar',       nameRu: 'Красная икра',         category: 'fish',      protein: 31.0, fat: 14.0, carbs: 0.0,  defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'trout',            nameRu: 'Форель',               category: 'fish',      protein: 19.5, fat: 6.5,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'pink_salmon',      nameRu: 'Горбуша',              category: 'fish',      protein: 21.0, fat: 7.0,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'hake',             nameRu: 'Хек',                  category: 'fish',      protein: 16.6, fat: 2.2,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'halibut',          nameRu: 'Палтус',               category: 'fish',      protein: 18.9, fat: 3.0,  carbs: 0.0,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'sardine',          nameRu: 'Сардина',              category: 'fish',      protein: 19.8, fat: 10.5, carbs: 0.0,  defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'anchovy',          nameRu: 'Анчоусы',              category: 'fish',      protein: 20.0, fat: 4.8,  carbs: 0.0,  defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'peeled_shrimp',    nameRu: 'Креветки очищенные',   category: 'fish',      protein: 18.0, fat: 2.2,  carbs: 0.0,  defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'octopus',          nameRu: 'Осьминог',             category: 'fish',      protein: 18.2, fat: 2.1,  carbs: 3.7,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'seafood_mix',      nameRu: 'Морской коктейль',     category: 'fish',      protein: 15.0, fat: 2.0,  carbs: 2.0,  defaultQuantity: 300, defaultUnit: 'г'    },
 
   // --- ОВОЩИ ---
   { name: 'potato',           nameRu: 'Картофель',            category: 'vegetable', protein: 2.0,  fat: 0.1,  carbs: 17.0, avgWeightG: 150, defaultQuantity: 1,   defaultUnit: 'кг'   },
@@ -83,6 +114,16 @@ const ingredients = [
   { name: 'artichoke',        nameRu: 'Артишок',              category: 'vegetable', protein: 3.3,  fat: 0.2,  carbs: 5.1,                   defaultQuantity: 3,   defaultUnit: 'шт'   },
   { name: 'arugula',          nameRu: 'Руккола',              category: 'vegetable', protein: 2.6,  fat: 0.7,  carbs: 2.1,                   defaultQuantity: 100, defaultUnit: 'г'    },
   { name: 'chinese_cabbage',  nameRu: 'Пекинская капуста',    category: 'vegetable', protein: 1.2,  fat: 0.2,  carbs: 2.0,                   defaultQuantity: 1,   defaultUnit: 'шт'   },
+  { name: 'turnip',           nameRu: 'Репа',                 category: 'vegetable', protein: 1.5,  fat: 0.1,  carbs: 5.9,  avgWeightG: 200, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'red_onion',        nameRu: 'Красный лук',          category: 'vegetable', protein: 1.4,  fat: 0.0,  carbs: 8.2,  avgWeightG: 150, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'white_onion',      nameRu: 'Белый лук',            category: 'vegetable', protein: 1.4,  fat: 0.0,  carbs: 8.2,  avgWeightG: 150, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'brussels_sprouts', nameRu: 'Брюссельская капуста', category: 'vegetable', protein: 3.4,  fat: 0.3,  carbs: 5.2,                   defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'savoy_cabbage',    nameRu: 'Савойская капуста',    category: 'vegetable', protein: 2.0,  fat: 0.1,  carbs: 4.1,                   defaultQuantity: 1,   defaultUnit: 'шт'   },
+  { name: 'sorrel',           nameRu: 'Щавель',               category: 'vegetable', protein: 1.5,  fat: 0.3,  carbs: 2.9,                   defaultQuantity: 1,   defaultUnit: 'пучок'},
+  { name: 'hot_pepper',       nameRu: 'Острый перец',         category: 'vegetable', protein: 2.0,  fat: 0.2,  carbs: 9.5,  avgWeightG: 15,  defaultQuantity: 5,   defaultUnit: 'шт'   },
+  { name: 'jalapeno',         nameRu: 'Халапеньо',            category: 'vegetable', protein: 0.9,  fat: 0.4,  carbs: 5.9,  avgWeightG: 15,  defaultQuantity: 5,   defaultUnit: 'шт'   },
+  { name: 'pickled_cucumber', nameRu: 'Маринованные огурцы',  category: 'vegetable', protein: 0.8,  fat: 0.1,  carbs: 1.3,                   defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'daikon',           nameRu: 'Дайкон',               category: 'vegetable', protein: 0.6,  fat: 0.1,  carbs: 4.1,                   defaultQuantity: 500, defaultUnit: 'г'    },
 
   // --- ФРУКТЫ И ЯГОДЫ ---
   { name: 'apple',            nameRu: 'Яблоко',               category: 'fruit',     protein: 0.4,  fat: 0.4,  carbs: 11.0, avgWeightG: 180, defaultQuantity: 1,   defaultUnit: 'кг'   },
@@ -103,6 +144,16 @@ const ingredients = [
   { name: 'watermelon',       nameRu: 'Арбуз',                category: 'fruit',     protein: 0.6,  fat: 0.1,  carbs: 5.8,                   defaultQuantity: 1,   defaultUnit: 'шт'   },
   { name: 'pomegranate',      nameRu: 'Гранат',               category: 'fruit',     protein: 1.0,  fat: 0.5,  carbs: 14.5, avgWeightG: 300, defaultQuantity: 2,   defaultUnit: 'шт'   },
   { name: 'kiwi',             nameRu: 'Киви',                 category: 'fruit',     protein: 1.1,  fat: 0.6,  carbs: 10.3, avgWeightG: 75,  defaultQuantity: 5,   defaultUnit: 'шт'   },
+  { name: 'currant',          nameRu: 'Смородина',            category: 'fruit',     protein: 1.0,  fat: 0.2,  carbs: 7.3,                   defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'blackberry',       nameRu: 'Ежевика',              category: 'fruit',     protein: 1.5,  fat: 0.5,  carbs: 4.4,                   defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'bilberry',         nameRu: 'Голубика',             category: 'fruit',     protein: 0.7,  fat: 0.5,  carbs: 8.6,                   defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'plum',             nameRu: 'Слива',                category: 'fruit',     protein: 0.7,  fat: 0.3,  carbs: 11.3, avgWeightG: 60,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'apricot',          nameRu: 'Абрикос',              category: 'fruit',     protein: 0.9,  fat: 0.1,  carbs: 9.0,  avgWeightG: 40,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'tangerine',        nameRu: 'Мандарин',             category: 'fruit',     protein: 0.8,  fat: 0.2,  carbs: 7.5,  avgWeightG: 80,  defaultQuantity: 1,   defaultUnit: 'кг'   },
+  { name: 'grapefruit',       nameRu: 'Грейпфрут',            category: 'fruit',     protein: 0.7,  fat: 0.2,  carbs: 6.5,  avgWeightG: 300, defaultQuantity: 3,   defaultUnit: 'шт'   },
+  { name: 'persimmon',        nameRu: 'Хурма',                category: 'fruit',     protein: 0.5,  fat: 0.4,  carbs: 16.0, avgWeightG: 200, defaultQuantity: 3,   defaultUnit: 'шт'   },
+  { name: 'fig',              nameRu: 'Инжир',                category: 'fruit',     protein: 0.7,  fat: 0.2,  carbs: 12.4, avgWeightG: 50,  defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'coconut',          nameRu: 'Кокос',                category: 'fruit',     protein: 3.3,  fat: 33.5, carbs: 6.2,  avgWeightG: 400, defaultQuantity: 1,   defaultUnit: 'шт'   },
 
   // --- КРУПЫ И ЗЛАКИ ---
   { name: 'rice',             nameRu: 'Рис',                  category: 'grain',     protein: 7.0,  fat: 1.8,  carbs: 74.0, defaultQuantity: 500, defaultUnit: 'г'    },
@@ -119,6 +170,16 @@ const ingredients = [
   { name: 'bulgur',           nameRu: 'Булгур',               category: 'grain',     protein: 12.3, fat: 1.3,  carbs: 65.2, defaultQuantity: 500, defaultUnit: 'г'    },
   { name: 'cornmeal',         nameRu: 'Кукурузная крупа',     category: 'grain',     protein: 8.3,  fat: 1.2,  carbs: 71.0, defaultQuantity: 500, defaultUnit: 'г'    },
   { name: 'starch',           nameRu: 'Крахмал',              category: 'grain',     protein: 0.3,  fat: 0.0,  carbs: 85.0, defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'quinoa',           nameRu: 'Киноа',                category: 'grain',     protein: 14.1, fat: 6.1,  carbs: 57.2, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'basmati_rice',     nameRu: 'Рис басмати',          category: 'grain',     protein: 7.0,  fat: 0.6,  carbs: 78.0, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'jasmine_rice',     nameRu: 'Рис жасмин',           category: 'grain',     protein: 7.0,  fat: 0.5,  carbs: 79.0, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'noodles',          nameRu: 'Лапша',                category: 'grain',     protein: 12.0, fat: 3.5,  carbs: 68.0, defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'rice_noodles',     nameRu: 'Рисовая лапша',        category: 'grain',     protein: 3.5,  fat: 0.6,  carbs: 25.0, defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'glass_noodles',    nameRu: 'Фунчоза',              category: 'grain',     protein: 0.1,  fat: 0.0,  carbs: 83.2, defaultQuantity: 300, defaultUnit: 'г'    },
+  { name: 'barley_grits',     nameRu: 'Ячневая крупа',        category: 'grain',     protein: 10.0, fat: 1.3,  carbs: 66.3, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'spelt',            nameRu: 'Полба',                category: 'grain',     protein: 14.5, fat: 2.4,  carbs: 65.0, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'corn_flour',       nameRu: 'Кукурузная мука',      category: 'grain',     protein: 7.2,  fat: 1.5,  carbs: 72.1, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'lasagna_sheets',   nameRu: 'Листы для лазаньи',    category: 'grain',     protein: 13.0, fat: 1.5,  carbs: 72.0, defaultQuantity: 500, defaultUnit: 'г'    },
 
   // --- БОБОВЫЕ ---
   { name: 'lentils',          nameRu: 'Чечевица',             category: 'legume',    protein: 24.0, fat: 1.5,  carbs: 42.0, defaultQuantity: 500, defaultUnit: 'г'    },
@@ -127,6 +188,8 @@ const ingredients = [
   { name: 'white_beans',      nameRu: 'Белая фасоль',         category: 'legume',    protein: 21.0, fat: 1.0,  carbs: 46.0, defaultQuantity: 500, defaultUnit: 'г'    },
   { name: 'green_beans',      nameRu: 'Стручковая фасоль',    category: 'legume',    protein: 2.0,  fat: 0.2,  carbs: 3.6,  defaultQuantity: 300, defaultUnit: 'г'    },
   { name: 'split_peas',       nameRu: 'Горох колотый',        category: 'legume',    protein: 23.0, fat: 1.2,  carbs: 50.3, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'black_beans',      nameRu: 'Чёрная фасоль',        category: 'legume',    protein: 21.6, fat: 0.9,  carbs: 47.5, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'beans_in_tomato',  nameRu: 'Фасоль в томате',      category: 'legume',    protein: 5.0,  fat: 0.5,  carbs: 12.0, defaultQuantity: 400, defaultUnit: 'г'    },
 
   // --- ЯЙЦА ---
   { name: 'chicken_egg',      nameRu: 'Куриное яйцо',         category: 'egg',       protein: 12.7, fat: 11.5, carbs: 0.7,  avgWeightG: 60,  defaultQuantity: 10,  defaultUnit: 'шт'   },
@@ -141,6 +204,10 @@ const ingredients = [
   { name: 'baguette',         nameRu: 'Багет',                category: 'bread',     protein: 8.0,  fat: 1.5,  carbs: 55.0, defaultQuantity: 1,   defaultUnit: 'шт'   },
   { name: 'puff_pastry',      nameRu: 'Слоёное тесто',        category: 'bread',     protein: 7.4,  fat: 24.0, carbs: 31.0, defaultQuantity: 500, defaultUnit: 'г'    },
   { name: 'yeast_dough',      nameRu: 'Дрожжевое тесто',      category: 'bread',     protein: 7.8,  fat: 4.0,  carbs: 45.0, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'tortilla',         nameRu: 'Тортилья',             category: 'bread',     protein: 8.0,  fat: 5.0,  carbs: 50.0, defaultQuantity: 8,   defaultUnit: 'шт'   },
+  { name: 'crispbread',       nameRu: 'Хлебцы',               category: 'bread',     protein: 10.0, fat: 1.0,  carbs: 72.0, defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'shortcrust_pastry',nameRu: 'Песочное тесто',       category: 'bread',     protein: 5.5,  fat: 23.0, carbs: 46.0, defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'phyllo_dough',     nameRu: 'Тесто фило',           category: 'bread',     protein: 8.0,  fat: 1.0,  carbs: 55.0, defaultQuantity: 400, defaultUnit: 'г'    },
 
   // --- МАСЛА ---
   { name: 'sunflower_oil',    nameRu: 'Подсолнечное масло',   category: 'oil',       protein: 0.0,  fat: 99.9, carbs: 0.0,  isBasic: true, ignoreInFridgeFilter: true, defaultQuantity: 1,   defaultUnit: 'л'    },
@@ -148,6 +215,9 @@ const ingredients = [
   { name: 'vegetable_oil',    nameRu: 'Растительное масло',   category: 'oil',       protein: 0.0,  fat: 99.9, carbs: 0.0,  isBasic: true, ignoreInFridgeFilter: true, defaultQuantity: 1,   defaultUnit: 'л'    },
   { name: 'coconut_oil',      nameRu: 'Кокосовое масло',      category: 'oil',       protein: 0.0,  fat: 99.1, carbs: 0.0,  defaultQuantity: 200, defaultUnit: 'мл'   },
   { name: 'sesame_oil',       nameRu: 'Кунжутное масло',      category: 'oil',       protein: 0.0,  fat: 99.9, carbs: 0.0,  defaultQuantity: 100, defaultUnit: 'мл'   },
+  { name: 'flaxseed_oil',     nameRu: 'Льняное масло',        category: 'oil',       protein: 0.0,  fat: 99.8, carbs: 0.0,  defaultQuantity: 250, defaultUnit: 'мл'   },
+  { name: 'ghee',             nameRu: 'Масло гхи',            category: 'oil',       protein: 0.0,  fat: 99.8, carbs: 0.0,  defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'avocado_oil',      nameRu: 'Масло авокадо',        category: 'oil',       protein: 0.0,  fat: 99.6, carbs: 0.0,  defaultQuantity: 250, defaultUnit: 'мл'   },
 
   // --- СОУСЫ ---
   { name: 'soy_sauce',        nameRu: 'Соевый соус',          category: 'sauce',     protein: 6.0,  fat: 0.0,  carbs: 6.6,                        defaultQuantity: 200, defaultUnit: 'мл'   },
@@ -160,6 +230,15 @@ const ingredients = [
   { name: 'worcestershire',   nameRu: 'Вустерский соус',      category: 'sauce',     protein: 0.8,  fat: 0.0,  carbs: 20.0, defaultQuantity: 150, defaultUnit: 'мл'   },
   { name: 'teriyaki',         nameRu: 'Соус терияки',         category: 'sauce',     protein: 3.5,  fat: 0.5,  carbs: 18.0, defaultQuantity: 200, defaultUnit: 'мл'   },
   { name: 'pesto',            nameRu: 'Соус песто',           category: 'sauce',     protein: 5.4,  fat: 22.0, carbs: 6.0,  defaultQuantity: 190, defaultUnit: 'г'    },
+  { name: 'fish_sauce',       nameRu: 'Рыбный соус',          category: 'sauce',     protein: 5.0,  fat: 0.0,  carbs: 3.6,  defaultQuantity: 200, defaultUnit: 'мл'   },
+  { name: 'oyster_sauce',     nameRu: 'Устричный соус',       category: 'sauce',     protein: 1.5,  fat: 0.3,  carbs: 11.0, defaultQuantity: 200, defaultUnit: 'мл'   },
+  { name: 'tahini',           nameRu: 'Тахини',               category: 'sauce',     protein: 17.0, fat: 53.0, carbs: 12.0, defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'cheese_sauce',     nameRu: 'Сырный соус',          category: 'sauce',     protein: 5.0,  fat: 10.0, carbs: 8.0,  defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'bbq_sauce',        nameRu: 'Соус барбекю',         category: 'sauce',     protein: 1.2,  fat: 0.2,  carbs: 24.0, defaultQuantity: 350, defaultUnit: 'мл'   },
+  { name: 'narsharab',        nameRu: 'Наршараб',             category: 'sauce',     protein: 1.0,  fat: 0.2,  carbs: 55.0, defaultQuantity: 200, defaultUnit: 'мл'   },
+  { name: 'adjika',           nameRu: 'Аджика',               category: 'sauce',     protein: 2.5,  fat: 5.0,  carbs: 7.5,  defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'horseradish',      nameRu: 'Хрен',                 category: 'sauce',     protein: 3.2,  fat: 0.4,  carbs: 10.5, defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'balsamic_sauce',   nameRu: 'Бальзамический соус',  category: 'sauce',     protein: 0.5,  fat: 0.0,  carbs: 28.0, defaultQuantity: 250, defaultUnit: 'мл'   },
 
   // --- СПЕЦИИ (defaultQuantity/defaultUnit не задаём — "по вкусу") ---
   // ignoreInFridgeFilter: true — специи не учитываются при фильтрации холодильника
@@ -181,6 +260,12 @@ const ingredients = [
   { name: 'ginger_dry',       nameRu: 'Имбирь сухой',         category: 'spice',     protein: 8.7,  fat: 4.2,  carbs: 71.0,                 ignoreInFridgeFilter: true },
   { name: 'vanilla',          nameRu: 'Ванилин',              category: 'spice',     protein: 0.1,  fat: 0.1,  carbs: 12.6,                 ignoreInFridgeFilter: true },
   { name: 'hops_suneli',      nameRu: 'Хмели-сунели',         category: 'spice',     protein: 10.0, fat: 6.0,  carbs: 50.0,                 ignoreInFridgeFilter: true },
+  { name: 'garlic_powder',    nameRu: 'Чесночный порошок',    category: 'spice',     protein: 16.6, fat: 0.7,  carbs: 72.7,                 ignoreInFridgeFilter: true },
+  { name: 'white_pepper',     nameRu: 'Белый перец',          category: 'spice',     protein: 10.4, fat: 2.1,  carbs: 68.6,                 ignoreInFridgeFilter: true },
+  { name: 'cardamom',         nameRu: 'Кардамон',             category: 'spice',     protein: 10.8, fat: 6.7,  carbs: 68.5,                 ignoreInFridgeFilter: true },
+  { name: 'saffron',          nameRu: 'Шафран',               category: 'spice',     protein: 11.4, fat: 5.9,  carbs: 65.4,                 ignoreInFridgeFilter: true },
+  { name: 'fennel_seeds',     nameRu: 'Семена фенхеля',       category: 'spice',     protein: 15.8, fat: 14.9, carbs: 52.3,                 ignoreInFridgeFilter: true },
+  { name: 'sumac',            nameRu: 'Сумах',                category: 'spice',     protein: 3.4,  fat: 1.8,  carbs: 26.5,                 ignoreInFridgeFilter: true },
 
   // --- СВЕЖАЯ ЗЕЛЕНЬ ---
   { name: 'dill',             nameRu: 'Укроп',                category: 'herb',      protein: 2.5,  fat: 0.5,  carbs: 4.1,  defaultQuantity: 1,   defaultUnit: 'пучок'},
@@ -191,6 +276,7 @@ const ingredients = [
   { name: 'rosemary',         nameRu: 'Розмарин',             category: 'herb',      protein: 3.3,  fat: 5.9,  carbs: 20.7, defaultQuantity: 1,   defaultUnit: 'пучок'},
   { name: 'tarragon',         nameRu: 'Эстрагон',             category: 'herb',      protein: 3.7,  fat: 0.4,  carbs: 5.3,  defaultQuantity: 1,   defaultUnit: 'пучок'},
   { name: 'ginger_fresh',     nameRu: 'Имбирь свежий',        category: 'herb',      protein: 1.8,  fat: 0.8,  carbs: 15.8, defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'iceberg',          nameRu: 'Салат айсберг',        category: 'herb',      protein: 0.9,  fat: 0.1,  carbs: 2.0,                   defaultQuantity: 1,   defaultUnit: 'шт'   },
 
   // --- ОРЕХИ И СЕМЕНА ---
   { name: 'walnut',           nameRu: 'Грецкий орех',         category: 'nut',       protein: 15.2, fat: 65.2, carbs: 7.0,  defaultQuantity: 200, defaultUnit: 'г'    },
@@ -203,6 +289,12 @@ const ingredients = [
   { name: 'pumpkin_seeds',    nameRu: 'Семена тыквы',         category: 'nut',       protein: 24.5, fat: 45.8, carbs: 13.5, defaultQuantity: 100, defaultUnit: 'г'    },
   { name: 'flax_seeds',       nameRu: 'Семена льна',          category: 'nut',       protein: 18.3, fat: 42.2, carbs: 1.6,  defaultQuantity: 100, defaultUnit: 'г'    },
   { name: 'hazelnut',         nameRu: 'Фундук',               category: 'nut',       protein: 13.0, fat: 61.0, carbs: 9.4,  defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'pistachio',        nameRu: 'Фисташки',             category: 'nut',       protein: 20.6, fat: 45.8, carbs: 16.6, defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'pecan',            nameRu: 'Пекан',                category: 'nut',       protein: 9.2,  fat: 72.0, carbs: 4.3,  defaultQuantity: 150, defaultUnit: 'г'    },
+  { name: 'chia_seeds',       nameRu: 'Семена чиа',           category: 'nut',       protein: 16.5, fat: 30.7, carbs: 7.7,  defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'poppy_seeds',      nameRu: 'Мак',                  category: 'nut',       protein: 17.5, fat: 47.5, carbs: 14.0, defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'white_sesame',     nameRu: 'Кунжут белый',         category: 'nut',       protein: 17.7, fat: 48.7, carbs: 12.2, defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'black_sesame',     nameRu: 'Кунжут чёрный',        category: 'nut',       protein: 17.7, fat: 48.7, carbs: 12.2, defaultQuantity: 100, defaultUnit: 'г'    },
 
   // --- СЛАДКОЕ И ДЛЯ ВЫПЕЧКИ ---
   { name: 'sugar',            nameRu: 'Сахар',                category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 99.8, isBasic: true, ignoreInFridgeFilter: true, defaultQuantity: 1,   defaultUnit: 'кг'   },
@@ -215,6 +307,14 @@ const ingredients = [
   { name: 'vanilla_sugar',    nameRu: 'Ванильный сахар',      category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 95.0,                       defaultQuantity: 100, defaultUnit: 'г'    },
   { name: 'jam',              nameRu: 'Варенье',              category: 'sweetener', protein: 0.3,  fat: 0.0,  carbs: 65.0, defaultQuantity: 400, defaultUnit: 'г'    },
   { name: 'maple_syrup',      nameRu: 'Кленовый сироп',       category: 'sweetener', protein: 0.0,  fat: 0.3,  carbs: 67.0, defaultQuantity: 250, defaultUnit: 'мл'   },
+  { name: 'white_chocolate',  nameRu: 'Белый шоколад',        category: 'sweetener', protein: 5.9,  fat: 32.1, carbs: 59.3, defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'milk_chocolate',   nameRu: 'Молочный шоколад',     category: 'sweetener', protein: 6.9,  fat: 35.7, carbs: 52.4, defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'boiled_cond_milk', nameRu: 'Сгущёнка варёная',     category: 'sweetener', protein: 7.0,  fat: 8.5,  carbs: 55.0, defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'coconut_flakes',   nameRu: 'Кокосовая стружка',    category: 'sweetener', protein: 3.3,  fat: 34.0, carbs: 15.2, defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'gelatin',          nameRu: 'Желатин',              category: 'sweetener', protein: 87.2, fat: 0.4,  carbs: 0.7,  defaultQuantity: 50,  defaultUnit: 'г'    },
+  { name: 'agar_agar',        nameRu: 'Агар-агар',            category: 'sweetener', protein: 0.0,  fat: 0.0,  carbs: 0.0,  defaultQuantity: 30,  defaultUnit: 'г'    },
+  { name: 'dry_yeast',        nameRu: 'Дрожжи',               category: 'sweetener', protein: 12.7, fat: 2.7,  carbs: 19.0, defaultQuantity: 50,  defaultUnit: 'г'    },
+  { name: 'chocolate_spread', nameRu: 'Шоколадная паста',     category: 'sweetener', protein: 6.3,  fat: 31.0, carbs: 57.5, defaultQuantity: 350, defaultUnit: 'г'    },
 
   // --- КОНСЕРВЫ ---
   { name: 'canned_tomatoes',  nameRu: 'Томаты консервированные', category: 'canned', protein: 0.9,  fat: 0.2,  carbs: 5.0,  defaultQuantity: 400, defaultUnit: 'г'    },
@@ -224,6 +324,29 @@ const ingredients = [
   { name: 'canned_tuna',      nameRu: 'Тунец консервированный', category: 'canned',  protein: 22.0, fat: 5.0,  carbs: 0.0,  defaultQuantity: 185, defaultUnit: 'г'    },
   { name: 'olives',           nameRu: 'Маслины/оливки',       category: 'canned',    protein: 0.8,  fat: 10.7, carbs: 0.8,  avgWeightG: 5,        defaultQuantity: 200, defaultUnit: 'г'    },
   { name: 'canned_mushrooms', nameRu: 'Грибы консервированные', category: 'canned',  protein: 2.5,  fat: 0.5,  carbs: 3.0,  defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'canned_pineapple', nameRu: 'Ананасы консервированные', category: 'canned', protein: 0.4, fat: 0.1,  carbs: 14.0, defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'canned_peach',     nameRu: 'Персики консервированные', category: 'canned', protein: 0.6, fat: 0.1,  carbs: 11.0, defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'canned_sardine',   nameRu: 'Сардины консервированные', category: 'canned', protein: 21.0, fat: 9.0, carbs: 0.0,  defaultQuantity: 240, defaultUnit: 'г'    },
+  { name: 'sprats',           nameRu: 'Шпроты',               category: 'canned',    protein: 17.4, fat: 32.4, carbs: 0.4,  defaultQuantity: 160, defaultUnit: 'г'    },
+  { name: 'pickled_cucumbers',nameRu: 'Солёные огурцы',        category: 'canned',    protein: 0.8,  fat: 0.1,  carbs: 1.3,  defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'capers',           nameRu: 'Каперсы',              category: 'canned',    protein: 2.4,  fat: 0.9,  carbs: 4.9,  defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'canned_artichoke', nameRu: 'Артишоки консервированные', category: 'canned', protein: 1.8, fat: 0.4, carbs: 4.5,  defaultQuantity: 400, defaultUnit: 'г'    },
+
+  // --- НАПИТКИ ---
+  { name: 'water',            nameRu: 'Вода',                 category: 'drink',     protein: 0.0,  fat: 0.0,  carbs: 0.0,  isBasic: true, ignoreInFridgeFilter: true, defaultQuantity: 1, defaultUnit: 'л' },
+  { name: 'sparkling_water',  nameRu: 'Минеральная вода',     category: 'drink',     protein: 0.0,  fat: 0.0,  carbs: 0.0,  defaultQuantity: 1,   defaultUnit: 'л'    },
+  { name: 'coffee',           nameRu: 'Кофе',                 category: 'drink',     protein: 0.2,  fat: 0.0,  carbs: 0.3,  defaultQuantity: 200, defaultUnit: 'г'    },
+  { name: 'black_tea',        nameRu: 'Чёрный чай',           category: 'drink',     protein: 0.0,  fat: 0.0,  carbs: 0.3,  defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'green_tea',        nameRu: 'Зелёный чай',          category: 'drink',     protein: 0.0,  fat: 0.0,  carbs: 0.3,  defaultQuantity: 100, defaultUnit: 'г'    },
+  { name: 'juice',            nameRu: 'Сок',                  category: 'drink',     protein: 0.5,  fat: 0.0,  carbs: 10.0, defaultQuantity: 1,   defaultUnit: 'л'    },
+
+  // --- ПОЛУФАБРИКАТЫ / ЗАМОРОЗКА ---
+  { name: 'pelmeni',          nameRu: 'Пельмени',             category: 'frozen',    protein: 11.0, fat: 9.0,  carbs: 26.0, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'varenyky',         nameRu: 'Вареники',             category: 'frozen',    protein: 7.0,  fat: 3.0,  carbs: 32.0, defaultQuantity: 500, defaultUnit: 'г'    },
+  { name: 'frozen_vegetables',nameRu: 'Замороженные овощи',   category: 'frozen',    protein: 2.0,  fat: 0.1,  carbs: 8.0,  defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'frozen_broccoli',  nameRu: 'Замороженная брокколи',category: 'frozen',    protein: 2.8,  fat: 0.4,  carbs: 5.2,  defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'frozen_berries',   nameRu: 'Замороженные ягоды',   category: 'frozen',    protein: 0.8,  fat: 0.3,  carbs: 7.5,  defaultQuantity: 400, defaultUnit: 'г'    },
+  { name: 'frozen_seafood',   nameRu: 'Замороженные морепродукты', category: 'frozen', protein: 15.0, fat: 2.0, carbs: 2.0,  defaultQuantity: 400, defaultUnit: 'г'    },
 ]
 
 module.exports = { ingredients }
