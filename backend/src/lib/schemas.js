@@ -35,7 +35,7 @@ const ingredientInput = z.object({
 })
 
 const dishCreate = z.object({
-  nameRu:      z.string({ required_error: 'Укажите название' })
+  name:        z.string({ required_error: 'Укажите название' })
                .trim().min(1, 'Название не может быть пустым').max(200, 'Название не более 200 символов'),
   description: z.string().trim().max(2000, 'Описание не более 2000 символов').optional().nullable(),
   categories:  z.array(z.enum(DISH_CATEGORIES, { message: 'Неверная категория' }))

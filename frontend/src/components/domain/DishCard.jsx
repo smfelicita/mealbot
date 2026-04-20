@@ -260,7 +260,7 @@ function InlineCard({ dish, onClick }) {
           ? <img src={img} alt="" className="w-full h-full object-cover" />
           : emoji}
       </div>
-      <span className="flex-1 text-[13px] font-semibold truncate text-text">{dish.nameRu || dish.name}</span>
+      <span className="flex-1 text-[13px] font-semibold truncate text-text">{dish.name}</span>
       <span className="text-text-3 text-xs shrink-0">→</span>
     </button>
   )

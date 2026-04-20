@@ -5,8 +5,7 @@ const prisma = new PrismaClient()
 // 1 блюдо на каждое время приёма пищи — живые, домашние, не каталог
 const dishes = [
   {
-    name: 'syrniki_home',
-    nameRu: 'Сырники без сахара',
+    name: 'Сырники без сахара',
     imageUrl: 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images/syrniki.jpg',
     description: 'пышные, почти без сахара. со сметаной обязательно',
     categories: ['MAIN'],
@@ -27,8 +26,7 @@ const dishes = [
     ],
   },
   {
-    name: 'chicken_soup_home',
-    nameRu: 'Тот куриный суп',
+    name: 'Тот куриный суп',
     imageUrl: 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images/sup-kurinyj.jpg',
     description: 'варю когда никто не болеет — просто потому что вкусно',
     categories: ['SOUP'],
@@ -50,8 +48,7 @@ const dishes = [
     ],
   },
   {
-    name: 'fried_potatoes_home',
-    nameRu: 'Жареная картошка с луком',
+    name: 'Жареная картошка с луком',
     imageUrl: 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images/kartoshka.png',
     description: 'то самое. главное — не мешать слишком часто и дать подрумяниться',
     categories: ['SIDE'],
@@ -71,8 +68,7 @@ const dishes = [
     ],
   },
   {
-    name: 'blinchiki_home',
-    nameRu: 'Любимые блинчики',
+    name: 'Любимые блинчики',
     imageUrl: 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images/blinchiki.png',
     description: 'тонкие, по маминому рецепту. с чем угодно — со сметаной, с вареньем, просто так',
     categories: ['BAKERY'],

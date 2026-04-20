@@ -49,7 +49,7 @@ export default function AddToPlanModal({ dish, hasFamilyGroup, onClose, onAdded 
             : <span>{emoji}</span>
           }
         </div>
-        <strong className="text-[15px]">{dish.nameRu || dish.name}</strong>
+        <strong className="text-[15px]">{dish.name}</strong>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">

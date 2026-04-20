@@ -166,7 +166,6 @@ model FridgeItem {
 model Dish {
   id          String         @id @default(cuid())
   name        String
-  nameRu      String
   description String?
   categories  MealCategory[]
   cuisine     String?

@@ -119,7 +119,7 @@ async function tryDailySuggest(user, now, tz) {
   if (myDishes.length < 5) return false
 
   const picks = shuffle(myDishes).slice(0, 3)
-  const list = picks.map(d => `• ${d.nameRu}`).join('\n')
+  const list = picks.map(d => `• ${d.name}`).join('\n')
 
   await sendTelegramMessage(user.telegramId,
     `На сегодня ничего не запланировано.\n\nВот варианты из ваших блюд:\n${list}`)

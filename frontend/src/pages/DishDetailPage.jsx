@@ -254,7 +254,7 @@ export default function DishDetailPage() {
 
   async function handleShare() {
     const url = window.location.href
-    const title = dish.nameRu || dish.name
+    const title = dish.name
     if (navigator.share) {
       try { await navigator.share({ title, url }) } catch {}
     } else {

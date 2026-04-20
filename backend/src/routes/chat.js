@@ -17,7 +17,7 @@ async function getCachedDishes() {
   if (dishCache && Date.now() - dishCacheAt < DISH_CACHE_TTL) return dishCache
   const dishes = await prisma.dish.findMany({
     where: { visibility: 'PUBLIC' },
-    select: { id: true, nameRu: true, name: true, mealTime: true, tags: true, imageUrl: true, images: true },
+    select: { id: true, name: true, mealTime: true, tags: true, imageUrl: true, images: true },
   })
   dishCache = dishes
   dishCacheAt = Date.now()
@@ -39,7 +39,7 @@ function getRelevantDishes(dishes, message) {
     let score = 0
 
     // Совпадение по названию (слова длиннее 3 букв)
-    dish.nameRu.toLowerCase().split(' ').forEach(w => {
+    dish.name.toLowerCase().split(' ').forEach(w => {
       if (w.length > 3 && msg.includes(w)) score += 3
     })
 
@@ -72,7 +72,7 @@ function extractMentionedDishes(text, dishMap) {
     .filter(id => { if (seen.has(id)) return false; seen.add(id); return true })
     .map(id => dishMap.get(id))
     .filter(Boolean)
-    .map(d => ({ id: d.id, nameRu: d.nameRu, name: d.name, imageUrl: d.imageUrl, images: d.images }))
+    .map(d => ({ id: d.id, name: d.name, imageUrl: d.imageUrl, images: d.images }))
 }
 
 function buildSystemPrompt(dishSummary, fridgeList, isPro) {
@@ -132,7 +132,7 @@ router.post('/', auth, async (req, res, next) => {
     const relevantDishes = getRelevantDishes(allDishes, message)
     const dishMap = new Map(allDishes.map(d => [d.id, d]))
     const dishSummary = relevantDishes
-      .map(d => `[DISH:${d.id}] ${d.nameRu} (${d.mealTime.join('/')}, теги: ${d.tags.join(', ')})`)
+      .map(d => `[DISH:${d.id}] ${d.name} (${d.mealTime.join('/')}, теги: ${d.tags.join(', ')})`)
       .join('\n')
 
     const isPro = role === 'PRO' || role === 'ADMIN'

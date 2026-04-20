@@ -52,7 +52,7 @@ export default function DishFormPage() {
     : 'PRIVATE'
 
   const [form, setForm] = useState({
-    nameRu: '', description: '', categories: [],
+    name: '', description: '', categories: [],
     mealTime: [], difficulty: '', cookTime: '',
     calories: '', recipe: '', imageUrl: '', videoUrl: '',
     tags: '', visibility: defaultVisibility,
@@ -69,7 +69,7 @@ export default function DishFormPage() {
 
     function applyDish(dish, resetImages = true) {
       setForm({
-        nameRu:      dish.name,
+        name:      dish.name,
         description: dish.description || '',
         categories:  dish.categories || [],
         mealTime:    dish.mealTime || [],
@@ -139,7 +139,7 @@ export default function DishFormPage() {
   function addIngredient(ing) {
     if (ingredients.find(i => i.id === ing.id)) return
     setIngredients(prev => [...prev, {
-      id: ing.id, name: ing.nameRu, emoji: ing.emoji,
+      id: ing.id, name: ing.name, emoji: ing.emoji,
       amountValue: '', unit: 'г', toTaste: false, optional: false, amount: '',
     }])
   }
@@ -209,7 +209,7 @@ export default function DishFormPage() {
   // ── Submit ───────────────────────────────────────────────────────────────
   async function handleSubmit() {
     const errs = {}
-    if (!form.nameRu.trim()) errs.nameRu = 'Укажите название'
+    if (!form.name.trim()) errs.name = 'Укажите название'
     if (!form.mealTime.length) errs.mealTime = 'Выберите время приёма пищи'
     if (mode === 'extended' && !form.categories.length) errs.categories = 'Выберите хотя бы одну категорию'
     if (Object.keys(errs).length) { setErrors(errs); return }
@@ -314,9 +314,9 @@ export default function DishFormPage() {
           label="Название"
           required
           placeholder="Введите название блюда"
-          value={form.nameRu}
-          error={errors.nameRu}
-          onChange={e => setField('nameRu', e.target.value)}
+          value={form.name}
+          error={errors.name}
+          onChange={e => setField('name', e.target.value)}
         />
 
         {/* Описание — extended only */}

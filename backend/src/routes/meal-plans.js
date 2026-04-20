@@ -67,7 +67,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const plans = await prisma.mealPlan.findMany({
       where,
       include: {
-        dish: { select: { id: true, name: true, nameRu: true, imageUrl: true, images: true, categories: true } },
+        dish: { select: { id: true, name: true, imageUrl: true, images: true, categories: true } },
         user: { select: { id: true, name: true } },
       },
       orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
@@ -85,7 +85,7 @@ router.post('/', authMiddleware, validate(mealPlanCreate), async (req, res) => {
     const mealType = 'ANYTIME'
     if (!dishId) return res.status(400).json({ error: 'dishId обязателен' })
 
-    const dish = await prisma.dish.findUnique({ where: { id: dishId }, select: { id: true, nameRu: true } })
+    const dish = await prisma.dish.findUnique({ where: { id: dishId }, select: { id: true, name: true } })
     if (!dish) return res.status(404).json({ error: 'Блюдо не найдено' })
 
     let groupId = null
@@ -117,7 +117,7 @@ router.post('/', authMiddleware, validate(mealPlanCreate), async (req, res) => {
         note: note || null,
       },
       include: {
-        dish: { select: { id: true, name: true, nameRu: true, imageUrl: true, images: true, categories: true } },
+        dish: { select: { id: true, name: true, imageUrl: true, images: true, categories: true } },
         user: { select: { id: true, name: true } },
       },
     })
@@ -129,13 +129,13 @@ router.post('/', authMiddleware, validate(mealPlanCreate), async (req, res) => {
       if (process.env.VAPID_PUBLIC_KEY) {
         sendPushToGroup(groupId, req.userId, {
           title: 'Новое блюдо в плане',
-          body: `${name} добавил(а) «${dish.nameRu}» в общий план`,
+          body: `${name} добавил(а) «${dish.name}» в общий план`,
           url: `/dishes/${dishId}`,
         })
       }
       // Telegram
       notifyFamilyGroup(groupId, req.userId,
-        `${name} добавил(а) блюдо в план:\n*${dish.nameRu}*`).catch(() => {})
+        `${name} добавил(а) блюдо в план:\n*${dish.name}*`).catch(() => {})
     }
 
     logger.info({ action: 'meal_plan_added', planId: plan.id, dishId, mealType, groupId: groupId || null, userId: req.userId, requestId: req.requestId }, 'meal_plan_added')
@@ -150,7 +150,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const plan = await prisma.mealPlan.findUnique({
       where: { id: req.params.id },
-      include: { dish: { select: { nameRu: true } } },
+      include: { dish: { select: { name: true } } },
     })
     if (!plan) return res.status(404).json({ error: 'Не найдено' })
     if (plan.userId !== req.userId) return res.status(403).json({ error: 'Нет доступа' })
@@ -162,7 +162,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       const initiator = await prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } })
       const name = initiator?.name || 'Участник группы'
       notifyFamilyGroup(plan.groupId, req.userId,
-        `${name} убрал(а) блюдо из плана:\n*${plan.dish.nameRu}*`).catch(() => {})
+        `${name} убрал(а) блюдо из плана:\n*${plan.dish.name}*`).catch(() => {})
     }
 
     res.json({ ok: true })

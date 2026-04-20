@@ -218,7 +218,7 @@ router.get('/:id', async (req, res, next) => {
       })),
       dishes: dishes.map(d => ({
         id: d.id,
-        name: d.nameRu,
+        name: d.name,
         description: d.description,
         categories: d.categories,
         cuisine: d.cuisine,

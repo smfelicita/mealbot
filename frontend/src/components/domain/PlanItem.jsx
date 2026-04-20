@@ -22,7 +22,7 @@ export default function PlanItem({ plan, currentUserId, onNavigate, onRemove }) 
         onClick={onNavigate}
         className="flex-1 min-w-0 text-left"
       >
-        <p className="font-bold text-sm truncate text-text">{dish.nameRu || dish.name}</p>
+        <p className="font-bold text-sm truncate text-text">{dish.name}</p>
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           {plan.groupId && (
             <span className="text-2xs text-teal font-semibold">🏠 Семейный</span>

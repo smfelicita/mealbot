@@ -103,9 +103,9 @@ async function getSearchIds(q) {
     LEFT JOIN dish_ingredients di ON di."dishId" = d.id
     LEFT JOIN ingredients i ON i.id = di."ingredientId"
     WHERE
-      d."nameRu" ILIKE ${likeQ}
+      d."name" ILIKE ${likeQ}
       OR d.description ILIKE ${likeQ}
-      OR similarity(d."nameRu", ${q}) > 0.25
+      OR similarity(d."name", ${q}) > 0.25
       OR EXISTS (SELECT 1 FROM unnest(d.tags) t WHERE t ILIKE ${likeQ})
       OR i."nameRu" ILIKE ${likeQ}
   `
@@ -182,7 +182,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
       const allDishes = await prisma.dish.findMany({
         include: { ingredients: { include: { ingredient: true } } },
         where: baseWhere,
-        orderBy: { nameRu: 'asc' },
+        orderBy: { name: 'asc' },
       })
 
       const filtered = allDishes.filter(dish => {
@@ -206,7 +206,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
       prisma.dish.findMany({
         where,
         include: { ingredients: { include: { ingredient: true } } },
-        orderBy: { nameRu: 'asc' },
+        orderBy: { name: 'asc' },
         skip: offset,
         take: limit,
       }),
@@ -256,12 +256,12 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
 router.post('/', auth, validate(dishCreate), async (req, res, next) => {
   try {
     const {
-      nameRu, description, categories, cuisine, mealTime, tags,
+      name, description, categories, cuisine, mealTime, tags,
       cookTime, difficulty, calories, imageUrl, images, videoUrl,
       recipe, ingredients, visibility = 'PRIVATE', groupId,
     } = req.body
 
-    if (!nameRu?.trim()) return res.status(400).json({ error: 'Укажите название' })
+    if (!name?.trim()) return res.status(400).json({ error: 'Укажите название' })
     if (!categories?.length) return res.status(400).json({ error: 'Укажите категорию' })
     if (!mealTime?.length) return res.status(400).json({ error: 'Укажите время приёма пищи' })
 
@@ -284,8 +284,7 @@ router.post('/', auth, validate(dishCreate), async (req, res, next) => {
 
     const dish = await prisma.dish.create({
       data: {
-        name: nameRu.trim(),
-        nameRu: nameRu.trim(),
+        name: name.trim(),
         description: description || null,
         categories: categories || [],
         cuisine: cuisine || null,
@@ -353,11 +352,10 @@ router.post('/bulk', auth, validate(dishBulk), async (req, res, next) => {
     const visibility = familyGroupId ? 'FAMILY' : 'PRIVATE'
 
     const created = await Promise.all(
-      validNames.map(nameRu =>
+      validNames.map(dishName =>
         prisma.dish.create({
           data: {
-            name: nameRu,
-            nameRu,
+            name: dishName,
             categories: [],
             mealTime: ['ANYTIME'],
             tags: [],
@@ -370,7 +368,7 @@ router.post('/bulk', auth, validate(dishBulk), async (req, res, next) => {
       )
     )
 
-    res.status(201).json({ created: created.map(d => ({ id: d.id, name: d.nameRu })) })
+    res.status(201).json({ created: created.map(d => ({ id: d.id, name: d.name })) })
   } catch (err) {
     next(err)
   }
@@ -384,7 +382,7 @@ router.put('/:id', auth, validate(dishUpdate), async (req, res, next) => {
     if (dish.authorId !== req.userId) return res.status(403).json({ error: 'Нет доступа' })
 
     const {
-      nameRu, description, categories, cuisine, mealTime, tags,
+      name, description, categories, cuisine, mealTime, tags,
       cookTime, difficulty, calories, imageUrl, images, videoUrl,
       recipe, ingredients, visibility,
     } = req.body
@@ -410,7 +408,7 @@ router.put('/:id', auth, validate(dishUpdate), async (req, res, next) => {
     const updated = await prisma.dish.update({
       where: { id: req.params.id },
       data: {
-        ...(nameRu && { name: nameRu.trim(), nameRu: nameRu.trim() }),
+        ...(name && { name: name.trim() }),
         ...(description !== undefined && { description: description || null }),
         ...(categories !== undefined && { categories }),
         ...(cuisine !== undefined && { cuisine: cuisine || null }),
@@ -582,7 +580,7 @@ function formatDish(dish) {
   const nutrition = dish.ingredients?.length ? calculateNutrition(dish.ingredients) : null
   return {
     id: dish.id,
-    name: dish.nameRu,
+    name: dish.name,
     description: dish.description,
     categories: dish.categories,
     cuisine: dish.cuisine,

@@ -78,7 +78,7 @@ async function getUser(tgUser) {
 // ─── Helper: format dish for message ─────────────────────────────────────
 function formatDish(dish) {
   const diff = { easy: 'Просто', medium: 'Средне', hard: 'Сложно' }
-  let text = `🍽 *${dish.nameRu}*\n`
+  let text = `🍽 *${dish.name}*\n`
   if (dish.description) text += `_${dish.description}_\n`
   text += '\n'
   if (dish.cookTime) text += `⏱ ${dish.cookTime} мин  `
@@ -462,7 +462,7 @@ async function showMealPlan(chatId, userId) {
       if (!byMeal[mt]) continue
       text += `\n  ${MEAL_RU[mt]}`
       for (const p of byMeal[mt]) {
-        text += `\n   • ${p.dish.nameRu}`
+        text += `\n   • ${p.dish.name}`
         if (p.note) text += ` _(${p.note})_`
       }
     }
@@ -495,7 +495,7 @@ async function showMealPlanManage(chatId, userId) {
       ? new Date(p.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ' · '
       : ''
     return [{
-      text: `❌ ${dateStr}${MEAL_RU[p.mealType] || ''} · ${p.dish.nameRu}`,
+      text: `❌ ${dateStr}${MEAL_RU[p.mealType] || ''} · ${p.dish.name}`,
       callback_data: `remove_plan_${p.id}`,
     }]
   })
@@ -613,7 +613,7 @@ async function handleAiChat(chatId, userId, userMessage) {
   const fridgeList = fridge.map(f => f.ingredient.nameRu).join(', ')
 
   const dishes = await prisma.dish.findMany({ take: 100 })
-  const dishSummary = dishes.map(d => `- ${d.nameRu} (${d.mealTime.join('/')})`).join('\n')
+  const dishSummary = dishes.map(d => `- ${d.name} (${d.mealTime.join('/')})`).join('\n')
 
   const systemPrompt = `Ты дружелюбный кулинарный помощник MealBot в Telegram. Отвечай кратко (до 200 слов), используй эмодзи.
 ${fridgeList ? `В холодильнике: ${fridgeList}` : 'Холодильник не заполнен.'}
@@ -869,7 +869,7 @@ bot.on('callback_query', async (query) => {
     if (!dish) return
 
     const ings = dish.ingredients.map(di => `${di.ingredient.emoji || '•'} ${di.ingredient.nameRu}${di.amount ? ` — ${di.amount}` : ''}`).join('\n')
-    let text = `📋 *${dish.nameRu}*\n\n*Ингредиенты:*\n${ings}\n`
+    let text = `📋 *${dish.name}*\n\n*Ингредиенты:*\n${ings}\n`
     if (dish.recipe) {
       const plain = dish.recipe.replace(/^##\s/gm,'').replace(/\*\*/g,'*').slice(0, 800)
       text += `\n*Рецепт:*\n${plain}`
@@ -1057,7 +1057,7 @@ bot.on('callback_query', async (query) => {
         ? new Date(p.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) + ' · '
         : ''
       return [{
-        text: `❌ ${dateStr}${MEAL_RU[p.mealType] || ''} · ${p.dish.nameRu}`,
+        text: `❌ ${dateStr}${MEAL_RU[p.mealType] || ''} · ${p.dish.name}`,
         callback_data: `remove_plan_${p.id}`,
       }]
     })
