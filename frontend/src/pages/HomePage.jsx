@@ -83,7 +83,7 @@ export default function HomePage() {
 
   const [dishes, setDishes]         = useState([])
   const [loading, setLoading]       = useState(true)
-  const [mealTime, setMealTime]     = useState(defaultMealTime)
+  const [mealTime, setMealTime]     = useState('')
   const [favOnly, setFavOnly]       = useState(false)
   const [fridgeOnly, setFridgeOnly] = useState(false)
   const [favIds, setFavIds]         = useState(new Set())
