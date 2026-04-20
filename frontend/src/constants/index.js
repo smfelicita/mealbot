@@ -52,10 +52,9 @@ export const ING_CATEGORIES = [
 ]
 
 export const VISIBILITY_OPTIONS = [
-  { value: 'PRIVATE',    label: 'Личный',          desc: 'Только вы'                        },
-  { value: 'PUBLIC',     label: 'Публичный',       desc: 'Все пользователи'                  },
-  { value: 'FAMILY',     label: 'Семья',           desc: 'Только участники семейной группы' },
-  { value: 'ALL_GROUPS', label: 'Все мои группы',  desc: 'Участники всех ваших групп'       },
+  { value: 'PRIVATE',    label: 'Личный',         desc: 'Только вы'                        },
+  { value: 'FAMILY',     label: 'Семья',          desc: 'Только участники семейной группы' },
+  { value: 'ALL_GROUPS', label: 'Все мои группы', desc: 'Участники всех ваших групп'       },
 ]
 
 export const PLAN_MEAL_TYPES = [
