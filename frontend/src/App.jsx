@@ -6,6 +6,7 @@ import Layout from './components/Layout'
 import OnboardingModal from './components/domain/OnboardingModal'
 import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
+import HomePageV2 from './pages/HomePageV2'
 import DishesPage from './pages/DishesPage'
 import DishDetailPage from './pages/DishDetailPage'
 import FridgePage from './pages/FridgePage'
@@ -81,6 +82,7 @@ export default function App() {
         <Route path="/invite/:token" element={<InvitePage />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
+          <Route path="v2" element={<HomePageV2 />} />
           <Route path="dishes" element={<DishesPage />} />
           <Route path="dishes/:id" element={<DishDetailPage />} />
           <Route path="fridge" element={<FridgePage />} />
