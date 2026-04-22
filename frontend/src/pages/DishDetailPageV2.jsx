@@ -311,7 +311,7 @@ function NutritionSection({ nutrition }) {
     <section className="mt-7">
       <div className="px-5 mb-3">
         <h2 className="text-[17px] font-bold tracking-tight text-text">Пищевая ценность</h2>
-        <div className="text-[12px] mt-0.5 text-text-3">на порцию</div>
+        <div className="text-[12px] mt-0.5 text-text-3">на 100 г</div>
       </div>
       <div className="mx-5 rounded-2xl bg-bg-2 border border-border flex justify-between items-stretch px-2.5 py-3.5">
         {items.map((t, i, arr) => (
