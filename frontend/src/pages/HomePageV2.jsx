@@ -13,7 +13,7 @@ import {
 
 import { api } from '../api'
 import { useStore } from '../store'
-import { DishCard } from '../components/domain'
+import { DishCardV2 } from '../components/domain'
 import {
   PageHeader,
   MetaStrip,
@@ -398,9 +398,8 @@ export default function HomePageV2() {
           </div>
         ) : (
           filtered.slice(0, 8).map(dish => (
-            <DishCard
+            <DishCardV2
               key={dish.id}
-              variant="row"
               dish={dish}
               isFav={favIds.has(dish.id)}
               onToggleFav={token ? handleToggleFav : undefined}
