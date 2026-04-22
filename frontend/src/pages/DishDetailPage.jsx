@@ -131,7 +131,10 @@ function NutritionBlock({ nutrition }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[17px] font-semibold text-text">Пищевая ценность</h2>
+        <div>
+          <h2 className="text-[17px] font-semibold text-text">Пищевая ценность</h2>
+          <div className="text-[12px] mt-0.5 text-text-3">на 100 г</div>
+        </div>
         <button type="button" onClick={() => setVisible(v => !v)} className="text-[13px] text-text-3 focus:outline-none">
           {visible ? 'Скрыть' : 'Показать'}
         </button>
