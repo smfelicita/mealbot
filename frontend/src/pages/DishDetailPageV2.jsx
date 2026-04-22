@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, Heart, Share2, MoreVertical,
-  Clock, Users, ChefHat, Utensils,
+  Clock, ChefHat, Utensils, Globe,
   CalendarPlus, Refrigerator, Pin, ArrowUp,
   Check, Edit3, Trash2, Copy,
 } from 'lucide-react'
@@ -17,7 +17,6 @@ import { Loader, Avatar, useToast } from '../components/ui'
 import AddToPlanModal from '../components/domain/AddToPlanModal'
 import { CAT_RU } from '../components/domain/dishCategories'
 
-const SERVINGS_DEFAULT = 4
 const MEAL_LABEL = {
   BREAKFAST: 'Завтрак',
   LUNCH:     'Обед',
@@ -134,12 +133,13 @@ function HeroButton({ icon, onClick, active, ariaLabel }) {
 }
 
 // ═══ MetaStripInline (4 метрики с разделителями) ═══════════════════
-function DishMetaStrip({ cookTime, difficulty, cuisine, servings }) {
+function DishMetaStrip({ cookTime, difficulty, cuisine, mealTime }) {
+  const firstMeal = Array.isArray(mealTime) ? mealTime[0] : mealTime
   const items = [
     { Icon: Clock,    value: cookTime || '—',                 unit: cookTime ? 'мин' : null,    label: 'время' },
-    { Icon: Users,    value: servings,                         unit: 'порц.',                    label: 'на'    },
+    { Icon: Utensils, value: MEAL_LABEL[firstMeal] || '—',    unit: null,                       label: 'приём' },
     { Icon: ChefHat,  value: DIFF_LABEL[difficulty] || '—',    unit: null,                       label: 'сложность' },
-    { Icon: Utensils, value: cuisine || '—',                   unit: null,                       label: 'кухня' },
+    { Icon: Globe,    value: cuisine || '—',                   unit: null,                       label: 'кухня' },
   ]
   return (
     <div className="mx-5 mt-5 rounded-2xl bg-bg-2 border border-border flex justify-between items-stretch px-2.5 py-3.5">
@@ -168,7 +168,7 @@ function DishMetaStrip({ cookTime, difficulty, cuisine, servings }) {
 }
 
 // ═══ Ingredients (2 колонки с чек-боксами) ══════════════════════════
-function IngredientsSection({ ingredients, fridgeIds, token, servings }) {
+function IngredientsSection({ ingredients, fridgeIds, token }) {
   const [fridgeMode, setFridgeMode] = useState(false)
 
   if (!ingredients?.length) return null
@@ -197,10 +197,7 @@ function IngredientsSection({ ingredients, fridgeIds, token, servings }) {
   return (
     <section className="mt-7">
       <div className="px-5 flex items-center justify-between mb-3">
-        <div>
-          <h2 className="text-[17px] font-bold tracking-tight text-text">Ингредиенты</h2>
-          <div className="text-[12px] mt-0.5 text-text-3">на {servings} порции</div>
-        </div>
+        <h2 className="text-[17px] font-bold tracking-tight text-text">Ингредиенты</h2>
         {canToggleFridge && (
           <button
             type="button"
@@ -305,32 +302,36 @@ function StepsSection({ steps }) {
 function NutritionSection({ nutrition }) {
   if (!nutrition || !nutrition.calories) return null
   const items = [
-    { value: nutrition.calories, unit: 'ккал', label: 'Калории',  color: 'var(--color-accent)'          },
-    { value: nutrition.protein,  unit: 'г',    label: 'Белки',    color: 'var(--color-sage)'            },
-    { value: nutrition.fat,      unit: 'г',    label: 'Жиры',     color: 'var(--color-nutrition-fat)'   },
-    { value: nutrition.carbs,    unit: 'г',    label: 'Углеводы', color: 'var(--color-nutrition-carbs)' },
+    { value: nutrition.calories, unit: 'ккал', label: 'калории',  color: 'var(--color-accent)'          },
+    { value: nutrition.protein,  unit: 'г',    label: 'белки',    color: 'var(--color-sage)'            },
+    { value: nutrition.fat,      unit: 'г',    label: 'жиры',     color: 'var(--color-nutrition-fat)'   },
+    { value: nutrition.carbs,    unit: 'г',    label: 'углеводы', color: 'var(--color-nutrition-carbs)' },
   ]
   return (
-    <section className="mt-8">
+    <section className="mt-7">
       <div className="px-5 mb-3">
         <h2 className="text-[17px] font-bold tracking-tight text-text">Пищевая ценность</h2>
         <div className="text-[12px] mt-0.5 text-text-3">на порцию</div>
       </div>
-      <div className="px-5 grid grid-cols-4 gap-2">
-        {items.map((t, i) => (
-          <div
-            key={i}
-            className="bg-bg-2 rounded-[14px] relative overflow-hidden flex flex-col items-center border border-border px-1 py-3"
-          >
-            <div
-              className="absolute top-2 left-2 w-1.5 h-1.5 rounded-full"
-              style={{ background: t.color }}
-            />
-            <div className="text-[17px] font-extrabold tabular-nums tracking-tight text-text">
-              {t.value ?? '—'}
+      <div className="mx-5 rounded-2xl bg-bg-2 border border-border flex justify-between items-stretch px-2.5 py-3.5">
+        {items.map((t, i, arr) => (
+          <div key={i} className="flex-1 min-w-0 flex items-stretch">
+            <div className="flex-1 flex flex-col items-center gap-1 px-0.5">
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ background: t.color }}
+              />
+              <div className="text-[13px] font-bold leading-tight text-center text-text">
+                {t.value ?? '—'}
+                {t.unit && (
+                  <span className="ml-0.5 text-[10.5px] font-semibold text-text-2">{t.unit}</span>
+                )}
+              </div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-text-3">
+                {t.label}
+              </div>
             </div>
-            <div className="text-[10.5px] font-semibold mt-0.5 text-text-3">{t.unit}</div>
-            <div className="text-[11px] mt-0.5 text-text-2">{t.label}</div>
+            {i < arr.length - 1 && <div className="w-px bg-border my-1" />}
           </div>
         ))}
       </div>
@@ -810,7 +811,7 @@ export default function DishDetailPageV2() {
             cookTime={dish.cookTime}
             difficulty={dish.difficulty}
             cuisine={dish.cuisine}
-            servings={dish.servings || SERVINGS_DEFAULT}
+            mealTime={dish.mealTime}
           />
 
           {/* ── Ingredients ──────────────────────────────────── */}
@@ -818,7 +819,6 @@ export default function DishDetailPageV2() {
             ingredients={dish.ingredients}
             fridgeIds={fridgeIds}
             token={token}
-            servings={dish.servings || SERVINGS_DEFAULT}
           />
 
           {/* ── Steps ────────────────────────────────────────── */}
