@@ -52,6 +52,7 @@ export default function App() {
   const token          = useStore(s => s.token)
   const setAuth        = useStore(s => s.setAuth)
   const setPlanDishIds = useStore(s => s.setPlanDishIds)
+  const setFridge      = useStore(s => s.setFridge)
 
   const [showOnboarding, setShowOnboarding] = useState(
     () => localStorage.getItem('mealbot_show_onboarding') === '1'
@@ -61,6 +62,7 @@ export default function App() {
     if (!token) return
     api.me().then(user => setAuth(user, token)).catch(() => {})
     api.getMealPlans().then(plans => setPlanDishIds(plans.map(p => p.dishId))).catch(() => {})
+    api.getFridge().then(({ items }) => setFridge(items)).catch(() => {})
   }, [token])
 
   useEffect(() => {
