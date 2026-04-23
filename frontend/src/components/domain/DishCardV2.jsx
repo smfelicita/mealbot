@@ -22,6 +22,7 @@ const MEAL_LABEL = {
   LUNCH:     'Обед',
   DINNER:    'Ужин',
   SNACK:     'Перекус',
+  ANYTIME:   'Любое',
 }
 
 function getImg(dish) {
@@ -48,7 +49,7 @@ export default function DishCardV2({
     ? dish.ingredients.filter(i => !i.toTaste && !i.isBasic && !fridgeIngredientIds.has(i.id))
     : null
   const allInFridge = missing !== null && missing.length === 0
-  const mealLabel = MEAL_LABEL[dish.mealTime?.[0]]
+  const mealLabel = MEAL_LABEL[dish.mealTime?.[0]] || MEAL_LABEL.ANYTIME
 
   function handleCardClick() {
     onClick?.(dish)

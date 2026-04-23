@@ -22,6 +22,7 @@ const MEAL_LABEL = {
   LUNCH:     'Обед',
   DINNER:    'Ужин',
   SNACK:     'Перекус',
+  ANYTIME:   'Любое',
 }
 const DIFF_LABEL = { easy: 'Легко', medium: 'Средне', hard: 'Сложно' }
 
@@ -135,9 +136,10 @@ function HeroButton({ icon, onClick, active, ariaLabel }) {
 // ═══ MetaStripInline (4 метрики с разделителями) ═══════════════════
 function DishMetaStrip({ cookTime, difficulty, cuisine, mealTime }) {
   const firstMeal = Array.isArray(mealTime) ? mealTime[0] : mealTime
+  const mealLabel = MEAL_LABEL[firstMeal] || MEAL_LABEL.ANYTIME
   const items = [
     { Icon: Clock,    value: cookTime || '—',                 unit: cookTime ? 'мин' : null,    label: 'время' },
-    { Icon: Utensils, value: MEAL_LABEL[firstMeal] || '—',    unit: null,                       label: 'приём' },
+    { Icon: Utensils, value: mealLabel,                        unit: null,                       label: 'приём' },
     { Icon: ChefHat,  value: DIFF_LABEL[difficulty] || '—',    unit: null,                       label: 'сложность' },
     { Icon: Globe,    value: cuisine || '—',                   unit: null,                       label: 'кухня' },
   ]
@@ -167,7 +169,7 @@ function DishMetaStrip({ cookTime, difficulty, cuisine, mealTime }) {
   )
 }
 
-// ═══ Ingredients (2 колонки с чек-боксами) ══════════════════════════
+// ═══ Ingredients (Вариант В — карточки строкой с фоном) ════════════
 function IngredientsSection({ ingredients, fridgeIds, token }) {
   const [fridgeMode, setFridgeMode] = useState(false)
 
@@ -215,46 +217,54 @@ function IngredientsSection({ ingredients, fridgeIds, token }) {
         )}
       </div>
 
-      <div className="px-5 grid grid-cols-2 gap-x-3.5 gap-y-2.5">
+      <div className="px-5 flex flex-col gap-[7px]">
         {items.map(ing => {
           const checked = ing.inFridge
           const dim = fridgeMode && !checked && !ing.basic
           return (
             <div
               key={ing.id}
-              className="flex items-start gap-2"
+              className={[
+                'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border transition-colors',
+                checked
+                  ? 'bg-sage-muted border-sage-border'
+                  : 'bg-bg-2 border-border',
+              ].join(' ')}
               style={{ opacity: dim ? 0.35 : 1 }}
             >
+              {checked ? (
+                <div className="w-[22px] h-[22px] rounded-full bg-sage flex items-center justify-center flex-shrink-0 text-white">
+                  <Check size={12} strokeWidth={3} />
+                </div>
+              ) : (
+                <div
+                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 border-[1.5px] border-dashed border-accent"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                </div>
+              )}
               <div
                 className={[
-                  'w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5',
-                  'border-[1.5px]',
-                  checked
-                    ? 'bg-sage border-sage text-white'
-                    : 'bg-bg-2 border-border text-transparent',
+                  'flex-1 min-w-0 text-[14.5px] font-semibold',
+                  ing.basic ? 'text-text-3' : 'text-text',
                 ].join(' ')}
+                style={{ textWrap: 'pretty' }}
               >
-                {checked && <Check size={12} strokeWidth={3} />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div
-                  className={[
-                    'text-[14px] font-semibold leading-tight',
-                    ing.basic ? 'text-text-3' : 'text-text',
-                  ].join(' ')}
-                  style={{ textWrap: 'pretty' }}
-                >
-                  {ing.name}
-                  {ing.optional && (
-                    <span className="text-text-3 text-xs ml-1.5 font-normal">· необязательно</span>
-                  )}
-                </div>
-                {ing.amount && (
-                  <div className="text-[12px] mt-0.5 tabular-nums text-text-3">
-                    {ing.amount}
-                  </div>
+                {ing.name}
+                {ing.optional && (
+                  <span className="text-text-3 text-xs ml-1.5 font-normal">· необязательно</span>
                 )}
               </div>
+              {ing.amount && (
+                <div
+                  className={[
+                    'text-[13px] tabular-nums flex-shrink-0',
+                    checked ? 'text-sage font-bold' : 'text-text-3 font-medium',
+                  ].join(' ')}
+                >
+                  {ing.amount}
+                </div>
+              )}
             </div>
           )
         })}
