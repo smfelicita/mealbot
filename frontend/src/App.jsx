@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage'
 import HomePageV2 from './pages/HomePageV2'
 import DishDetailPageV2 from './pages/DishDetailPageV2'
 import FridgePageV2 from './pages/FridgePageV2'
+import DishesPageV2 from './pages/DishesPageV2'
 import DishesPage from './pages/DishesPage'
 import DishDetailPage from './pages/DishDetailPage'
 import FridgePage from './pages/FridgePage'
@@ -87,6 +88,7 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="v2" element={<HomePageV2 />} />
+          <Route path="v2/dishes" element={<DishesPageV2 />} />
           <Route path="v2/dishes/:id" element={<DishDetailPageV2 />} />
           <Route path="v2/fridge" element={<FridgePageV2 />} />
           <Route path="dishes" element={<DishesPage />} />
