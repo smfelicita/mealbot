@@ -607,8 +607,9 @@ export default function DishesPage() {
     favorites:  (token && favOnly) ? 'true' : undefined,
     tags:       tags.size ? [...tags].join(',') : undefined,
     cuisine:    cuisines.size ? [...cuisines][0] : undefined, // backend поддерживает один cuisine
+    difficulty: difficulty || undefined,
     limit:      LIMIT,
-  }), [q, mealTime, inFridge, favOnly, tags, cuisines, token])
+  }), [q, mealTime, inFridge, favOnly, tags, cuisines, difficulty, token])
 
   // ── Загрузка ─────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -617,14 +618,12 @@ export default function DishesPage() {
     offsetRef.current = 0
     try {
       const data = await api.getDishes({ ...getParams(), offset: 0 })
-      let fetched = data.dishes ?? []
-      // difficulty фильтруется клиентски (бэкенд не поддерживает)
-      if (difficulty) fetched = fetched.filter(d => d.difficulty === difficulty)
+      const fetched = data.dishes ?? []
       const totalCnt = data.total ?? fetched.length
       setDishes(fetched)
       setTotal(totalCnt)
-      offsetRef.current = (data.dishes ?? []).length
-      setHasMore((data.dishes ?? []).length < totalCnt)
+      offsetRef.current = fetched.length
+      setHasMore(fetched.length < totalCnt)
     } catch (e) {
       setDishes([])
       setHasMore(false)
@@ -632,7 +631,7 @@ export default function DishesPage() {
     } finally {
       setLoading(false)
     }
-  }, [getParams, difficulty, show])
+  }, [getParams, show])
 
   const loadMore = useCallback(async () => {
     if (!canLoadRef.current) return
@@ -640,21 +639,20 @@ export default function DishesPage() {
     setLoadingMore(true)
     try {
       const data = await api.getDishes({ ...getParams(), offset: offsetRef.current })
-      let fetched = data.dishes ?? []
-      if (difficulty) fetched = fetched.filter(d => d.difficulty === difficulty)
+      const fetched = data.dishes ?? []
       const totalCnt = data.total ?? 0
       setDishes(prev => {
         const seen = new Set(prev.map(d => d.id))
         return [...prev, ...fetched.filter(d => !seen.has(d.id))]
       })
-      offsetRef.current += (data.dishes ?? []).length
+      offsetRef.current += fetched.length
       setHasMore(offsetRef.current < totalCnt)
     } catch {
       // тихо
     } finally {
       setLoadingMore(false)
     }
-  }, [getParams, difficulty])
+  }, [getParams])
 
   useEffect(() => { loadMoreFnRef.current = loadMore }, [loadMore])
   useEffect(() => {

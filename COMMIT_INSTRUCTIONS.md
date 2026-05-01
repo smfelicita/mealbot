@@ -1,155 +1,56 @@
-# Slim-main: срез /v2 + merge redesign → main
+# Коммит: difficulty фильтр на бэкенде
 
-Цель: убрать `/v2`-префикс, удалить старые версии 4 страниц (HomePage/DishesPage/DishDetailPage/FridgePage), слить `redesign` в `main`. Дальнейший редизайн остальных страниц (chat/plan/profile/groups/...) идёт прямо в `main` правкой существующих `*Page.jsx`.
+Ветка: `main`
 
-## Что сделано в working copy
+## Что сделано
 
-- ✅ Удалены старые `HomePage.jsx`, `DishesPage.jsx`, `DishDetailPage.jsx`, `FridgePage.jsx` (без V2)
-- ✅ Удалён `components/domain/DishList.jsx` (использовался только старой каталог-страницей)
-- ✅ V2-файлы переименованы: `*PageV2.jsx` → `*Page.jsx`. Внутри: компоненты, шапки-комментарии, `/v2/...` → `/...`
-- ✅ `App.jsx`: убраны импорты V2, убраны `v2/*`-роуты, добавлены redirect-роуты `/v2/* → /*` (на 1-2 недели для совместимости со старыми закладками — потом можно убрать)
-- ✅ `components/domain/index.js`: убран `DishList` экспорт
-- ✅ Билд проходит (1851 модулей, бандл 399 KB / 119 KB gzip)
+В `backend/src/routes/dishes.js` добавлена поддержка `?difficulty=easy|medium|hard` в `GET /api/dishes`. На фронте (`DishesPage.jsx`) убран клиентский filter — `difficulty` теперь идёт как обычный server-параметр.
 
-## DishCardV2 не трогали
+Зачем: раньше клиент фильтровал в js после fetch — это ломало paging (подгружали страницу 2, половина опять отсеивалась) и `total` не совпадал с реально показанным.
 
-Старый `DishCard.jsx` нужен ещё для `ChatPage` и `GroupDetailPage` (старые экраны с inline-карточками). `DishCardV2` — отдельный компонент для новых страниц. Когда будем редизайнить chat/groups — переименуем `DishCardV2` → `DishCard` и удалим старый одним коммитом.
+## Что в working copy
 
----
+```
+modified:   backend/src/routes/dishes.js   (3 точки: комментарий, деструктуризация, buildBaseFilter)
+modified:   frontend/src/pages/DishesPage.jsx  (убран клиентский filter, difficulty в getParams)
+modified:   COMMIT_INSTRUCTIONS.md
+```
+
+Сборка проходит (фронт 1851 модулей, бэк синтаксис ок).
 
 ## Команды
 
 ```bash
 cd <путь-к-mealbot>
-git status                    # посмотреть, всё ли как ожидалось
-git branch --show-current     # должна быть redesign
+git status                    # ожидаются: dishes.js + DishesPage.jsx + COMMIT_INSTRUCTIONS.md
+git branch --show-current     # должна быть main
 
-# git распознаёт переименования автоматически (Renames в diff)
-git add frontend/src/pages/ \
-        frontend/src/components/domain/ \
-        frontend/src/App.jsx \
+git add backend/src/routes/dishes.js \
+        frontend/src/pages/DishesPage.jsx \
         COMMIT_INSTRUCTIONS.md
 
-# проверь — должны быть renames, не «delete + new file»
-git status                    # ожидается: 4 renames в pages/, deletes для DishList и старых *Page
+git commit -m "fix(api): фильтр по difficulty в GET /api/dishes
 
-git commit -m "refactor: slim-main, срез /v2 (HomePage/DishesPage/DishDetailPage/FridgePage)
-
-Все 4 редизайн-страницы теперь живут на основных URL (/, /dishes,
-/dishes/:id, /fridge). Старые версии этих страниц удалены, V2-файлы
-переименованы. /v2/* временно редиректит на основные URL для
-совместимости со старыми закладками.
-
-Удалён DishList (использовался только старой DishesPage). DishCardV2
-оставлен как отдельный компонент — будет переименован в DishCard когда
-будут редизайниться ChatPage / GroupDetailPage."
-
-git push origin redesign
-```
-
----
-
-## Слияние redesign → main
-
-```bash
-git checkout main
-git pull origin main
-
-git merge redesign --no-ff -m "merge: redesign → main (slim-main)
-
-Срез /v2-префикса, редизайн на основных URL для главной/каталога/
-деталки/холодильника. Дальнейший редизайн остальных страниц
-делается прямо в main правкой существующих *Page.jsx."
+Раньше клиент DishesPage фильтровал difficulty в js после fetch —
+это ломало paging (подгружали страницу 2, половина отсеивалась)
+и total не совпадал. Добавлен прямой Prisma-фильтр where.difficulty
++ DishesPage передаёт difficulty как server-параметр."
 
 git push origin main
 ```
 
-`--no-ff` обязателен — оставит merge-коммит с понятным сообщением, видно что было слияние.
-
----
-
-## Сохранение redesign-ветки
-
-После успешного merge и проверки на сервере — переименовать в архив (на случай отката):
+## На сервере
 
 ```bash
-git branch -m redesign archive/redesign
-git push origin archive/redesign
-git push origin --delete redesign
-git branch --set-upstream-to=origin/archive/redesign archive/redesign
+ssh root@194.87.130.215 "cd /var/www/mealbot && git checkout main && git pull && pm2 restart mealbot-backend && cd frontend && npm run build 2>&1 | tail -10"
 ```
 
----
-
-## Деплой на сервер
-
-```bash
-cd <путь-к-mealbot>
-git checkout main
-git pull
-cd frontend && npm run build
-# backend не трогаем
-```
-
----
+Здесь нужен **и backend restart, и frontend rebuild** (правки в обоих).
 
 ## Что проверить после деплоя
 
-### Основные URL (теперь редизайн)
-- `https://<host>/` → редизайн HomePage
-- `https://<host>/dishes` → редизайн каталога с фильтрами
-- `https://<host>/dishes/<id>` → редизайн деталки
-- `https://<host>/fridge` → редизайн холодильника
-
-### Backward-compat редиректы
-- `https://<host>/v2` → редирект на `/`
-- `https://<host>/v2/dishes` → редирект на `/dishes`
-- `https://<host>/v2/dishes/<id>` → редирект на `/dishes/<id>` (с тем же id)
-- `https://<host>/v2/fridge` → редирект на `/fridge`
-
-### Навигация
-- TabBar внизу: `/` `/dishes` `/fridge` `/plan` — все ведут куда надо
-- Тап карточки блюда из главной/каталога/чата → редизайн-деталка
-- FAB в каталоге → `/dishes/new` (старая форма создания, ок)
-- Возврат с деталки несуществующего блюда → `/` (главная)
-
-### Старые страницы без редизайна (должны работать как раньше)
-- `/chat` — старый дизайн
-- `/plan` — старый дизайн
-- `/profile` — старый дизайн
-- `/groups` — старый дизайн
-- `/dishes/new`, `/dishes/<id>/edit` — старая форма
-
----
-
-## Откат
-
-Если что-то критично сломалось:
-
-```bash
-git checkout main
-git revert -m 1 <merge-commit-hash>     # откатывает merge
-git push origin main
-
-# на сервере
-git pull && cd frontend && npm run build
-```
-
-`archive/redesign` остаётся как точка возврата.
-
----
-
-## Что дальше (после slim-main)
-
-**Стратегия 1** для оставшихся страниц — правка существующих `*Page.jsx` прямо в `main`:
-- ChatPage (есть `brief-chat.md`)
-- MealPlanPage (есть `brief-meal-plan.md`)
-- DishFormPage
-- GroupsPage / GroupDetailPage / GroupFormPage (есть `brief-groups.md`)
-- ProfilePage (есть `brief-profile.md`)
-- AuthPage (есть `brief-auth.md`)
-
-Поток: получаем артефакт → переписываем содержимое `*Page.jsx` → билд → коммит в `main` → деплой.
-
-**Из бэк-логов:**
-- Task #19 — фильтр `difficulty` на сервере (сейчас клиентский на DishesPage). Можно сделать любым моментом.
+- `/dishes` → bottom-sheet фильтров → секция «Сложность» («Легко» / «Средне» / «Сложно»)
+- выбрать «Легко» → счётчик `total` сверху корректный (в выдаче только лёгкие, paging работает чисто)
+- скролл вниз — догружаются только подходящие
+- сбросить — список возвращается полностью
+- network tab: `GET /api/dishes?...&difficulty=easy` (раньше параметр уходил, но игнорировался)

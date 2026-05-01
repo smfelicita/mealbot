@@ -113,10 +113,10 @@ async function getSearchIds(q) {
 }
 
 // GET /api/dishes — поиск и фильтрация
-// Query params: q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, onlyMine, familyOnly, limit, offset
+// Query params: q, mealTime, category, tags, cuisine, difficulty, ingredients, fridgeMode, myKitchen, onlyMine, familyOnly, limit, offset
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const { q, mealTime, category, tags, cuisine, ingredients, fridgeMode, myKitchen, onlyMine, familyOnly, favorites } = req.query
+    const { q, mealTime, category, tags, cuisine, difficulty, ingredients, fridgeMode, myKitchen, onlyMine, familyOnly, favorites } = req.query
     const limit  = Math.min(parseInt(req.query.limit  || '100', 10), 200)
     const offset = parseInt(req.query.offset || '0', 10) || 0
 
@@ -134,7 +134,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
       visibilityFilter = await buildVisibilityFilter(req.userId)
     }
 
-    const baseWhere = { ...visibilityFilter, ...buildBaseFilter({ mealTime, category, tags, cuisine }) }
+    const baseWhere = { ...visibilityFilter, ...buildBaseFilter({ mealTime, category, tags, cuisine, difficulty }) }
 
     // Collect id-filter sets — AND them together at the end
     let idSets = []
@@ -561,7 +561,7 @@ function normalizeMealTime(mt) {
   return VALID_MEALTYPES.includes(mt) ? mt : (MEALTIME_STRING_MAP[mt.toLowerCase()] || null)
 }
 
-function buildBaseFilter({ mealTime, category, tags, cuisine }) {
+function buildBaseFilter({ mealTime, category, tags, cuisine, difficulty }) {
   const where = {}
   if (mealTime) {
     const mt = normalizeMealTime(mealTime)
@@ -573,6 +573,7 @@ function buildBaseFilter({ mealTime, category, tags, cuisine }) {
     const tagList = tags.split(',').filter(Boolean)
     if (tagList.length) where.tags = { hasSome: tagList }
   }
+  if (difficulty) where.difficulty = difficulty
   return where
 }
 
