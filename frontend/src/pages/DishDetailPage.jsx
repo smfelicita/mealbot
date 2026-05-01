@@ -1,153 +1,113 @@
-import { useEffect, useState, useRef } from 'react'
+// DishDetailPage — детальная страница блюда.
+// Портировано из context/design/dish-detail-v2.jsx.
+// Маршрут: /dishes/:id
+
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import {
+  ChevronLeft, Heart, Share2, MoreVertical,
+  Clock, ChefHat, Utensils, Globe,
+  CalendarPlus, Refrigerator, Pin, ArrowUp,
+  Check, Edit3, Trash2, Copy,
+} from 'lucide-react'
+
 import { api } from '../api'
 import { useStore } from '../store'
-import { Loader, useToast } from '../components/ui'
-import {
-  DishMeta,
-  IngredientList,
-  DishSteps,
-  CommentsSection,
-  DishCard,
-} from '../components/domain'
+import { Loader, Avatar, useToast } from '../components/ui'
 import AddToPlanModal from '../components/domain/AddToPlanModal'
 import { CAT_RU } from '../components/domain/dishCategories'
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-const IcoBack   = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-const IcoHeart  = ({ filled }) => <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-const IcoPlan   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16M8 15h2M12 15h4"/></svg>
-const IcoDots   = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-const IcoEdit   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-const IcoCopy   = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-const IcoDelete = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-const IcoShare   = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+const MEAL_LABEL = {
+  BREAKFAST: 'Завтрак',
+  LUNCH:     'Обед',
+  DINNER:    'Ужин',
+  SNACK:     'Перекус',
+  ANYTIME:   'Любое',
+}
+const DIFF_LABEL = { easy: 'Легко', medium: 'Средне', hard: 'Сложно' }
 
-// ─── ImageSlider ─────────────────────────────────────────────────────────────
-function ImageSlider({ images, onImageClick }) {
-  const scrollRef = useRef(null)
-  const timerRef  = useRef(null)
-  const items = images.length > 1 ? [images[images.length - 1], ...images, images[0]] : images
+const SUPABASE_IMG = 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images'
 
-  useEffect(() => {
-    const el = scrollRef.current
-    if (el && images.length > 1) el.scrollLeft = el.offsetWidth
-  }, [])
-
-  function handleScroll() {
-    if (images.length <= 1) return
-    clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      const el = scrollRef.current
-      if (!el) return
-      const w = el.offsetWidth
-      const pos = Math.round(el.scrollLeft / w)
-      if (pos === 0) el.scrollTo({ left: images.length * w, behavior: 'instant' })
-      if (pos === images.length + 1) el.scrollTo({ left: w, behavior: 'instant' })
-    }, 50)
-  }
-
-  return (
-    <div
-      ref={scrollRef}
-      onScroll={handleScroll}
-      onClick={onImageClick}
-      className="w-full h-full flex overflow-x-auto scrollbar-hide cursor-pointer"
-      style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
-    >
-      {items.map((url, i) => (
-        <div key={i} className="w-full h-full shrink-0" style={{ scrollSnapAlign: 'start' }}>
-          <img src={url} alt="" className="w-full h-full object-cover" draggable={false} />
-        </div>
-      ))}
-    </div>
-  )
+// Парсит recipe-строку на список шагов.
+// Если есть "1. ..." — берём эти пункты, иначе режем по \n\n.
+function parseSteps(recipe) {
+  if (!recipe) return []
+  const lines = recipe.split('\n').map(l => l.trim()).filter(Boolean)
+  const numbered = lines
+    .map(l => l.match(/^\d+[.)]\s+(.+)/))
+    .filter(Boolean)
+    .map(m => m[1])
+  if (numbered.length >= 2) return numbered
+  return recipe.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean)
 }
 
-// ─── ImageGallery (fullscreen lightbox) ───────────────────────────────────────
-function ImageGallery({ images, onClose }) {
+// ═══ Hero (слайдер фото) ══════════════════════════════════════════
+function Hero({ images, photoIdx, setPhotoIdx, children }) {
   const scrollRef = useRef(null)
-  const timerRef  = useRef(null)
-  const items = images.length > 1 ? [images[images.length - 1], ...images, images[0]] : images
-
-  useEffect(() => {
-    const el = scrollRef.current
-    if (el && images.length > 1) el.scrollLeft = el.offsetWidth
-  }, [])
 
   function handleScroll() {
-    if (images.length <= 1) return
-    clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      const el = scrollRef.current
-      if (!el) return
-      const w = el.offsetWidth
-      const pos = Math.round(el.scrollLeft / w)
-      if (pos === 0) el.scrollTo({ left: images.length * w, behavior: 'instant' })
-      if (pos === images.length + 1) el.scrollTo({ left: w, behavior: 'instant' })
-    }, 50)
+    const el = scrollRef.current
+    if (!el) return
+    const w = el.offsetWidth
+    const idx = Math.round(el.scrollLeft / w)
+    if (idx !== photoIdx) setPhotoIdx(idx)
+  }
+
+  function goTo(i) {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollTo({ left: i * el.offsetWidth, behavior: 'smooth' })
   }
 
   return (
-    <div className="fixed inset-0 z-[500] bg-black flex flex-col" onClick={onClose}>
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute top-12 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
-      </button>
+    <div className="relative w-full h-[320px] overflow-hidden bg-bg-3">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        onClick={e => e.stopPropagation()}
-        className="flex-1 flex overflow-x-auto scrollbar-hide"
+        className="w-full h-full flex overflow-x-auto scrollbar-hide"
         style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
       >
-        {items.map((url, i) => (
-          <div key={i} className="w-full h-full shrink-0 flex items-center justify-center" style={{ scrollSnapAlign: 'start' }}>
-            <img src={url} alt="" className="max-w-full max-h-full object-contain" draggable={false} />
+        {images.map((src, i) => (
+          <div
+            key={i}
+            className="w-full h-full shrink-0"
+            style={{ scrollSnapAlign: 'start' }}
+          >
+            <img src={src} alt="" className="w-full h-full object-cover" draggable={false} />
           </div>
         ))}
       </div>
-    </div>
-  )
-}
 
-// ─── NutritionBlock ───────────────────────────────────────────────────────────
-function NutritionBlock({ nutrition }) {
-  const [visible, setVisible] = useState(true)
-  if (!nutrition) return null
+      {/* градиенты */}
+      <div
+        className="absolute top-0 inset-x-0 h-28 pointer-events-none"
+        style={{ background: 'linear-gradient(180deg, rgba(28,25,23,0.5) 0%, rgba(28,25,23,0) 100%)' }}
+      />
+      <div
+        className="absolute bottom-0 inset-x-0 h-24 pointer-events-none"
+        style={{ background: 'linear-gradient(0deg, var(--color-bg) 0%, rgba(246,244,239,0) 100%)' }}
+      />
 
-  const items = [
-    { label: 'Калории',  value: nutrition.calories, unit: 'ккал' },
-    { label: 'Белки',    value: nutrition.protein,  unit: 'г'    },
-    { label: 'Жиры',     value: nutrition.fat,      unit: 'г'    },
-    { label: 'Углеводы', value: nutrition.carbs,    unit: 'г'    },
-  ]
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-[17px] font-semibold text-text">Пищевая ценность</h2>
-          <div className="text-[12px] mt-0.5 text-text-3">на 100 г</div>
-        </div>
-        <button type="button" onClick={() => setVisible(v => !v)} className="text-[13px] text-text-3 focus:outline-none">
-          {visible ? 'Скрыть' : 'Показать'}
-        </button>
+      {/* верхние контролы */}
+      <div className="absolute top-3 inset-x-3 flex items-center justify-between">
+        {children}
       </div>
-      {visible && (
-        <div className="grid grid-cols-4 gap-2">
-          {items.map(item => (
-            <div key={item.label}
-              className="rounded-xl px-2 py-2.5 text-center bg-white border border-border/50">
-              <div className="text-sm font-semibold text-text tabular-nums">{item.value}</div>
-              <div className="text-2xs text-text-3 leading-tight mt-0.5">{item.unit}</div>
-              <div className="text-2xs text-text-2 leading-tight mt-0.5">{item.label}</div>
-            </div>
+
+      {/* индикаторы */}
+      {images.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => goTo(i)}
+              className="h-1.5 rounded-full transition-all"
+              style={{
+                width: i === photoIdx ? 20 : 6,
+                background: i === photoIdx ? 'var(--color-text)' : 'rgba(28,25,23,0.28)',
+              }}
+              aria-label={`Фото ${i + 1}`}
+            />
           ))}
         </div>
       )}
@@ -155,42 +115,481 @@ function NutritionBlock({ nutrition }) {
   )
 }
 
-// ─── ActionsMenu (bottom sheet) ───────────────────────────────────────────────
-function ActionsMenu({ onClose, onEdit, onCopy, onDelete, isOwner, hasUser }) {
+// ═══ Круглая кнопка в hero ═════════════════════════════════════════
+function HeroButton({ icon, onClick, active, ariaLabel }) {
   return (
-    <div
-      className="fixed inset-0 z-[300] flex items-end"
-      onClick={onClose}
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className={[
+        'w-10 h-10 rounded-full flex items-center justify-center',
+        'shadow-sm active:scale-95 transition',
+        active ? 'bg-accent text-white' : 'bg-white/95 text-text',
+      ].join(' ')}
     >
+      {icon}
+    </button>
+  )
+}
+
+// ═══ MetaStripInline (4 метрики с разделителями) ═══════════════════
+function DishMetaStrip({ cookTime, difficulty, cuisine, mealTime }) {
+  const firstMeal = Array.isArray(mealTime) ? mealTime[0] : mealTime
+  const mealLabel = MEAL_LABEL[firstMeal] || MEAL_LABEL.ANYTIME
+  const items = [
+    { Icon: Clock,    value: cookTime || '—',                 unit: cookTime ? 'мин' : null,    label: 'время' },
+    { Icon: Utensils, value: mealLabel,                        unit: null,                       label: 'приём' },
+    { Icon: ChefHat,  value: DIFF_LABEL[difficulty] || '—',    unit: null,                       label: 'сложность' },
+    { Icon: Globe,    value: cuisine || '—',                   unit: null,                       label: 'кухня' },
+  ]
+  return (
+    <div className="mx-5 mt-5 rounded-2xl bg-bg-2 border border-border flex justify-between items-stretch px-2.5 py-3.5">
+      {items.map((it, i, arr) => (
+        <div key={i} className="flex-1 min-w-0 flex items-stretch">
+          <div className="flex-1 flex flex-col items-center gap-1 px-0.5">
+            <it.Icon size={17} strokeWidth={1.8} className="text-accent" />
+            <div
+              className="text-[13px] font-bold leading-tight text-center text-text"
+              style={{ overflowWrap: 'anywhere' }}
+            >
+              {it.value}
+              {it.unit && (
+                <span className="ml-0.5 text-[10.5px] font-semibold text-text-2">{it.unit}</span>
+              )}
+            </div>
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-text-3">
+              {it.label}
+            </div>
+          </div>
+          {i < arr.length - 1 && <div className="w-px bg-border my-1" />}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ═══ Ingredients (Вариант В — карточки строкой с фоном) ════════════
+function IngredientsSection({ ingredients, fridgeIds, token }) {
+  const [fridgeMode, setFridgeMode] = useState(false)
+
+  if (!ingredients?.length) return null
+
+  const items = ingredients.map(i => {
+    const inFridge = fridgeIds.has(i.ingredientId ?? i.id)
+    const basic = i.toTaste || i.isBasic
+    const amountStr = i.toTaste
+      ? 'по вкусу'
+      : (i.amountValue && i.unit ? `${i.amountValue} ${i.unit}` : i.amount || '')
+    return {
+      id: i.id,
+      name: i.name,
+      amount: amountStr,
+      inFridge,
+      basic,
+      optional: i.optional,
+    }
+  })
+
+  const missingCount = items.filter(i => !i.inFridge && !i.basic).length
+  const haveCount    = items.filter(i =>  i.inFridge && !i.basic).length
+  const totalCount   = items.filter(i => !i.basic).length
+  const canToggleFridge = token && fridgeIds.size > 0
+
+  return (
+    <section className="mt-7">
+      <div className="px-5 flex items-center justify-between mb-3">
+        <h2 className="text-[17px] font-bold tracking-tight text-text">Ингредиенты</h2>
+        {canToggleFridge && (
+          <button
+            type="button"
+            onClick={() => setFridgeMode(m => !m)}
+            className={[
+              'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[12px] font-bold transition-colors border',
+              fridgeMode
+                ? 'bg-sage-muted border-sage-border text-sage'
+                : 'bg-accent-muted border-accent-border text-accent',
+            ].join(' ')}
+          >
+            <Refrigerator size={14} strokeWidth={2.2} />
+            {fridgeMode ? 'из моего' : `не хватает ${missingCount}`}
+          </button>
+        )}
+      </div>
+
+      <div className="px-5 flex flex-col gap-[7px]">
+        {items.map(ing => {
+          const checked = ing.inFridge
+          const dim = fridgeMode && !checked && !ing.basic
+          return (
+            <div
+              key={ing.id}
+              className={[
+                'flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border transition-colors',
+                checked
+                  ? 'bg-sage-muted border-sage-border'
+                  : 'bg-bg-2 border-border',
+              ].join(' ')}
+              style={{ opacity: dim ? 0.35 : 1 }}
+            >
+              {checked ? (
+                <div className="w-[22px] h-[22px] rounded-full bg-sage flex items-center justify-center flex-shrink-0 text-white">
+                  <Check size={12} strokeWidth={3} />
+                </div>
+              ) : (
+                <div
+                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 border-[1.5px] border-dashed border-accent"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                </div>
+              )}
+              <div
+                className={[
+                  'flex-1 min-w-0 text-[14.5px] font-semibold',
+                  ing.basic ? 'text-text-3' : 'text-text',
+                ].join(' ')}
+                style={{ textWrap: 'pretty' }}
+              >
+                {ing.name}
+                {ing.optional && (
+                  <span className="text-text-3 text-xs ml-1.5 font-normal">· необязательно</span>
+                )}
+              </div>
+              {ing.amount && (
+                <div
+                  className={[
+                    'text-[13px] tabular-nums flex-shrink-0',
+                    checked ? 'text-sage font-bold' : 'text-text-3 font-medium',
+                  ].join(' ')}
+                >
+                  {ing.amount}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {canToggleFridge && totalCount > 0 && (
+        <div className="mx-5 mt-3.5 rounded-xl bg-sage-muted text-sage text-[12.5px] font-semibold flex items-center gap-2.5 px-3.5 py-2.5">
+          <Refrigerator size={16} strokeWidth={2} />
+          В холодильнике есть {haveCount} из {totalCount}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ═══ Steps ═════════════════════════════════════════════════════════
+function StepsSection({ steps }) {
+  if (!steps.length) return null
+  return (
+    <section className="mt-8">
+      <div className="px-5 mb-3">
+        <h2 className="text-[17px] font-bold tracking-tight text-text">Приготовление</h2>
+        <div className="text-[12px] mt-0.5 text-text-3">{steps.length} шагов</div>
+      </div>
+      <div className="px-5 flex flex-col gap-3.5">
+        {steps.map((s, i) => (
+          <div key={i} className="flex gap-3.5 items-start">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-[20px] font-extrabold tabular-nums bg-accent-muted text-accent">
+              {i + 1}
+            </div>
+            <div
+              className="flex-1 pt-1 text-[14.5px] leading-relaxed text-text"
+              style={{ textWrap: 'pretty' }}
+            >
+              {s}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ═══ Nutrition ═════════════════════════════════════════════════════
+function NutritionSection({ nutrition }) {
+  if (!nutrition || !nutrition.calories) return null
+  const items = [
+    { value: nutrition.calories, unit: 'ккал', label: 'калории',  color: 'var(--color-accent)'          },
+    { value: nutrition.protein,  unit: 'г',    label: 'белки',    color: 'var(--color-sage)'            },
+    { value: nutrition.fat,      unit: 'г',    label: 'жиры',     color: 'var(--color-nutrition-fat)'   },
+    { value: nutrition.carbs,    unit: 'г',    label: 'углеводы', color: 'var(--color-nutrition-carbs)' },
+  ]
+  return (
+    <section className="mt-7">
+      <div className="px-5 mb-3">
+        <h2 className="text-[17px] font-bold tracking-tight text-text">Пищевая ценность</h2>
+        <div className="text-[12px] mt-0.5 text-text-3">на 100 г</div>
+      </div>
+      <div className="mx-5 rounded-2xl bg-bg-2 border border-border flex justify-between items-stretch px-2.5 py-3.5">
+        {items.map((t, i, arr) => (
+          <div key={i} className="flex-1 min-w-0 flex items-stretch">
+            <div className="flex-1 flex flex-col items-center gap-1 px-0.5">
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ background: t.color }}
+              />
+              <div className="text-[13px] font-bold leading-tight text-center text-text">
+                {t.value ?? '—'}
+                {t.unit && (
+                  <span className="ml-0.5 text-[10.5px] font-semibold text-text-2">{t.unit}</span>
+                )}
+              </div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-text-3">
+                {t.label}
+              </div>
+            </div>
+            {i < arr.length - 1 && <div className="w-px bg-border my-1" />}
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ═══ Categories + tags ═════════════════════════════════════════════
+function TagsSection({ categories, tags, onCategoryClick, onTagClick }) {
+  if (!categories?.length && !tags?.length) return null
+  return (
+    <section className="mt-8">
+      <div className="px-5 mb-3">
+        <h2 className="text-[17px] font-bold tracking-tight text-text">Категории и теги</h2>
+      </div>
+      <div className="px-5 flex flex-wrap gap-1.5">
+        {categories?.map(c => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onCategoryClick?.(c)}
+            className="px-3 py-1.5 rounded-full text-[12.5px] font-bold bg-accent-muted text-accent border border-accent-border"
+          >
+            {CAT_RU[c] || MEAL_LABEL[c] || c}
+          </button>
+        ))}
+        {tags?.map(t => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onTagClick?.(t)}
+            className="px-3 py-1.5 rounded-full text-[12.5px] font-semibold bg-bg-2 text-text-2 border border-border"
+          >
+            #{t}
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ═══ Similar (похожие блюда) ═══════════════════════════════════════
+function SimilarSection({ dishes, onOpen }) {
+  if (!dishes?.length) return null
+  return (
+    <section className="mt-8">
+      <div className="px-5 mb-3">
+        <h2 className="text-[17px] font-bold tracking-tight text-text">Попробуй также</h2>
+      </div>
       <div
-        className="w-full bg-white rounded-t-3xl px-4 pt-5 pb-8 flex flex-col gap-1 shadow-top"
+        className="flex gap-3 overflow-x-auto px-5 pb-1.5"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {dishes.map(d => {
+          const img = d.images?.[0] || d.imageUrl
+          return (
+            <button
+              key={d.id}
+              type="button"
+              onClick={() => onOpen(d.id)}
+              className="w-[168px] flex-shrink-0 text-left"
+            >
+              <div className="w-full h-[120px] rounded-[14px] overflow-hidden relative bg-bg-3 border border-border">
+                {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                {d.cookTime && (
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-0.5 text-text">
+                    <Clock size={10} strokeWidth={2.5} />
+                    {d.cookTime}м
+                  </div>
+                )}
+              </div>
+              <div
+                className="mt-2 text-[13.5px] font-bold leading-tight text-text"
+                style={{ textWrap: 'pretty' }}
+              >
+                {d.name}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+// ═══ Comments ══════════════════════════════════════════════════════
+function CommentsSection({ dishId, comments, setComments, token, currentUserId, dishAuthorId }) {
+  const [draft, setDraft] = useState('')
+  const { show } = useToast()
+  const canPin = currentUserId && currentUserId === dishAuthorId
+
+  async function send() {
+    const text = draft.trim()
+    if (!text) return
+    try {
+      const c = await api.addComment(dishId, text)
+      setComments(prev => [c, ...(prev || [])])
+      setDraft('')
+    } catch (e) {
+      show(e.message || 'Не удалось отправить', 'error')
+    }
+  }
+
+  async function handlePin(id) {
+    try {
+      const updated = await api.pinComment(id)
+      setComments(prev => (prev || []).map(c => c.id === id ? updated : c))
+    } catch (e) { show(e.message, 'error') }
+  }
+  async function handleDelete(id) {
+    try {
+      await api.deleteComment(id)
+      setComments(prev => (prev || []).filter(c => c.id !== id))
+    } catch (e) { show(e.message, 'error') }
+  }
+
+  const list = comments || []
+
+  return (
+    <section className="mt-8">
+      <div className="px-5 mb-3 flex items-baseline gap-2">
+        <h2 className="text-[17px] font-bold tracking-tight text-text">Комментарии</h2>
+        <div className="text-[12px] text-text-3">{list.length}</div>
+      </div>
+
+      <div className="px-5 flex flex-col gap-3.5">
+        {list.map(c => (
+          <div
+            key={c.id}
+            className={[
+              'flex gap-2.5',
+              c.pinned ? 'p-3 rounded-xl bg-accent-muted border border-accent-border' : '',
+            ].join(' ')}
+          >
+            <Avatar name={c.author?.name} size="md" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[13.5px] font-bold text-text">{c.author?.name || 'Пользователь'}</span>
+                {c.pinned && (
+                  <span className="inline-flex items-center gap-0.5 text-[10.5px] font-bold uppercase tracking-wide rounded-full bg-accent-muted text-accent border border-accent-border px-1.5 py-0.5">
+                    <Pin size={9} strokeWidth={2.5} />
+                    закреплено
+                  </span>
+                )}
+                {c.createdAt && (
+                  <span className="text-[11.5px] text-text-3">
+                    · {new Date(c.createdAt).toLocaleDateString('ru-RU')}
+                  </span>
+                )}
+              </div>
+              <div
+                className="text-[13.5px] leading-relaxed mt-1 text-text"
+                style={{ textWrap: 'pretty' }}
+              >
+                {c.content}
+              </div>
+              {(canPin || currentUserId === c.authorId) && (
+                <div className="mt-1.5 flex gap-3">
+                  {canPin && (
+                    <button
+                      type="button"
+                      onClick={() => handlePin(c.id)}
+                      className="text-[11.5px] text-text-3 hover:text-accent"
+                    >
+                      {c.pinned ? 'Открепить' : 'Закрепить'}
+                    </button>
+                  )}
+                  {currentUserId === c.authorId && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(c.id)}
+                      className="text-[11.5px] text-text-3 hover:text-red-500"
+                    >
+                      Удалить
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {token && (
+        <div className="px-5 mt-4">
+          <div className="flex items-center gap-2 bg-bg-2 rounded-full border border-border pl-4 pr-1.5 py-1.5">
+            <input
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+              placeholder="Написать комментарий…"
+              className="flex-1 bg-transparent outline-none text-[13.5px] text-text placeholder:text-text-3 min-w-0"
+            />
+            <button
+              type="button"
+              onClick={send}
+              disabled={!draft.trim()}
+              aria-label="Отправить"
+              className={[
+                'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors',
+                draft.trim() ? 'bg-accent text-white' : 'bg-border text-text-3',
+              ].join(' ')}
+            >
+              <ArrowUp size={16} strokeWidth={2.6} />
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ═══ Actions bottom sheet ══════════════════════════════════════════
+function ActionsSheet({ onClose, isOwner, hasUser, onCopy, onEdit, onDelete }) {
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end bg-black/30" onClick={onClose}>
+      <div
+        className="w-full max-w-[430px] mx-auto bg-bg-2 rounded-t-3xl px-4 pt-5 pb-8 flex flex-col gap-1 shadow-top"
         onClick={e => e.stopPropagation()}
       >
         {hasUser && (
           <button
             type="button"
             onClick={onCopy}
-            className="flex items-center gap-3 px-3 py-3.5 rounded-2xl text-[15px] font-medium text-text hover:bg-bg-3 transition-colors text-left"
+            className="flex items-center gap-3 px-3 py-3.5 rounded-2xl text-[15px] font-medium text-text hover:bg-bg-3 text-left"
           >
-            <span className="text-text-2"><IcoCopy /></span>Копировать рецепт
+            <Copy size={18} className="text-text-2" />
+            Копировать рецепт
           </button>
         )}
         {isOwner && (
           <button
             type="button"
             onClick={onEdit}
-            className="flex items-center gap-3 px-3 py-3.5 rounded-2xl text-[15px] font-medium text-text hover:bg-bg-3 transition-colors text-left"
+            className="flex items-center gap-3 px-3 py-3.5 rounded-2xl text-[15px] font-medium text-text hover:bg-bg-3 text-left"
           >
-            <span className="text-text-2"><IcoEdit /></span>Редактировать
+            <Edit3 size={18} className="text-text-2" />
+            Редактировать
           </button>
         )}
         {isOwner && (
           <button
             type="button"
             onClick={onDelete}
-            className="flex items-center gap-3 px-3 py-3.5 rounded-2xl text-[15px] font-medium text-red-400 hover:bg-red-50 transition-colors text-left"
+            className="flex items-center gap-3 px-3 py-3.5 rounded-2xl text-[15px] font-medium text-red-500 hover:bg-red-50 text-left"
           >
-            <span><IcoDelete /></span>Удалить
+            <Trash2 size={18} />
+            Удалить
           </button>
         )}
         <button
@@ -205,26 +604,28 @@ function ActionsMenu({ onClose, onEdit, onCopy, onDelete, isOwner, hasUser }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ═══ DishDetailPage ══════════════════════════════════════════════
 export default function DishDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const user  = useStore(s => s.user)
-  const token = useStore(s => s.token)
+  const user   = useStore(s => s.user)
+  const token  = useStore(s => s.token)
+  const fridge = useStore(s => s.fridge)
   const { show, Toast } = useToast()
 
-  const [dish, setDish]               = useState(null)
-  const [loading, setLoading]         = useState(true)
-  const [loadError, setLoadError]     = useState(null)
-  const [showGallery, setShowGallery] = useState(false)
-  const [recs, setRecs]               = useState(null)
-  const [showPlanModal, setShowPlanModal]   = useState(false)
+  const [dish, setDish]             = useState(null)
+  const [loading, setLoading]       = useState(true)
+  const [loadError, setLoadError]   = useState(null)
+  const [photoIdx, setPhotoIdx]     = useState(0)
+  const [recs, setRecs]             = useState(null)
+  const [isFav, setIsFav]           = useState(false)
+  const [comments, setComments]     = useState(null)
+  const [showMenu, setShowMenu]     = useState(false)
+  const [showPlanModal, setShowPlanModal] = useState(false)
   const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
-  const [isFav, setIsFav]             = useState(false)
-  const [comments, setComments]       = useState(null)
-  const [showMenu, setShowMenu]       = useState(false)
 
   useEffect(() => {
+    setLoading(true)
     api.getDish(id)
       .then(d => {
         setDish(d)
@@ -249,20 +650,22 @@ export default function DishDetailPage() {
   }, [id, token])
 
   async function toggleFav() {
+    if (!token) return
     try {
       if (isFav) { await api.removeFavorite(id); setIsFav(false) }
-      else        { await api.addFavorite(id);    setIsFav(true)  }
+      else       { await api.addFavorite(id);    setIsFav(true)  }
     } catch (e) { show(e.message, 'error') }
   }
 
   async function handleShare() {
     const url = window.location.href
-    const title = dish.name
     if (navigator.share) {
-      try { await navigator.share({ title, url }) } catch {}
+      try { await navigator.share({ title: dish.name, url }) } catch {}
     } else {
-      await navigator.clipboard.writeText(url)
-      show('Ссылка скопирована', 'success')
+      try {
+        await navigator.clipboard.writeText(url)
+        show('Ссылка скопирована', 'success')
+      } catch {}
     }
   }
 
@@ -271,7 +674,7 @@ export default function DishDetailPage() {
     if (!confirm(`Удалить "${dish.name}"?`)) return
     try {
       await api.deleteDish(id)
-      navigate('/dishes', { replace: true })
+      navigate('/', { replace: true })
     } catch (e) { show(e.message, 'error') }
   }
 
@@ -292,270 +695,208 @@ export default function DishDetailPage() {
   )
   if (!dish) return null
 
-  const isOwner    = user && dish.authorId === user.id
-  const SUPABASE_IMG = 'https://nwtqeytmmqmkwqafkgin.supabase.co/storage/v1/object/public/media/images'
+  const isOwner = user && dish.authorId === user.id
   const cat = dish.categories?.[0]
   const fallbackImg = cat ? `${SUPABASE_IMG}/${cat.toLowerCase()}.jpg` : null
-  const dishImages = dish.images?.length ? dish.images
+  const images = dish.images?.length
+    ? dish.images
     : dish.imageUrl ? [dish.imageUrl]
     : fallbackImg ? [fallbackImg]
     : []
 
+  const fridgeIds = new Set(fridge.map(f => f.ingredientId))
+  const steps = parseSteps(dish.recipe)
+  const author = dish.author || {}
+  const similar = recs?.similar || recs?.fromFridge || []
+
   return (
-    <div className="fixed inset-0 z-[150] flex flex-col bg-bg">
-
-      {/* ── Scrollable content ── */}
-      <div className="flex-1 overflow-y-auto pb-24">
-
-        {/* ── Hero image or plain header ── */}
-        {dishImages.length > 0 ? (
-          <div className="relative">
-            <div className="relative h-[250px] overflow-hidden">
-              <ImageSlider images={dishImages} onImageClick={() => setShowGallery(true)} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
-
-              {/* Top action row over image */}
-              <div className="absolute top-0 left-0 right-0 flex items-center gap-2 px-4 pt-12 pb-3" onClick={e => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white shrink-0"
-                >
-                  <IcoBack />
-                </button>
-                <div className="flex-1" />
+    <div className="fixed inset-0 z-[150] flex flex-col bg-bg overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        <div className="relative mx-auto max-w-app pb-32">
+          {/* ── Hero ─────────────────────────────────────────── */}
+          {images.length > 0 ? (
+            <Hero images={images} photoIdx={photoIdx} setPhotoIdx={setPhotoIdx}>
+              <HeroButton
+                icon={<ChevronLeft size={20} strokeWidth={2} />}
+                onClick={() => navigate(-1)}
+                ariaLabel="Назад"
+              />
+              <div className="flex gap-2">
+                <HeroButton
+                  icon={<Share2 size={18} strokeWidth={2} />}
+                  onClick={handleShare}
+                  ariaLabel="Поделиться"
+                />
+                {user && (
+                  <HeroButton
+                    icon={<Heart size={18} strokeWidth={2.2} fill={isFav ? '#fff' : 'none'} />}
+                    onClick={toggleFav}
+                    active={isFav}
+                    ariaLabel={isFav ? 'Убрать из избранного' : 'В избранное'}
+                  />
+                )}
+                <HeroButton
+                  icon={<MoreVertical size={18} strokeWidth={2} />}
+                  onClick={() => setShowMenu(true)}
+                  ariaLabel="Ещё"
+                />
+              </div>
+            </Hero>
+          ) : (
+            /* без фото: компактный top-bar */
+            <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="w-10 h-10 rounded-full bg-bg-2 border border-border flex items-center justify-center text-text"
+                aria-label="Назад"
+              >
+                <ChevronLeft size={20} strokeWidth={2} />
+              </button>
+              <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white"
+                  className="w-10 h-10 rounded-full bg-bg-2 border border-border flex items-center justify-center text-text"
+                  aria-label="Поделиться"
                 >
-                  <IcoShare />
+                  <Share2 size={18} strokeWidth={2} />
                 </button>
                 {user && (
                   <button
                     type="button"
                     onClick={toggleFav}
-                    className={['w-9 h-9 flex items-center justify-center rounded-full transition-colors',
-                      isFav ? 'bg-accent text-white' : 'bg-black/40 text-white',
+                    className={[
+                      'w-10 h-10 rounded-full border flex items-center justify-center',
+                      isFav ? 'bg-accent text-white border-accent' : 'bg-bg-2 border-border text-text',
                     ].join(' ')}
                   >
-                    <IcoHeart filled={isFav} />
+                    <Heart size={18} strokeWidth={2.2} fill={isFav ? '#fff' : 'none'} />
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => setShowMenu(true)}
-                  className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white"
+                  className="w-10 h-10 rounded-full bg-bg-2 border border-border flex items-center justify-center text-text"
+                  aria-label="Ещё"
                 >
-                  <IcoDots />
+                  <MoreVertical size={18} strokeWidth={2} />
                 </button>
               </div>
-
-              {/* Title over image */}
-              <div className="absolute bottom-4 left-4 right-4 pointer-events-none">
-                <h1 className="text-[22px] font-bold text-white leading-tight">{dish.name}</h1>
-              </div>
             </div>
-          </div>
-        ) : (
-          /* No image — own top bar */
-          <div className="bg-bg pt-12 px-4 pb-5">
-            <div className="flex items-center gap-2 mb-5">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2 shrink-0 shadow-sm"
-              >
-                <IcoBack />
-              </button>
-              <div className="flex-1" />
-              <button
-                type="button"
-                onClick={handleShare}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2 shadow-sm"
-              >
-                <IcoShare />
-              </button>
-              {user && (
-                <button
-                  type="button"
-                  onClick={toggleFav}
-                  className={['w-9 h-9 flex items-center justify-center rounded-full transition-colors shadow-sm',
-                    isFav ? 'bg-accent text-white' : 'bg-white text-text-2',
-                  ].join(' ')}
-                >
-                  <IcoHeart filled={isFav} />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowMenu(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-text-2 shadow-sm"
-              >
-                <IcoDots />
-              </button>
-            </div>
+          )}
 
-            <h1 className="text-[24px] font-bold text-text leading-tight">{dish.name}</h1>
+          {/* ── Title + description ──────────────────────────── */}
+          <div className={['px-5 relative', images.length > 0 ? '-mt-4' : 'mt-3'].join(' ')}>
+            <h1
+              className="text-[26px] font-extrabold leading-[1.2] tracking-tight text-text"
+              style={{ textWrap: 'pretty' }}
+            >
+              {dish.name}
+            </h1>
             {dish.description && (
-              <p className="text-sm text-text-2 mt-2 leading-relaxed">{dish.description}</p>
+              <p className="mt-2.5 text-[15px] leading-relaxed text-text-2">
+                {dish.description}
+              </p>
             )}
-          </div>
-        )}
 
-        {/* ── Description (if had hero image) ── */}
-        {dishImages.length > 0 && dish.description && (
-          <div className="px-4 pt-4">
-            <p className="text-sm text-text-2 leading-relaxed">{dish.description}</p>
-          </div>
-        )}
-
-        {/* ── DishMeta (cook time) ── */}
-        <DishMeta dish={dish} />
-
-        {/* ── Content ── */}
-        <div className="px-4 flex flex-col divide-y divide-border/60 border-t border-border/60 mt-4">
-          <div className="py-6"><IngredientList ingredients={dish.ingredients} /></div>
-          <div className="py-6"><DishSteps recipe={dish.recipe} /></div>
-          <div className="py-6"><NutritionBlock nutrition={dish.nutrition} /></div>
-
-          {/* ── Clickable meta: categories, cuisine, tags ── */}
-          {(dish.categories?.length > 0 || dish.tags?.length > 0) && (
-            <div className="py-5 flex flex-wrap gap-2">
-              {dish.categories?.map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => navigate(`/dishes?category=${cat}`)}
-                  className="text-xs text-text-2 bg-white rounded-full px-3 py-1.5 border border-border/60 active:bg-bg-2"
-                >
-                  {CAT_RU[cat] || cat}
-                </button>
-              ))}
-              {dish.tags?.map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => navigate(`/dishes?tag=${encodeURIComponent(t)}`)}
-                  className="text-xs text-text-2 bg-white rounded-full px-3 py-1.5 border border-border/60 active:bg-bg-2"
-                >
-                  #{t}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* ── Owner actions ── */}
-          {isOwner && (
-            <div className="py-5 flex gap-3">
-              <button
-                type="button"
-                onClick={() => navigate(`/dishes/${id}/edit`)}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-border text-sm font-medium text-text-2 bg-white active:bg-bg-2"
-              >
-                <IcoEdit /> Редактировать
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-red-200 text-sm font-medium text-red-400 bg-white active:bg-red-50"
-              >
-                <IcoDelete /> Удалить
-              </button>
-            </div>
-          )}
-
-          {comments !== null && (
-            <div className="py-6">
-              <CommentsSection
-                comments={comments}
-                setComments={setComments}
-                dishId={id}
-                currentUser={user}
-                dishAuthorId={dish.authorId}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* ── Recommendations ── */}
-        {recs && (
-          <div className="pb-4">
-            {user && recs.fromFridge?.length > 0 && (
-              <RecsRow title="Из холодильника" dishes={recs.fromFridge} navigate={navigate} />
-            )}
-            {user && recs.nearMatch?.length > 0 && (
-              <div className="pt-6">
-                <p className="text-[17px] font-semibold text-text px-4 mb-3">Осталось докупить</p>
-                <div className="flex overflow-x-auto px-4 gap-3 pb-1" style={{ scrollSnapType: 'x mandatory', scrollPaddingLeft: '1rem' }}>
-                  {recs.nearMatch.map(({ dish: d, missing }) => (
-                    <div key={d.id} className="shrink-0 w-full" style={{ scrollSnapAlign: 'start' }}>
-                      <DishCard
-                        variant="row"
-                        dish={d}
-                        onClick={() => navigate(`/dishes/${d.id}`)}
-                        hint={`Докупить: ${missing.map(m => m.name).join(', ')}`}
-                      />
-                    </div>
-                  ))}
+            {(author.name || isOwner) && (
+              <div className="mt-3.5 flex items-center gap-2">
+                <Avatar name={author.name || user?.name} size="sm" />
+                <div className="text-[13px] text-text-2">
+                  Рецепт от{' '}
+                  <span className="font-semibold text-text">
+                    {author.name || (isOwner ? user?.name : '—')}
+                  </span>
+                  {isOwner && (
+                    <span className="ml-2 font-semibold text-accent">· Ваш рецепт</span>
+                  )}
                 </div>
               </div>
             )}
-            {/* Похожие блюда временно отключены */}
           </div>
-        )}
+
+          {/* ── Meta strip ───────────────────────────────────── */}
+          <DishMetaStrip
+            cookTime={dish.cookTime}
+            difficulty={dish.difficulty}
+            cuisine={dish.cuisine}
+            mealTime={dish.mealTime}
+          />
+
+          {/* ── Ingredients ──────────────────────────────────── */}
+          <IngredientsSection
+            ingredients={dish.ingredients}
+            fridgeIds={fridgeIds}
+            token={token}
+          />
+
+          {/* ── Steps ────────────────────────────────────────── */}
+          <StepsSection steps={steps} />
+
+          {/* ── Nutrition ────────────────────────────────────── */}
+          <NutritionSection nutrition={dish.nutrition} />
+
+          {/* ── Categories + tags ────────────────────────────── */}
+          <TagsSection
+            categories={dish.categories}
+            tags={dish.tags}
+            onCategoryClick={c => navigate(`/dishes?category=${c}`)}
+            onTagClick={t => navigate(`/dishes?tag=${encodeURIComponent(t)}`)}
+          />
+
+          {/* ── Similar ──────────────────────────────────────── */}
+          <SimilarSection
+            dishes={similar}
+            onOpen={dishId => navigate(`/dishes/${dishId}`)}
+          />
+
+          {/* ── Comments ─────────────────────────────────────── */}
+          {comments !== null && (
+            <CommentsSection
+              dishId={id}
+              comments={comments}
+              setComments={setComments}
+              token={token}
+              currentUserId={user?.id}
+              dishAuthorId={dish.authorId}
+            />
+          )}
+        </div>
       </div>
 
-      {/* ── FAB: Буду готовить ── */}
+      {/* ── FAB «В план» ──────────────────────────────────────── */}
       <button
         type="button"
-        onClick={() => setShowPlanModal(true)}
-        className="fixed bottom-6 right-4 z-[140] w-14 h-14 rounded-full bg-accent text-white flex items-center justify-center shadow-lg active:opacity-90 transition-opacity"
+        onClick={() => token ? setShowPlanModal(true) : navigate('/auth?mode=register')}
+        className="fixed bottom-6 right-6 h-[52px] rounded-full flex items-center gap-2 text-[14.5px] font-bold text-white active:scale-95 transition bg-accent px-5 pl-4 z-[200]"
+        style={{ boxShadow: '0 8px 24px rgba(196,112,74,0.45), 0 2px 6px rgba(196,112,74,0.3)' }}
       >
-        <IcoPlan />
+        <CalendarPlus size={18} strokeWidth={2.2} />
+        В план готовки
       </button>
 
-      {/* ── Modals ── */}
-      {showGallery && dishImages.length > 0 && (
-        <ImageGallery images={dishImages} onClose={() => setShowGallery(false)} />
-      )}
-
+      {/* ── Modals ────────────────────────────────────────────── */}
       {showMenu && (
-        <ActionsMenu
+        <ActionsSheet
           onClose={() => setShowMenu(false)}
-          onEdit={() => { setShowMenu(false); navigate(`/dishes/${id}/edit`) }}
-          onCopy={() => { setShowMenu(false); navigate(`/dishes/new?copyFrom=${id}`) }}
-          onDelete={handleDelete}
           isOwner={isOwner}
           hasUser={Boolean(user)}
+          onCopy={() => { setShowMenu(false); navigate(`/dishes/new?copyFrom=${id}`) }}
+          onEdit={() => { setShowMenu(false); navigate(`/dishes/${id}/edit`) }}
+          onDelete={handleDelete}
         />
       )}
-
-      {showPlanModal && dish && (
+      {showPlanModal && (
         <AddToPlanModal
           dish={dish}
           hasFamilyGroup={hasFamilyGroup}
           onClose={() => setShowPlanModal(false)}
-          onAdded={() => show('Добавлено в список!')}
+          onAdded={() => show('Добавлено в план', 'success')}
         />
       )}
 
       {Toast}
-    </div>
-  )
-}
-
-function RecsRow({ title, dishes, navigate }) {
-  return (
-    <div className="px-4 pt-5">
-      <p className="font-semibold text-[15px] mb-3 text-text">{title}</p>
-      <div className="flex gap-3 overflow-x-auto pb-1">
-        {dishes.map(d => (
-          <div key={d.id} className="shrink-0 w-48">
-            <DishCard dish={d} onClick={() => navigate(`/dishes/${d.id}`)} />
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
