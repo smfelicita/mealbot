@@ -9,6 +9,7 @@ node_modules/
 # Build
 frontend/dist/
 frontend/.vite/
+frontend/vite.config.js.timestamp-*.mjs
 
 # IDE
 .idea/

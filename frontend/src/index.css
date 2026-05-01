@@ -2,31 +2,60 @@
 
 /* ── Тема ────────────────────────────────────────────────────── */
 @theme {
-  --color-bg:           #F6F4EF;
-  --color-bg-2:         #FFFFFF;
-  --color-bg-3:         #F5EFE6;
-  --color-card:         #FFFFFF;
-  --color-border:       #E5D8C8;
+  /* Фоны и поверхности */
+  --color-bg:            #F6F4EF;
+  --color-bg-2:          #FFFFFF;
+  --color-bg-3:          #F5EFE6;
+  --color-card:          #FFFFFF;
+  --color-border:        #E5D8C8;
 
-  --color-accent:       #C4704A;
-  --color-accent-2:     #D4855C;
-  --color-accent-muted: rgba(196,112,74,0.1);
+  /* Accent (терракот) */
+  --color-accent:        #C4704A;
+  --color-accent-2:      #D4855C;
+  --color-accent-muted:  rgba(196,112,74,0.10);
+  --color-accent-border: rgba(196,112,74,0.25);
 
-  --color-sage:         #4A6B47;
-  --color-teal:         #4A6B47;
-  --color-text:         #1C1917;
-  --color-text-2:       #78716C;
-  --color-text-3:       #A8A29E;
+  /* Sage (зелёный успех/семья) — обновлено под design-system v2 */
+  --color-sage:          #5C7A59;
+  --color-teal:          #5C7A59;
+  --color-sage-muted:    rgba(92,122,89,0.08);
+  --color-sage-border:   rgba(92,122,89,0.30);
 
-  --radius-DEFAULT:     16px;
-  --radius-sm:          12px;
-  --radius-full:        9999px;
+  /* Pro (золото — монетизация) */
+  --color-pro:           #B8935A;
+  --color-pro-muted:     rgba(184,147,90,0.12);
+  --color-pro-border:    rgba(184,147,90,0.35);
 
-  --font-sans:          'Nunito', system-ui, sans-serif;
-  --font-serif:         'Nunito', system-ui, sans-serif;
+  /* КБЖУ-цвета (для DishDetailPage и подобных) */
+  --color-nutrition-fat:    #D4A441;
+  --color-nutrition-carbs:  #8C6D9E;
 
-  --shadow-card:        0 2px 16px rgba(0,0,0,0.08);
-  --shadow-sm:          0 1px 6px rgba(0,0,0,0.06);
+  /* Текст */
+  --color-text:          #1C1917;
+  --color-text-2:        #78716C;
+  --color-text-3:        #A8A29E;
+
+  /* Радиусы — 4 размера всего */
+  --radius-DEFAULT:      16px;
+  --radius-md:           12px;
+  --radius-sm:           8px;
+  --radius-full:         9999px;
+
+  /* Шрифт */
+  --font-sans:           'Nunito', system-ui, sans-serif;
+  --font-serif:          'Nunito', system-ui, sans-serif;
+
+  /* Размеры шрифта (фикс под дизайн-систему) */
+  --text-sm2:            13px;
+  --text-md2:            15px;
+  --text-lg2:            17px;
+
+  /* Тени */
+  --shadow-card:         0 2px 16px rgba(0,0,0,0.08);
+  --shadow-sm:           0 1px 6px rgba(0,0,0,0.06);
+  --shadow-accent:       0 4px 16px rgba(196,112,74,0.35);
+  --shadow-accent-strong: 0 8px 24px rgba(196,112,74,0.45);
+  --shadow-top:          0 -4px 24px rgba(0,0,0,0.12);
 }
 
 /* ── Base ──────────────────────────────────────────────────────── */

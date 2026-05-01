@@ -1,0 +1,13 @@
+{
+  "generic": "Что-то пошло не так",
+  "network": "Нет связи с сервером",
+  "unauthorized": "Нужно войти в аккаунт",
+  "forbidden": "Нет доступа",
+  "notFound": "Не найдено",
+  "validation": {
+    "required": "Обязательное поле",
+    "email": "Введите корректный email",
+    "minLength": "Минимум {{count}} символов",
+    "maxLength": "Максимум {{count}} символов"
+  }
+}

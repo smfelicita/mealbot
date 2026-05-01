@@ -1,127 +1,223 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+// HomePage — главная страница.
+// Три состояния: guest / user с пустым холодильником / user рабочий вид.
+// Портировано из context/design/home-v2.jsx, токены через Tailwind (bg-accent, text-sage и т.п.)
+
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  ChevronRight, Heart, Refrigerator,
+  Sun, Utensils, Moon, Cookie,
+  Plus, Clock, Flame, Sparkles,
+  BookOpen, CalendarDays,
+} from 'lucide-react'
+
 import { api } from '../api'
 import { useStore } from '../store'
-import { DishCard } from '../components/domain'
-import MealTypeChips from '../components/domain/MealTypeChips'
-import { useHintDismiss } from '../hooks/useHintDismiss'
-import { useToast } from '../components/ui'
+import { DishCardV2 } from '../components/domain'
+import {
+  PageHeader,
+  MetaStrip,
+  GuestBlock,
+  HintBanner,
+  Button,
+  useToast,
+} from '../components/ui'
 
-const CARD_GAP = 12 // gap-3 = 12px
+// ─── Meal times (локальный reference) ────────────────────────────
+const MEAL_TIMES = [
+  { id: 'breakfast', label: 'Завтрак', Icon: Sun       },
+  { id: 'lunch',     label: 'Обед',    Icon: Utensils  },
+  { id: 'dinner',    label: 'Ужин',    Icon: Moon      },
+  { id: 'snack',     label: 'Перекус', Icon: Cookie    },
+]
 
-// ─── GuestHeroBanner ──────────────────────────────────────────────────────────
-function GuestHeroBanner({ onNavigate }) {
-  const [visible, setVisible] = useState(
-    () => !localStorage.getItem('mealbot_guest_banner_dismissed')
-  )
-  if (!visible) return null
-
-  function dismiss() {
-    localStorage.setItem('mealbot_guest_banner_dismissed', '1')
-    setVisible(false)
-  }
-
+// ═══ MealChips ═══════════════════════════════════════════════════
+// Инлайновые chips с иконками (v2-вариант), чтобы не править общий MealTypeChips.
+function MealChips({ active, onChange }) {
+  const all = [{ id: '', label: 'Все', Icon: null }, ...MEAL_TIMES]
   return (
-    <div className="relative bg-white rounded-2xl px-5 py-4 shrink-0 shadow-sm">
+    <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-1.5 w-max">
+        {all.map(({ id, label, Icon }) => {
+          const isActive = id === active
+          return (
+            <button
+              key={id || 'all'}
+              type="button"
+              onClick={() => onChange(id)}
+              className={[
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full',
+                'text-[12.5px] font-bold transition-colors flex-shrink-0 border',
+                isActive
+                  ? 'bg-accent-muted border-accent-border text-accent'
+                  : 'bg-bg-2 border-border text-text-2',
+              ].join(' ')}
+            >
+              {Icon && <Icon size={14} strokeWidth={2} />}
+              {label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ═══ FridgeSuggest ═══════════════════════════════════════════════
+function FridgeSuggest({ count, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-2xl flex items-center gap-2.5 text-left
+        bg-sage-muted border border-sage-border px-3.5 py-2.5
+        hover:opacity-90 transition-opacity"
+    >
+      <Refrigerator size={16} strokeWidth={2} className="text-sage shrink-0" />
+      <div className="flex-1 text-[12.5px] font-bold text-sage">
+        Из вашего холодильника можно приготовить{' '}
+        <span className="tabular-nums">{count}</span> блюд
+      </div>
+      <ChevronRight size={14} strokeWidth={2.2} className="text-sage shrink-0" />
+    </button>
+  )
+}
+
+// ═══ TodayPinned ═════════════════════════════════════════════════
+function TodayPinned({ dish, img, onCook, onOpen }) {
+  return (
+    <div className="rounded-2xl bg-accent-muted border border-accent-border p-2.5">
+      <div className="flex items-center gap-1.5 mb-2 px-1">
+        <Flame size={12} strokeWidth={2.4} className="text-accent" />
+        <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent">
+          Сегодня в плане
+        </span>
+      </div>
+      <div className="flex items-center gap-3 rounded-xl bg-bg-2 p-2">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-border
+            bg-bg-3 flex items-center justify-center"
+        >
+          {img
+            ? <img src={img} alt="" className="w-full h-full object-cover" />
+            : <Utensils size={20} className="text-text-3" />
+          }
+        </button>
+        <div className="flex-1 min-w-0">
+          <div
+            className="text-[13.5px] font-bold leading-tight text-text"
+            style={{ textWrap: 'pretty' }}
+          >
+            {dish.name}
+          </div>
+          {dish.cookTime && (
+            <div className="flex items-center gap-2 mt-1 text-[11.5px] text-text-2">
+              <span className="flex items-center gap-0.5">
+                <Clock size={10} strokeWidth={2.2} />
+                {dish.cookTime} мин
+              </span>
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onCook}
+          className="h-9 px-3.5 rounded-full text-[12.5px] font-bold text-white
+            bg-accent shrink-0 hover:bg-accent-2 transition-colors"
+        >
+          Готовлю!
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ═══ QuickActions ════════════════════════════════════════════════
+function QuickActions({ favActive, fridgeActive, onFav, onFridge }) {
+  return (
+    <div className="flex gap-2">
       <button
         type="button"
-        onClick={dismiss}
-        aria-label="Закрыть"
-        className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full text-text-3 hover:text-text transition-colors text-lg leading-none"
-      >✕</button>
-
-      <p className="font-semibold text-[17px] leading-snug pr-6 text-text">
-        Добавь свои блюда —<br />и больше не думай, что готовить
-      </p>
-      <p className="text-xs mt-1 mb-3 text-text-3">Займёт меньше минуты</p>
-
-      <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          onClick={() => onNavigate('/auth?mode=register')}
-          className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity active:opacity-80 bg-accent"
-        >
-          Создать свою кухню
-        </button>
-        <button
-          type="button"
-          onClick={() => onNavigate('/auth')}
-          className="w-full py-2 rounded-xl text-[13px] font-medium transition-colors text-text-3"
-        >
-          Уже есть аккаунт? Войти
-        </button>
-      </div>
+        onClick={onFav}
+        className={[
+          'flex-1 h-11 rounded-full flex items-center justify-center gap-2',
+          'text-[13px] font-bold transition-colors border',
+          favActive
+            ? 'bg-accent text-white border-accent'
+            : 'bg-bg-2 text-text-2 border-border hover:text-accent hover:border-accent',
+        ].join(' ')}
+      >
+        <Heart size={14} strokeWidth={2.4} fill={favActive ? '#fff' : 'none'} />
+        Избранное
+      </button>
+      <button
+        type="button"
+        onClick={onFridge}
+        className={[
+          'flex-1 h-11 rounded-full flex items-center justify-center gap-2',
+          'text-[13px] font-bold transition-colors border',
+          fridgeActive
+            ? 'bg-sage text-white border-sage'
+            : 'bg-sage-muted text-sage border-sage-border hover:opacity-90',
+        ].join(' ')}
+      >
+        <Refrigerator size={14} strokeWidth={2.4} />
+        Холодильник
+      </button>
     </div>
   )
 }
 
-function defaultMealTime() {
-  const h = new Date().getHours()
-  if (h < 11) return 'breakfast'
-  if (h < 15) return 'lunch'
-  if (h < 21) return 'dinner'
-  return 'snack'
-}
-
-function SkeletonCard() {
+// ═══ AddOwnDish ══════════════════════════════════════════════════
+function AddOwnDish({ guest, onClick }) {
+  if (guest) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full h-12 rounded-full text-[14px] font-bold text-white
+          flex items-center justify-center gap-2 bg-accent hover:bg-accent-2 transition-colors"
+        style={{ boxShadow: '0 6px 18px rgba(196,112,74,0.35)' }}
+      >
+        <Sparkles size={16} strokeWidth={2.2} />
+        Создать свою кухню
+      </button>
+    )
+  }
   return (
-    <div className="w-full flex items-center justify-between bg-white rounded-2xl p-4 animate-pulse shadow-sm">
-      <div className="flex-1 pr-3 space-y-2">
-        <div className="h-4 bg-bg-3 rounded-full w-3/4" />
-        <div className="h-3 bg-bg-3 rounded-full w-1/2" />
-      </div>
-      <div className="w-16 h-16 rounded-xl bg-bg-3 shrink-0" />
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full h-12 rounded-full text-[14px] font-bold
+        flex items-center justify-center gap-2
+        bg-bg-2 text-accent border border-dashed border-accent-border
+        hover:bg-accent-muted transition-colors"
+    >
+      <Plus size={16} strokeWidth={2.4} />
+      Добавить своё блюдо
+    </button>
   )
 }
 
+// ═══ HomePage ══════════════════════════════════════════════════
 export default function HomePage() {
   const navigate = useNavigate()
   const token    = useStore(s => s.token)
+  const user     = useStore(s => s.user)
   const fridge   = useStore(s => s.fridge)
+  const planDishIds = useStore(s => s.planDishIds)
   const { show, Toast } = useToast()
 
-  const [dishes, setDishes]         = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [mealTime, setMealTime]     = useState('')
-  const [favOnly, setFavOnly]       = useState(false)
+  const [dishes,    setDishes]    = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [mealTime,  setMealTime]  = useState('')
+  const [favOnly,   setFavOnly]   = useState(false)
   const [fridgeOnly, setFridgeOnly] = useState(false)
-  const [favIds, setFavIds]         = useState(new Set())
-  const [visibleCount, setVisibleCount] = useState(4)
-  const [fridgeModeHintDismissed, dismissFridgeModeHint] = useHintDismiss('mealbot_hint_fridgeMode_seen')
+  const [favIds,    setFavIds]    = useState(new Set())
 
-  // Refs for measuring
-  const listContainerRef = useRef(null)
-  const firstCardRef     = useRef(null)
-
-  const recalcCount = useCallback(() => {
-    const container = listContainerRef.current
-    const card      = firstCardRef.current
-    if (!container || !card) return
-    const containerH = container.clientHeight
-    const cardH      = card.clientHeight
-    if (containerH === 0 || cardH === 0) return
-    const count = Math.max(1, Math.floor((containerH + CARD_GAP) / (cardH + CARD_GAP)))
-    setVisibleCount(count)
-  }, [])
-
-  // Recalculate when container resizes (orientation change, window resize)
-  useEffect(() => {
-    const container = listContainerRef.current
-    if (!container) return
-    const ro = new ResizeObserver(recalcCount)
-    ro.observe(container)
-    return () => ro.disconnect()
-  }, [recalcCount])
-
-  // Recalculate after loading finishes or when any filter changes
-  // (container size doesn't change, but we need fresh card measurement)
-  useEffect(() => {
-    if (!loading) {
-      const raf = requestAnimationFrame(recalcCount)
-      return () => cancelAnimationFrame(raf)
-    }
-  }, [loading, mealTime, favOnly, fridgeOnly, recalcCount])
+  const guest = !token
 
   useEffect(() => {
     api.getDishes({ limit: 50 })
@@ -130,11 +226,53 @@ export default function HomePage() {
       .finally(() => setLoading(false))
 
     if (token) {
-      api.getFavoriteIds().then(({ dishIds }) => setFavIds(new Set(dishIds))).catch(() => {})
+      api.getFavoriteIds()
+        .then(({ dishIds }) => setFavIds(new Set(dishIds)))
+        .catch(() => {})
     }
   }, [token])
 
   const fridgeIds = new Set(fridge.map(f => f.ingredientId))
+
+  // Считаем, сколько блюд можно приготовить из холодильника
+  const fridgeReadyCount = token && fridge.length > 0
+    ? dishes.filter(d =>
+        d.ingredients?.length > 0 &&
+        d.ingredients.every(i => i.toTaste || i.isBasic || fridgeIds.has(i.id))
+      ).length
+    : 0
+
+  // Первое запланированное блюдо — для TodayPinned
+  const plannedDish = token && planDishIds.size > 0
+    ? dishes.find(d => planDishIds.has(d.id))
+    : null
+
+  // Determine variant:
+  //   'guest'  — нет токена
+  //   'empty'  — залогинен, но холодильник пустой
+  //   'normal' — залогинен и холодильник не пустой
+  const variant = guest ? 'guest' : (fridge.length === 0 ? 'empty' : 'normal')
+
+  const metrics = guest ? null : [
+    {
+      icon:  <CalendarDays size={16} strokeWidth={2.2} />,
+      value: planDishIds.size,
+      label: 'В плане',
+      accent: 'accent',
+    },
+    {
+      icon:  <Refrigerator size={16} strokeWidth={2.2} />,
+      value: fridge.length,
+      label: 'В холодильнике',
+      accent: 'sage',
+    },
+    {
+      icon:  <Heart size={16} strokeWidth={2.2} />,
+      value: favIds.size,
+      label: 'В избранном',
+      accent: 'pro',
+    },
+  ]
 
   function handleToggleFav(dishId) {
     if (!token) return
@@ -144,7 +282,9 @@ export default function HomePage() {
       isFav ? next.delete(dishId) : next.add(dishId)
       return next
     })
-    isFav ? api.removeFavorite(dishId).catch(() => {}) : api.addFavorite(dishId).catch(() => {})
+    isFav
+      ? api.removeFavorite(dishId).catch(() => {})
+      : api.addFavorite(dishId).catch(() => {})
   }
 
   async function handleAddToPlan(dish) {
@@ -170,121 +310,129 @@ export default function HomePage() {
     return true
   })
 
-  const visible = filtered.slice(0, visibleCount)
+  const greeting = user?.name ? `Добрый день, ${user.name} 👋` : null
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 px-5 pt-6 pb-6 gap-5 bg-bg">
+    <div className="flex flex-col flex-1 bg-bg pb-6">
+      {/* ── Title ───────────────────────────────────────────────── */}
+      <PageHeader
+        subtitle={guest ? null : greeting}
+        title={<>Что приготовить<br />сегодня?</>}
+      />
 
-      {/* Heading */}
-      <h1 className="text-[26px] font-semibold leading-[1.35] shrink-0 text-text">
-        Что приготовить<br />сегодня?
-      </h1>
+      {/* ── Guest banner ─────────────────────────────────────────── */}
+      {guest && (
+        <div className="px-5 mt-4">
+          <GuestBlock
+            variant="banner"
+            icon={<Sparkles size={18} strokeWidth={2.2} />}
+            title="Добавь свои блюда — и больше не думай, что готовить"
+            description="Подборка по холодильнику, план на неделю, любимые рецепты."
+            registerText="Создать свою кухню"
+            loginText="Войти"
+            storageKey="mealbot_guest_banner_dismissed"
+            dismissible
+          />
+        </div>
+      )}
 
-      {/* Guest hero banner */}
-      {!token && <GuestHeroBanner onNavigate={navigate} />}
+      {/* ── Empty-fridge hint ────────────────────────────────────── */}
+      {variant === 'empty' && (
+        <div className="px-5 mt-4">
+          <HintBanner
+            variant="sage"
+            icon={<Refrigerator size={17} strokeWidth={2} />}
+            title="Заполни холодильник"
+          >
+            Покажем рецепты из того, что есть дома
+          </HintBanner>
+        </div>
+      )}
 
-      {/* Chips */}
-      <div className="shrink-0">
-        <MealTypeChips
+      {/* ── Day meta ─────────────────────────────────────────────── */}
+      {metrics && (
+        <div className="px-5 mt-4">
+          <MetaStrip items={metrics} />
+        </div>
+      )}
+
+      {/* ── Meal chips ───────────────────────────────────────────── */}
+      <div className="px-5 mt-5">
+        <MealChips
           active={mealTime}
           onChange={v => { setMealTime(v); setFavOnly(false); setFridgeOnly(false) }}
-          showAll
         />
       </div>
 
-      {/* Recipe list — flex-1 takes remaining space, overflow hidden = no scroll */}
-      <div
-        ref={listContainerRef}
-        className="flex-1 min-h-0 overflow-hidden flex flex-col"
-        style={{ gap: CARD_GAP }}
-      >
-        {loading ? (
-          [1, 2, 3, 4].map(i => <SkeletonCard key={i} />)
-        ) : visible.length === 0 && fridgeOnly && fridge.length === 0 ? (
-          <div className="bg-white rounded-2xl p-5 flex flex-col gap-3 shadow-sm">
-            <p className="font-semibold text-[15px] text-text">Холодильник пуст</p>
-            <p className="text-[13px] text-text-3">Добавь продукты чтобы видеть блюда из того, что есть дома</p>
-            <button
-              type="button"
-              onClick={() => navigate('/fridge')}
-              className="self-start px-4 py-2 rounded-xl text-[13px] font-semibold text-white bg-sage"
-            >
-              Заполнить холодильник
-            </button>
-          </div>
-        ) : visible.length === 0 ? (
-          <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
-            <p className="text-[15px] text-text-3">Нет подходящих блюд</p>
-          </div>
-        ) : visible.map((dish, idx) => (
-          <DishCard
-            key={dish.id}
-            ref={idx === 0 ? firstCardRef : undefined}
-            variant="row"
-            dish={dish}
-            isFav={favIds.has(dish.id)}
-            onToggleFav={token ? handleToggleFav : undefined}
-            fridgeIngredientIds={token ? fridgeIds : undefined}
-            onAddToPlan={token ? handleAddToPlan : undefined}
-            onClick={() => navigate(`/dishes/${dish.id}`)}
+      {/* ── Fridge suggest ───────────────────────────────────────── */}
+      {variant === 'normal' && fridgeReadyCount > 0 && (
+        <div className="px-5 mt-4">
+          <FridgeSuggest
+            count={fridgeReadyCount}
+            onClick={() => setFridgeOnly(true)}
           />
-        ))}
+        </div>
+      )}
+
+      {/* ── Today pinned ─────────────────────────────────────────── */}
+      {variant === 'normal' && plannedDish && (
+        <div className="px-5 mt-4">
+          <TodayPinned
+            dish={plannedDish}
+            img={plannedDish.images?.[0] || plannedDish.imageUrl}
+            onCook={() => navigate(`/dishes/${plannedDish.id}`)}
+            onOpen={() => navigate(`/dishes/${plannedDish.id}`)}
+          />
+        </div>
+      )}
+
+      {/* ── Dish list ────────────────────────────────────────────── */}
+      <div className="px-5 mt-4 flex flex-col gap-2">
+        {loading ? (
+          <div className="bg-bg-2 border border-border rounded-2xl p-6 text-center text-[14px] text-text-3">
+            Загружаем блюда…
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-bg-2 border border-border rounded-2xl p-6 text-center">
+            <p className="text-[14px] text-text-3">Нет подходящих блюд</p>
+          </div>
+        ) : (
+          filtered.slice(0, 8).map(dish => (
+            <DishCardV2
+              key={dish.id}
+              dish={dish}
+              isFav={favIds.has(dish.id)}
+              onToggleFav={token ? handleToggleFav : undefined}
+              fridgeIngredientIds={token ? fridgeIds : undefined}
+              onAddToPlan={token ? handleAddToPlan : undefined}
+              onClick={() => navigate(`/dishes/${dish.id}`)}
+            />
+          ))
+        )}
       </div>
 
-      {/* Однократный hint: fridge mode включён, холодильник пуст */}
-      {token && fridgeOnly && fridge.length === 0 && !fridgeModeHintDismissed && (
-        <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 shrink-0 shadow-sm">
-          <p className="text-[13px] text-text-2">
-            Сначала добавь продукты в холодильник →
-          </p>
-          <button
-            type="button"
-            onClick={dismissFridgeModeHint}
-            className="ml-3 shrink-0 text-text-3 text-lg leading-none"
-          >✕</button>
+      {/* ── Add own dish ─────────────────────────────────────────── */}
+      {!loading && (
+        <div className="px-5 mt-4">
+          <AddOwnDish
+            guest={guest}
+            onClick={() => navigate(guest ? '/auth?mode=register' : '/dishes/new')}
+          />
         </div>
       )}
 
-      {/* Добавить своё */}
-      {!loading && visible.length > 0 && (
-        <button
-          type="button"
-          onClick={() => navigate(token ? '/dishes/new' : '/auth?mode=register')}
-          className="shrink-0 w-full py-3 rounded-2xl text-sm font-semibold transition-opacity active:opacity-75 bg-white text-accent shadow-sm"
-        >
-          + Добавить своё блюдо
-        </button>
-      )}
-
-      {/* Quick actions */}
-      {token && (
-        <div className="flex gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => { setFavOnly(f => !f); setFridgeOnly(false); setMealTime('') }}
-            className={`flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all shadow-card text-white/90 ${favOnly ? 'bg-accent' : 'bg-sage'}`}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 21C12 21 3 14.5 3 8.5C3 5.46 5.46 3 8.5 3C10.24 3 11.91 3.81 13 5.08C14.09 3.81 15.76 3 17.5 3C20.54 3 23 5.46 23 8.5C23 14.5 12 21 12 21Z" fill="currentColor"/>
-            </svg>
-            <span className="font-semibold text-sm text-white">Избранное</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setFridgeOnly(f => !f); setFavOnly(false); setMealTime('') }}
-            className={`flex-1 flex items-center justify-center gap-2.5 rounded-2xl py-4 transition-all shadow-card text-white/90 ${fridgeOnly ? 'bg-accent' : 'bg-sage'}`}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="6" y="3" width="12" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
-              <line x1="6" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="2"/>
-              <circle cx="10" cy="7" r="1.2" fill="currentColor"/>
-              <circle cx="10" cy="15" r="1.2" fill="currentColor"/>
-            </svg>
-            <span className="font-semibold text-sm text-white">Холодильник</span>
-          </button>
+      {/* ── Quick actions ────────────────────────────────────────── */}
+      {variant === 'normal' && (
+        <div className="px-5 mt-3">
+          <QuickActions
+            favActive={favOnly}
+            fridgeActive={fridgeOnly}
+            onFav={() => { setFavOnly(f => !f); setFridgeOnly(false); setMealTime('') }}
+            onFridge={() => { setFridgeOnly(f => !f); setFavOnly(false); setMealTime('') }}
+          />
         </div>
       )}
+
       {Toast}
     </div>
   )

@@ -1,5 +1,5 @@
 import { useEffect, useState, Component } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { useStore } from './store'
 import { api } from './api'
 import Layout from './components/Layout'
@@ -46,6 +46,12 @@ function RequireAuth({ children }) {
   return token ? children : <Navigate to="/auth" replace />
 }
 
+// Редирект /v2/dishes/:id → /dishes/:id (для старых закладок)
+function RedirectV2Dish() {
+  const { id } = useParams()
+  return <Navigate to={`/dishes/${id}`} replace />
+}
+
 export default function App() {
   const token          = useStore(s => s.token)
   const setAuth        = useStore(s => s.setAuth)
@@ -86,6 +92,11 @@ export default function App() {
           <Route path="dishes" element={<DishesPage />} />
           <Route path="dishes/:id" element={<DishDetailPage />} />
           <Route path="fridge" element={<FridgePage />} />
+          {/* Backward compat: /v2/* → / (для старых закладок, можно убрать через 1-2 недели) */}
+          <Route path="v2" element={<Navigate to="/" replace />} />
+          <Route path="v2/dishes" element={<Navigate to="/dishes" replace />} />
+          <Route path="v2/dishes/:id" element={<RedirectV2Dish />} />
+          <Route path="v2/fridge" element={<Navigate to="/fridge" replace />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="my-recipes" element={<Navigate to="/dishes" replace />} />
           <Route path="dishes/new" element={<RequireAuth><DishFormPage /></RequireAuth>} />
