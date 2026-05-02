@@ -1,57 +1,93 @@
-# Коммит: MealPlanPage редизайн
+# Коммит: ProfilePage + AuthPage + cleanup
 
-Ветка: `main`. Frontend-only.
+Ветка: `main`. Frontend-only (бэкенд не трогаем).
 
 ## Что сделано
 
-Полностью переписан `frontend/src/pages/MealPlanPage.jsx` под редизайн (артефакт `context/design/plan-v2.jsx`).
+### ProfilePage
+Переписана под редизайн без дизайн-артефакта (по паттернам уже сделанных страниц):
+- Hero (Avatar + name + email + role-чип)
+- Контакты (Email/Phone + статусы «подтв.» / «не подтв.»)
+- Подключения: Telegram-блок (подключён → sage-чип «подключено», не подключён → accent-кнопка «Подключить»)
+- Аккаунт: «Выйти из аккаунта» (red-tint)
+- **Не реализовано:** Pro-плашка, stats (24 блюда / серия / etc), смена языка, toggle уведомлений, удалить аккаунт — этих фич нет на бэке. Когда появятся — добавим секции по аналогии с брифом.
 
-**Состояния:**
-- **Гость** — `GuestBlock` с CTA «Создать свою кухню».
-- **Пустой** (логин, но плана нет) — EmptyState с Icon `CalendarPlus`, кнопка «Посмотреть блюда» → `/dishes`.
-- **Рабочий** — PageHeader (title + count·days в правом слоте) + (опц.) FilterChips + MetaStrip + (опц.) TodayPinned + (опц.) DayBlocks по будущим датам.
+### AuthPage
+Переписана под редизайн:
+- Бренд-блок (ChefHat в muted-кружке + «MealBot» + «Умный помощник для выбора блюд»)
+- Card с шагами (login / register / verify-email / phone-enter / phone-code)
+- TabSwitcher Email/Телефон в pill-стиле с lucide-иконками
+- PillInput (h-11 rounded-full bg-bg-2 border border-border)
+- Button использует общий ui/Button (он уже редизайн)
+- Google-кнопка `shape="pill"`
+- Skip-link «Продолжить без регистрации →»
+- Логика не тронута: API вызовы, state-машина шагов, countdown — всё как было
 
-**Компоненты внутри страницы:**
-- `FilterChips` — Все / Мои / Семейные. Показывается **только если есть план в семейной группе** (counts.family > 0).
-- `MetaStrip` — три ячейки (Сегодня / Неделя / Всего). «Всего» становится sage-tint когда total ≥ 5.
-- `TodayPinned` — accent-muted блок «Сегодня · понедельник, 20 апреля» с группировкой по mealType. Variant A (group-box) из артефакта.
-- `DayBlock` — для каждой будущей даты: верхняя бирка с датой + группировка по mealType + список плановых строк.
-- `PlanRow` — строка плана: 60×60 фото (с фолбэком по category) + название + cookTime + калории + 🏠 Семейный + AuthorAvatar (если добавил не я) + крестик удаления (только если мой).
-- `FAB` — «+ В план» → `/dishes` (выбрать блюдо чтобы добавить в план).
+### Cleanup
+- `frontend/src/App.jsx` — убраны backward-compat redirects `/v2/*` (главная/dishes/dishes/:id/fridge), удалена функция `RedirectV2Dish`, убран импорт `useParams`. После slim-main прошло достаточно времени — закладки уже устарели.
+- `frontend/src/components/domain/PlanItem.jsx` — **удалён** (после редизайна `MealPlanPage` он больше не используется).
+- `frontend/src/components/domain/index.js` — убран экспорт `PlanItem`.
 
-**API:** `getMealPlans()` (как было) + `deleteMealPlan(id)` (как было). Бэкенд возвращает `dish` (id, name, imageUrl, images, categories), `user` (id, name), `userId`, `groupId`, `date`, `mealType` — этого достаточно. Опциональные `dish.cookTime` и `dish.calories` — если бэк когда-то начнёт их возвращать в этом select, отобразятся автоматически.
-
-**Старый компонент `PlanItem`** (`components/domain/PlanItem.jsx`) **больше не используется**. В импорте `domain/index.js` он остался, но пустой балласт. Удалять отдельным коммитом или оставить — на твоё усмотрение (я бы оставила пока — мало ли где ещё всплывёт; уберу когда закроем все страницы).
+### Контекст
+- `CLAUDE.md` — добавлен раздел про редизайн (стратегия slim-main, статус страниц).
+- `context/TASKS.md` — добавлен раздел «Редизайн (Phase A)» со списком готового и в очереди.
+- `context/design/redesign-plan.md` — секция «Статус выполнения» сверху файла.
 
 ## Файлы
 
 ```
-modified:   frontend/src/pages/MealPlanPage.jsx
+modified:   CLAUDE.md
+modified:   context/TASKS.md
+modified:   context/design/redesign-plan.md
+modified:   frontend/src/App.jsx
+deleted:    frontend/src/components/domain/PlanItem.jsx
+modified:   frontend/src/components/domain/index.js
+modified:   frontend/src/pages/AuthPage.jsx
+modified:   frontend/src/pages/ProfilePage.jsx
 modified:   COMMIT_INSTRUCTIONS.md
 ```
 
-`context/design/plan-v2.jsx` уже закоммичен в layout-коммит.
-
-Сборка: 1851 модулей, без ошибок и warnings.
+Сборка: 1850 модулей (минус 1 — PlanItem), без ошибок и warnings.
 
 ## Команды
 
+Один коммит, один push:
+
 ```bash
 cd <путь-к-mealbot>
-git status                       # 2 файла modified
-git branch --show-current        # main
+git status                        # 8 файлов modified + 1 deleted + COMMIT_INSTRUCTIONS
+git branch --show-current         # main
 
-git add frontend/src/pages/MealPlanPage.jsx COMMIT_INSTRUCTIONS.md
+git add CLAUDE.md \
+        context/TASKS.md \
+        context/design/redesign-plan.md \
+        frontend/src/App.jsx \
+        frontend/src/components/domain/PlanItem.jsx \
+        frontend/src/components/domain/index.js \
+        frontend/src/pages/AuthPage.jsx \
+        frontend/src/pages/ProfilePage.jsx \
+        COMMIT_INSTRUCTIONS.md
 
-git commit -m "feat(plan): редизайн MealPlanPage
+git commit -m "feat: редизайн ProfilePage + AuthPage, cleanup /v2 и PlanItem
 
-- 3 состояния: guest / empty / normal
-- PageHeader (title + count·days), FilterChips (Все/Мои/Семейные —
-  только если есть family-планы), MetaStrip (Сегодня/Неделя/Всего)
-- TodayPinned: accent-muted блок с группировкой по mealType
-- DayBlocks: для каждой будущей даты, группировка по mealType
-- PlanRow: 60×60 фото с фолбэком, time/cal, AuthorAvatar для не-моих
-- FAB → /dishes (выбрать блюдо)"
+ProfilePage: Hero (Avatar+name+email+role), Контакты (email/phone +
+verified-бейджи), Telegram-блок (подключено/не подключено), Выход.
+Без Pro/stats/языка/уведомлений — этих фич нет на бэке.
+
+AuthPage: бренд-блок ChefHat, pill-инпуты, lucide-иконки в табах,
+Button через общий ui/Button. Логика как была — login/register/
+verify-email/phone steps + Google + skip.
+
+Cleanup:
+- App.jsx: убраны редиректы /v2/* (после slim-main прошло время,
+  закладки устарели)
+- PlanItem.jsx удалён (после редизайна MealPlan не используется)
+- index.js: убран экспорт PlanItem
+
+Контекст:
+- CLAUDE.md: раздел про редизайн
+- TASKS.md: статус Phase A
+- redesign-plan.md: статус выполнения сверху"
 
 git push origin main
 ```
@@ -66,21 +102,36 @@ Backend не трогаем.
 
 ## Что проверить после деплоя
 
-### Гость
-- `/plan` без логина → GuestBlock «Планируй меню заранее» + кнопки «Создать свою кухню» / «Уже есть аккаунт? Войти»
+### ProfilePage (`/profile`, требует логин)
+- Hero: Avatar + имя + email + чип «Пользователь» (или «Администратор» если ADMIN)
+- секция «Контакты»: email с verified-бейджем (sage если `emailVerified: true`)
+- секция «Подключения»: Telegram-блок
+  - не подключён → accent-кнопка «Подключить» → нажатие → ссылка → открывается бот
+  - подключён → sage-чип «подключено», под названием — `@username`
+- секция «Аккаунт»: ряд «Выйти из аккаунта» (красный) → logout → редирект на `/auth`
 
-### Пустой план
-- логин, но в плане нет блюд → EmptyState с Icon `CalendarPlus` («План пока пустой») + кнопка «Посмотреть блюда» → `/dishes`
+### AuthPage (`/auth`)
+- бренд-блок: ChefHat в muted-кружке + «MealBot»
+- по умолчанию — таб Email, форма Login (или Register если `?mode=register`)
+- TabSwitcher: переключение Email ↔ Телефон с lucide-иконками
+- pill-инпуты, accent-кнопка submit
+- ссылка «Зарегистрироваться» / «Войти» переключает между login/register
+- регистрация → если требуется верификация → шаг «Подтверди email» с кодом + countdown «Отправить повторно»
+- Google-кнопка (если `VITE_GOOGLE_CLIENT_ID` настроен)
+- Skip-link «Продолжить без регистрации →» снизу
 
-### Рабочий вид
-- header «План готовки» + справа «N блюд · M дней» (счётчик меняется при смене фильтра)
-- если есть family-план — над MetaStrip-ом ряд из 3 чипов (Все / Мои / Семейные)
-- ниже MetaStrip (Сегодня / Неделя / Всего); если Всего ≥ 5, эта ячейка sage-tint
-- если на сегодня есть планы — accent-muted блок «Сегодня · ...» с группировкой по mealType (Завтрак/Обед/Ужин). Внутри — 60×60 фото + название + time/cal + крестик
-- ниже — блоки по будущим датам в верхнем регистре
-- FAB справа внизу «+ В план» → `/dishes`
+### Cleanup проверка
+- `https://<host>/v2` → теперь **404** (раньше редиректило на `/`). Это ожидаемо.
+- `https://<host>/v2/dishes` → 404
+- `https://<host>/v2/fridge` → 404
+- `https://<host>/v2/dishes/<id>` → 404
+- Если кому-то реально надо backward-compat — добавим редиректы на nginx.
 
-### Действия
-- крестик в углу строки плана (только если план создан тобой) → запрос `DELETE /api/meal-plans/:id` → строка пропадает
-- тап по фото или названию → переход на деталку `/dishes/<id>`
-- фильтр чипов: «Мои» оставляет только те, что добавил ты; «Семейные» — только те, что в family-группе
+### Сборка
+- Бандл должен быть чуть меньше (минус PlanItem.jsx) — около 399-401 KB main.js.
+
+## Статус редизайна
+
+- ✅ Phase A основа: HomePage, DishesPage, DishDetailPage, FridgePage, MealPlanPage, ProfilePage, AuthPage, Layout
+- ⏳ Phase B (ждут артефактов): ChatPage, DishFormPage, GroupsPage, GroupDetailPage, GroupFormPage
+- 🧹 Будущая чистка: переименовать DishCardV2 → DishCard когда обновим Chat и GroupDetail

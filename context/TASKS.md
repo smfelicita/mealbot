@@ -101,6 +101,28 @@
 - [x] nginx + PM2 + HTTPS (Let's Encrypt)
 - [x] Claude Code на сервере
 
+### Редизайн (Phase A — порт артефактов)
+- [x] Дизайн-система: токены, типографика, отступы, иконки lucide (`context/design/design-system.md`)
+- [x] HomePage (главная) — портирована
+- [x] DishesPage (каталог) — портирована, с paging / filters / BulkAdd
+- [x] DishDetailPage (деталка) — full-bleed hero, КБЖУ на 100 г
+- [x] FridgePage (холодильник) — picker, family-баннер, telegram-баннер
+- [x] MealPlanPage (план готовки) — TodayPinned, FilterChips Все/Мои/Семейные
+- [x] ProfilePage — без Pro-плашки/stats (нет на бэке)
+- [x] AuthPage — pill-инпуты, lucide-иконки
+- [x] Layout — header (root/back/none) + TabBar (4 таба, чат скрыт флагом)
+- [x] **Slim-main**: убран `/v2`-префикс, V2-файлы переименованы в основные, redesign-ветка слита и архивирована
+- [x] **Cleanup**: удалены backward-compat redirects `/v2/*`, удалён `PlanItem.jsx`
+- [x] КБЖУ переписан с «на блюдо» на «на 100 г», скрипт пересчёта
+- [x] `store.fridge` загружается при старте (раньше — только при заходе на FridgePage)
+- [x] Фильтр `difficulty` на серверной стороне в GET /api/dishes
+
+В очереди (Phase B — оставшиеся страницы):
+- [ ] ChatPage — нужен артефакт (фича скрыта от пользователей)
+- [ ] DishFormPage — нужен артефакт (или бриф)
+- [ ] GroupsPage / GroupDetailPage / GroupFormPage — нужен артефакт
+- [ ] DishCardV2 → DishCard (переименование когда старый DishCard перестанет использоваться в Chat/GroupDetail)
+
 ---
 
 ## 📋 Бэклог

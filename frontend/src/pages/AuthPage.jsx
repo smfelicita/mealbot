@@ -1,20 +1,53 @@
+// AuthPage — вход и регистрация.
+// Полный экран без Layout (Layout не оборачивает /auth).
+// Логика как была: email login/register, verify-email, phone-enter, phone-code,
+// Google one-tap, skip-link «продолжить без регистрации».
+// Визуал — в стиле других редизайн-страниц: pill-инпуты, lucide-иконки, accent-кнопки.
+
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
+import { ChefHat, Mail, Phone, AlertCircle } from 'lucide-react'
+
 import { api } from '../api'
 import { useStore } from '../store'
-import { Button, TextInput } from '../components/ui'
+import { Button } from '../components/ui'
 
-// ─── Shared input style ───────────────────────────────────────────────────────
-const inputCls = 'w-full bg-bg-3 border border-border rounded-sm text-text text-[15px] px-3.5 py-2.5 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 placeholder:text-text-3'
-
+// ─── Field primitives ─────────────────────────────────────────────
 function FieldLabel({ children }) {
-  return <p className="text-xs font-bold text-text-2 uppercase tracking-wider mb-1.5">{children}</p>
+  return (
+    <label
+      className="block text-[11px] font-bold uppercase tracking-wider text-text-3 mb-1.5"
+      style={{ letterSpacing: 0.6 }}
+    >
+      {children}
+    </label>
+  )
+}
+
+function PillInput({ className = '', ...props }) {
+  return (
+    <input
+      className={[
+        'w-full h-11 px-4 rounded-full bg-bg-2 border border-border text-text text-[14.5px]',
+        'outline-none placeholder:text-text-3',
+        'focus:border-accent',
+        className,
+      ].join(' ')}
+      style={{ boxShadow: 'none' }}
+      {...props}
+    />
+  )
 }
 
 function ErrorMsg({ msg }) {
   if (!msg) return null
-  return <p className="text-red-400 text-[13px] mb-3">⚠️ {msg}</p>
+  return (
+    <div className="flex items-start gap-1.5 text-red-500 text-[13px]">
+      <AlertCircle size={14} strokeWidth={2.2} className="shrink-0 mt-0.5" />
+      <span style={{ textWrap: 'pretty' }}>{msg}</span>
+    </div>
+  )
 }
 
 function ResendLine({ countdown, onResend, loading, label = 'Отправить повторно' }) {
@@ -23,13 +56,51 @@ function ResendLine({ countdown, onResend, loading, label = 'Отправить 
       Не получили?{' '}
       {countdown > 0
         ? <span className="text-text-3">Повторно через {countdown} с</span>
-        : <button type="button" className="text-accent font-bold" onClick={onResend} disabled={loading}>{label}</button>
+        : (
+          <button
+            type="button"
+            className="text-accent font-bold"
+            onClick={onResend}
+            disabled={loading}
+          >
+            {label}
+          </button>
+        )
       }
     </p>
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Tab switcher (email | phone) ────────────────────────────────
+function TabSwitcher({ tab, onChange }) {
+  const items = [
+    { id: 'email', label: 'Email',   Icon: Mail  },
+    { id: 'phone', label: 'Телефон', Icon: Phone },
+  ]
+  return (
+    <div className="flex rounded-full p-1 bg-bg-3 border border-border">
+      {items.map(({ id, label, Icon }) => {
+        const on = tab === id
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            className={[
+              'flex-1 h-9 rounded-full text-[13px] font-bold inline-flex items-center justify-center gap-1.5 transition-colors',
+              on ? 'bg-accent text-white' : 'bg-transparent text-text-2',
+            ].join(' ')}
+          >
+            <Icon size={14} strokeWidth={2.2} />
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ═══ Page ═════════════════════════════════════════════════════════
 export default function AuthPage() {
   const [searchParams] = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/'
@@ -71,14 +142,11 @@ export default function AuthPage() {
       if (err.data?.requireVerification) {
         setPendingEmail(err.data.email || form.email)
         setStep('verify-email')
-        // countdown = 0 — кнопка "Отправить повторно" сразу доступна,
-        // потому что при логине новый код не отправляется автоматически
         setResendCountdown(0)
         return
       }
       setError(err.message)
-    }
-    finally { setLoading(false) }
+    } finally { setLoading(false) }
   }
 
   async function submitVerifyEmail(e) {
@@ -132,30 +200,46 @@ export default function AuthPage() {
     setForm({ email: '', password: '', name: '', phone: '', code: '' })
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-10 bg-bg fade-in">
-      {/* Logo */}
-      <div className="text-[40px] mb-1">🍽️</div>
-      <h1 className="font-serif text-[26px] font-extrabold mb-1">MealBot</h1>
-      <p className="text-sm text-text-2 mb-8">Умный помощник для выбора блюд</p>
+    <div className="min-h-dvh flex flex-col items-center justify-center px-5 py-10 bg-bg fade-in">
+      {/* Brand */}
+      <div className="flex flex-col items-center mb-6">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mb-3 bg-accent-muted"
+          style={{ border: '1px solid rgba(196,112,74,0.25)' }}
+        >
+          <ChefHat size={28} strokeWidth={2} className="text-accent" />
+        </div>
+        <h1 className="text-[26px] font-extrabold tracking-tight text-text">MealBot</h1>
+        <p className="text-[13px] text-text-2 mt-1">Умный помощник для выбора блюд</p>
+      </div>
 
       {/* Card */}
-      <div className="w-full max-w-[360px] bg-bg-2 border border-border rounded-DEFAULT p-6 fade-up">
+      <div className="w-full max-w-[380px] bg-bg-2 border border-border rounded-2xl p-6 fade-up">
 
         {/* ── Verify email ── */}
         {step === 'verify-email' && (
           <>
-            <h2 className="font-serif text-xl font-extrabold mb-1">Подтверди email</h2>
-            <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
-              Код отправлен на <strong>{pendingEmail}</strong><br />
-              <span className="text-text-3 text-xs">Не нашли? Проверьте папку «Спам»</span>
+            <h2 className="text-[20px] font-extrabold tracking-tight text-text mb-1">
+              Подтверди email
+            </h2>
+            <p className="text-[13px] text-text-2 leading-relaxed mb-5" style={{ textWrap: 'pretty' }}>
+              Код отправлен на <strong className="text-text">{pendingEmail}</strong>.
+              Если не нашли — проверь папку «Спам».
             </p>
             <form onSubmit={submitVerifyEmail} className="flex flex-col gap-4">
               <div>
                 <FieldLabel>Код из письма</FieldLabel>
-                <input className={inputCls} placeholder="123456" maxLength={6}
-                  value={form.code} onChange={upd('code')} required autoFocus />
+                <PillInput
+                  placeholder="123456"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={form.code}
+                  onChange={upd('code')}
+                  required
+                  autoFocus
+                />
               </div>
               <ErrorMsg msg={error} />
               <Button type="submit" className="w-full" loading={loading}>
@@ -169,12 +253,20 @@ export default function AuthPage() {
         {/* ── Phone enter ── */}
         {step === 'phone-enter' && (
           <>
-            <h2 className="font-serif text-xl font-extrabold mb-4">Вход по телефону</h2>
+            <h2 className="text-[20px] font-extrabold tracking-tight text-text mb-4">
+              Вход по телефону
+            </h2>
             <form onSubmit={submitSendPhone} className="flex flex-col gap-4">
               <div>
                 <FieldLabel>Номер телефона</FieldLabel>
-                <input className={inputCls} placeholder="+7 999 000-00-00" type="tel"
-                  value={form.phone} onChange={upd('phone')} required autoFocus />
+                <PillInput
+                  placeholder="+7 999 000-00-00"
+                  type="tel"
+                  value={form.phone}
+                  onChange={upd('phone')}
+                  required
+                  autoFocus
+                />
               </div>
               <ErrorMsg msg={error} />
               <Button type="submit" className="w-full" loading={loading}>
@@ -187,19 +279,32 @@ export default function AuthPage() {
         {/* ── Phone code ── */}
         {step === 'phone-code' && (
           <>
-            <h2 className="font-serif text-xl font-extrabold mb-1">Введи код</h2>
-            <p className="text-[13px] text-text-2 mb-4 leading-relaxed">
-              Код отправлен на <strong>{pendingPhone}</strong>
+            <h2 className="text-[20px] font-extrabold tracking-tight text-text mb-1">
+              Введи код
+            </h2>
+            <p className="text-[13px] text-text-2 leading-relaxed mb-5" style={{ textWrap: 'pretty' }}>
+              Код отправлен на <strong className="text-text">{pendingPhone}</strong>
             </p>
             <form onSubmit={submitVerifyPhone} className="flex flex-col gap-4">
               <div>
                 <FieldLabel>Код из SMS</FieldLabel>
-                <input className={inputCls} placeholder="123456" maxLength={6}
-                  value={form.code} onChange={upd('code')} required autoFocus />
+                <PillInput
+                  placeholder="123456"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={form.code}
+                  onChange={upd('code')}
+                  required
+                  autoFocus
+                />
               </div>
               <div>
-                <FieldLabel>Имя <span className="normal-case font-normal text-text-3">(опционально)</span></FieldLabel>
-                <input className={inputCls} placeholder="Как тебя зовут?" value={form.name} onChange={upd('name')} />
+                <FieldLabel>Имя (опционально)</FieldLabel>
+                <PillInput
+                  placeholder="Как тебя зовут?"
+                  value={form.name}
+                  onChange={upd('name')}
+                />
               </div>
               <ErrorMsg msg={error} />
               <Button type="submit" className="w-full" loading={loading}>
@@ -209,10 +314,15 @@ export default function AuthPage() {
             <p className="text-center mt-4 text-[13px] text-text-2">
               {resendCountdown > 0
                 ? <span className="text-text-3">Повторно через {resendCountdown} с</span>
-                : <button type="button" className="text-accent font-bold"
-                    onClick={() => { setStep('phone-enter'); setForm(f => ({ ...f, code: '' })) }}>
+                : (
+                  <button
+                    type="button"
+                    className="text-accent font-bold"
+                    onClick={() => { setStep('phone-enter'); setForm(f => ({ ...f, code: '' })) }}
+                  >
                     Изменить номер
                   </button>
+                )
               }
             </p>
           </>
@@ -221,22 +331,9 @@ export default function AuthPage() {
         {/* ── Email login / register ── */}
         {(step === 'login' || step === 'register') && (
           <>
-            {/* Tab switcher */}
-            <div className="flex rounded-sm overflow-hidden border border-border mb-5">
-              {[['email', '📧 Email'], ['phone', '📱 Телефон']].map(([t, label]) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => switchTab(t)}
-                  className={[
-                    'flex-1 py-2 text-[13px] font-bold transition-colors',
-                    tab === t ? 'bg-accent text-white' : 'bg-bg-3 text-text-2 hover:text-text',
-                  ].join(' ')}
-                >{label}</button>
-              ))}
-            </div>
+            <TabSwitcher tab={tab} onChange={switchTab} />
 
-            <h2 className="font-serif text-xl font-extrabold mb-4">
+            <h2 className="text-[20px] font-extrabold tracking-tight text-text mt-5 mb-4">
               {step === 'login' ? 'Войти' : 'Создать аккаунт'}
             </h2>
 
@@ -244,18 +341,33 @@ export default function AuthPage() {
               {step === 'register' && (
                 <div>
                   <FieldLabel>Имя</FieldLabel>
-                  <input className={inputCls} placeholder="Как тебя зовут?" value={form.name} onChange={upd('name')} />
+                  <PillInput
+                    placeholder="Как тебя зовут?"
+                    value={form.name}
+                    onChange={upd('name')}
+                  />
                 </div>
               )}
               <div>
                 <FieldLabel>Email</FieldLabel>
-                <input className={inputCls} type="email" required placeholder="you@example.com"
-                  value={form.email} onChange={upd('email')} />
+                <PillInput
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={upd('email')}
+                />
               </div>
               <div>
                 <FieldLabel>Пароль</FieldLabel>
-                <input className={inputCls} type="password" required minLength={6} placeholder="••••••••"
-                  value={form.password} onChange={upd('password')} />
+                <PillInput
+                  type="password"
+                  required
+                  minLength={6}
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={upd('password')}
+                />
               </div>
               <ErrorMsg msg={error} />
               <Button type="submit" className="w-full" loading={loading}>
@@ -274,12 +386,12 @@ export default function AuthPage() {
               </button>
             </p>
 
-            {/* Divider + Google */}
+            {/* Google divider */}
             {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
               <>
                 <div className="flex items-center gap-3 my-5">
                   <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-text-3">или</span>
+                  <span className="text-[12px] text-text-3 font-semibold uppercase tracking-wide" style={{ letterSpacing: 0.6 }}>или</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
                 <div className="flex justify-center">
@@ -287,7 +399,7 @@ export default function AuthPage() {
                     onSuccess={r => handleGoogle(r.credential)}
                     onError={() => setError('Ошибка Google авторизации')}
                     text="continue_with"
-                    shape="rectangular"
+                    shape="pill"
                     width="100%"
                     locale="ru"
                   />

@@ -4,6 +4,26 @@
 
 ---
 
+## ⚡ Статус выполнения (актуально)
+
+**Стратегия:** slim-main — без `/v2`-префикса, правка существующих `*Page.jsx` напрямую в `main`.
+
+**Сделано:**
+- ✅ HomePage, DishesPage, DishDetailPage, FridgePage (Phase A — портировано из артефактов)
+- ✅ Layout (header + TabBar, 4 таба, чат скрыт флагом)
+- ✅ MealPlanPage (TodayPinned + FilterChips + MetaStrip)
+- ✅ ProfilePage (без Pro/stats — этого нет на бэке)
+- ✅ AuthPage (pill-инпуты, lucide-иконки, без emoji в табах)
+- ✅ Cleanup: backward-compat редиректы `/v2/*` убраны, `PlanItem.jsx` удалён
+
+**В очереди:**
+- ⏳ ChatPage — ждёт артефакт (фича скрыта от пользователей)
+- ⏳ DishFormPage — ждёт артефакт
+- ⏳ GroupsPage / GroupDetailPage / GroupFormPage — ждёт артефакт
+- ⏳ DishCardV2 → DishCard (переименовать когда обновим Chat и GroupDetail)
+
+---
+
 ## 1. Карта страниц
 
 Всего **14 страниц**. Разделяю на 3 приоритетные группы.

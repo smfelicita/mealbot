@@ -58,5 +58,14 @@ context/          — документация проекта (TASKS.md, FUNCTIO
 - FAMILY — участники семейной группы (по groupId)
 - ALL_GROUPS — соучастники любой группы автора
 
+## Редизайн
+Редизайн идёт на ветке `main` (slim-main стратегия — без `/v2`-префикса).
+Готовые страницы: HomePage, DishesPage, DishDetailPage, FridgePage, MealPlanPage, ProfilePage, AuthPage, Layout (header + tab bar).
+В очереди: ChatPage, DishFormPage, GroupsPage, GroupDetailPage, GroupFormPage.
+
+Стратегия: правка существующих `*Page.jsx` напрямую, без отдельных V2-файлов.
+Артефакты дизайн-агента — в `context/design/*-v2.jsx`.
+Брифы — в `context/design/brief-*.md`.
+
 ## Текущий статус
 Смотри context/TASKS.md — там актуальный список выполненного и бэклог.
