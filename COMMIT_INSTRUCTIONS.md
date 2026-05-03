@@ -1,93 +1,75 @@
-# Коммит: ProfilePage + AuthPage + cleanup
+# Коммит: AuthPage fix + ProfilePage v2 + cleanup + контекст
 
-Ветка: `main`. Frontend-only (бэкенд не трогаем).
+Ветка: `main`. Frontend-only, бэкенд не трогаем.
 
 ## Что сделано
 
-### ProfilePage
-Переписана под редизайн без дизайн-артефакта (по паттернам уже сделанных страниц):
-- Hero (Avatar + name + email + role-чип)
-- Контакты (Email/Phone + статусы «подтв.» / «не подтв.»)
-- Подключения: Telegram-блок (подключён → sage-чип «подключено», не подключён → accent-кнопка «Подключить»)
-- Аккаунт: «Выйти из аккаунта» (red-tint)
-- **Не реализовано:** Pro-плашка, stats (24 блюда / серия / etc), смена языка, toggle уведомлений, удалить аккаунт — этих фич нет на бэке. Когда появятся — добавим секции по аналогии с брифом.
+### AuthPage багфикс
+В шагах `phone-enter` и `phone-code` не было TabSwitcher'а — пользователь, выбравший вход по телефону, не мог вернуться к email. Добавлен `<TabSwitcher tab={tab} onChange={switchTab} />` в `phone-enter`. На `phone-code` оставил без табов (это уже промежуточный шаг с введённым номером — переключение через «Изменить номер»).
 
-### AuthPage
-Переписана под редизайн:
-- Бренд-блок (ChefHat в muted-кружке + «MealBot» + «Умный помощник для выбора блюд»)
-- Card с шагами (login / register / verify-email / phone-enter / phone-code)
-- TabSwitcher Email/Телефон в pill-стиле с lucide-иконками
-- PillInput (h-11 rounded-full bg-bg-2 border border-border)
-- Button использует общий ui/Button (он уже редизайн)
-- Google-кнопка `shape="pill"`
-- Skip-link «Продолжить без регистрации →»
-- Логика не тронута: API вызовы, state-машина шагов, countdown — всё как было
+### ProfilePage v2 (по артефакту)
+Переписана по `context/design/profile-v2.jsx` — но **только то что есть на бэке**:
 
-### Cleanup
-- `frontend/src/App.jsx` — убраны backward-compat redirects `/v2/*` (главная/dishes/dishes/:id/fridge), удалена функция `RedirectV2Dish`, убран импорт `useParams`. После slim-main прошло достаточно времени — закладки уже устарели.
-- `frontend/src/components/domain/PlanItem.jsx` — **удалён** (после редизайна `MealPlanPage` он больше не используется).
-- `frontend/src/components/domain/index.js` — убран экспорт `PlanItem`.
+**Реализовано:**
+- **Hero** — Avatar 72px (с Pro-обводкой если `subscriptionUntil > now`) + имя + Pro/Free-чип + email + «С нами с {createdAt}» (если бэк когда-то начнёт возвращать `createdAt` в `/me` select).
+- **Telegram-row** — подключено / нет, accent-кнопка «Подключить» → `/api/auth/generate-telegram-link` → ссылка.
+- **Настройки → Язык** — селектор Русский / English. Переключение работает через `i18n.changeLanguage(code)` + `localStorage.mealbot_lang` (через LanguageDetector cache). **Но переключение на English ничего не покажет** — в коде нигде нет `t()`. Это отмечено в самом UI селектора («English перевод появится позже»).
+- **Аккаунт → Выйти из аккаунта** — `api.logout()` + store.logout() + переход на `/auth`.
+
+**Не реализовано (по согласованию):**
+- ❌ Stats (нет API)
+- ❌ Pro-upgrade плашка / My Subscription (монетизация не запущена)
+- ❌ Toggle уведомлений
+- ❌ Удалить аккаунт (нет API)
+- ❌ Версия приложения «MealBot v2.4.0» (не нужно сейчас)
 
 ### Контекст
-- `CLAUDE.md` — добавлен раздел про редизайн (стратегия slim-main, статус страниц).
-- `context/TASKS.md` — добавлен раздел «Редизайн (Phase A)» со списком готового и в очереди.
-- `context/design/redesign-plan.md` — секция «Статус выполнения» сверху файла.
+- `context/TASKS.md` — добавлена новая задача в бэклоге: «i18n: обернуть строки в t() и добавить английский перевод».
+- `context/design/profile-v2.jsx` — артефакт-источник, добавляем в репо.
+
+### Новая задача в бэклоге
+**i18n: обернуть строки в t() и добавить английский перевод.** Инфраструктура (i18next + LanguageDetector + namespaces) уже подключена. Переключатель в ProfilePage добавлен. Но в коде нигде нет вызовов `t()` — все строки хардкодом. Надо: пройтись по всем страницам/компонентам, заменить русский хардкод на `t('namespace:key')`, и заполнить `frontend/src/locales/en/*.json`.
 
 ## Файлы
 
 ```
-modified:   CLAUDE.md
+modified:   COMMIT_INSTRUCTIONS.md
 modified:   context/TASKS.md
-modified:   context/design/redesign-plan.md
-modified:   frontend/src/App.jsx
-deleted:    frontend/src/components/domain/PlanItem.jsx
-modified:   frontend/src/components/domain/index.js
 modified:   frontend/src/pages/AuthPage.jsx
 modified:   frontend/src/pages/ProfilePage.jsx
-modified:   COMMIT_INSTRUCTIONS.md
+new file:   context/design/profile-v2.jsx        (артефакт-источник)
 ```
 
-Сборка: 1850 модулей (минус 1 — PlanItem), без ошибок и warnings.
+Сборка: 1850 модулей, без ошибок.
 
 ## Команды
 
-Один коммит, один push:
-
 ```bash
 cd <путь-к-mealbot>
-git status                        # 8 файлов modified + 1 deleted + COMMIT_INSTRUCTIONS
-git branch --show-current         # main
+git status                       # ожидается список выше
+git branch --show-current        # main
 
-git add CLAUDE.md \
+git add COMMIT_INSTRUCTIONS.md \
         context/TASKS.md \
-        context/design/redesign-plan.md \
-        frontend/src/App.jsx \
-        frontend/src/components/domain/PlanItem.jsx \
-        frontend/src/components/domain/index.js \
+        context/design/profile-v2.jsx \
         frontend/src/pages/AuthPage.jsx \
-        frontend/src/pages/ProfilePage.jsx \
-        COMMIT_INSTRUCTIONS.md
+        frontend/src/pages/ProfilePage.jsx
 
-git commit -m "feat: редизайн ProfilePage + AuthPage, cleanup /v2 и PlanItem
+git commit -m "feat: ProfilePage v2 + AuthPage fix
 
-ProfilePage: Hero (Avatar+name+email+role), Контакты (email/phone +
-verified-бейджи), Telegram-блок (подключено/не подключено), Выход.
-Без Pro/stats/языка/уведомлений — этих фич нет на бэке.
+ProfilePage v2 (по артефакту profile-v2.jsx):
+- Hero: avatar 72px с Pro-обводкой (по subscriptionUntil), Pro/Free-чип
+- Telegram-row как был
+- Настройки → Язык (RU/EN селектор через i18n.changeLanguage)
+- Выход
+- Pro-плашка/stats/уведомления/удалить аккаунт — не делаем,
+  фич нет на бэке; добавим когда появятся
 
-AuthPage: бренд-блок ChefHat, pill-инпуты, lucide-иконки в табах,
-Button через общий ui/Button. Логика как была — login/register/
-verify-email/phone steps + Google + skip.
+AuthPage fix: TabSwitcher на шаге phone-enter — раньше нельзя
+было вернуться к Email после выбора Телефона.
 
-Cleanup:
-- App.jsx: убраны редиректы /v2/* (после slim-main прошло время,
-  закладки устарели)
-- PlanItem.jsx удалён (после редизайна MealPlan не используется)
-- index.js: убран экспорт PlanItem
-
-Контекст:
-- CLAUDE.md: раздел про редизайн
-- TASKS.md: статус Phase A
-- redesign-plan.md: статус выполнения сверху"
+В бэклог TASKS.md добавлена задача i18n: обернуть строки в t() +
+английский перевод (инфраструктура уже подключена)."
 
 git push origin main
 ```
@@ -102,36 +84,24 @@ Backend не трогаем.
 
 ## Что проверить после деплоя
 
-### ProfilePage (`/profile`, требует логин)
-- Hero: Avatar + имя + email + чип «Пользователь» (или «Администратор» если ADMIN)
-- секция «Контакты»: email с verified-бейджем (sage если `emailVerified: true`)
-- секция «Подключения»: Telegram-блок
-  - не подключён → accent-кнопка «Подключить» → нажатие → ссылка → открывается бот
-  - подключён → sage-чип «подключено», под названием — `@username`
-- секция «Аккаунт»: ряд «Выйти из аккаунта» (красный) → logout → редирект на `/auth`
+### AuthPage — багфикс
+- `/auth` → таб «Телефон» → должны быть видны два таба сверху, можно переключиться обратно на «Email».
+- На шаге `phone-code` (после ввода телефона и получения кода) — табов нет, но есть «Изменить номер» (это ожидаемо).
 
-### AuthPage (`/auth`)
-- бренд-блок: ChefHat в muted-кружке + «MealBot»
-- по умолчанию — таб Email, форма Login (или Register если `?mode=register`)
-- TabSwitcher: переключение Email ↔ Телефон с lucide-иконками
-- pill-инпуты, accent-кнопка submit
-- ссылка «Зарегистрироваться» / «Войти» переключает между login/register
-- регистрация → если требуется верификация → шаг «Подтверди email» с кодом + countdown «Отправить повторно»
-- Google-кнопка (если `VITE_GOOGLE_CLIENT_ID` настроен)
-- Skip-link «Продолжить без регистрации →» снизу
+### ProfilePage v2 (`/profile`, требует логин)
+- **Hero:** Avatar 72px с инициалом, имя, чип «Free» (или «Pro» если `subscriptionUntil > now`), email под, «С нами с …» если бэк отдаёт `createdAt`.
+- **Подключения:** Telegram-блок
+  - не подключён → accent-кнопка «Подключить» → ссылка → бот
+  - подключён → sage-чип «Подключено» + `@username`
+- **Настройки → Язык интерфейса:** клик → раскрывается список (Русский / English) + подсказка «English перевод появится позже». Выбор «English» меняет `localStorage.mealbot_lang` на `en` (можно проверить через DevTools), но визуально ничего не меняется — это ок.
+- **Аккаунт → Выйти из аккаунта:** красная плашка → клик → выход → `/auth`.
 
-### Cleanup проверка
-- `https://<host>/v2` → теперь **404** (раньше редиректило на `/`). Это ожидаемо.
-- `https://<host>/v2/dishes` → 404
-- `https://<host>/v2/fridge` → 404
-- `https://<host>/v2/dishes/<id>` → 404
-- Если кому-то реально надо backward-compat — добавим редиректы на nginx.
-
-### Сборка
-- Бандл должен быть чуть меньше (минус PlanItem.jsx) — около 399-401 KB main.js.
+### Cleanup
+- `https://<host>/v2` → теперь 404 (раньше редиректило на `/`). Если в Telegram где-то остались ссылки на `/v2/...` — их надо обновить руками или вернуть редирект.
 
 ## Статус редизайна
 
-- ✅ Phase A основа: HomePage, DishesPage, DishDetailPage, FridgePage, MealPlanPage, ProfilePage, AuthPage, Layout
-- ⏳ Phase B (ждут артефактов): ChatPage, DishFormPage, GroupsPage, GroupDetailPage, GroupFormPage
+- ✅ Phase A: HomePage, DishesPage, DishDetailPage, FridgePage, MealPlanPage, ProfilePage (v2), AuthPage, Layout
+- ⏳ Phase B (ждут артефакта): ChatPage, DishFormPage, GroupsPage, GroupDetailPage, GroupFormPage
 - 🧹 Будущая чистка: переименовать DishCardV2 → DishCard когда обновим Chat и GroupDetail
+- 📚 Бэклог: i18n переводы (см. TASKS.md)

@@ -253,7 +253,8 @@ export default function AuthPage() {
         {/* ── Phone enter ── */}
         {step === 'phone-enter' && (
           <>
-            <h2 className="text-[20px] font-extrabold tracking-tight text-text mb-4">
+            <TabSwitcher tab={tab} onChange={switchTab} />
+            <h2 className="text-[20px] font-extrabold tracking-tight text-text mt-5 mb-4">
               Вход по телефону
             </h2>
             <form onSubmit={submitSendPhone} className="flex flex-col gap-4">
