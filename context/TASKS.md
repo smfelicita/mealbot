@@ -115,6 +115,8 @@
 - [x] GroupsPage — список групп + входящие приглашения (incoming invites)
 - [x] GroupDetailPage — Hero + Участники с pending-инвайтами + Invite-блок (joinCode + email) + Danger zone, без табов
 - [x] GroupFormPage — radio-cards FAMILY/REGULAR, pill-инпуты, аватар группы
+- [x] DishFormPage — sticky form-header с Сохранить, ModeSwitcher Быстро/Расширенно, photo grid с главным фото, MiniSwitch «по вкусу» в строке ингредиента, VisibilityCards
+- [x] DishIngredientPicker — bottom-sheet, поиск, chips категорий, grid карточек, форма создания своего ингредиента
 - [x] **Slim-main**: убран `/v2`-префикс, V2-файлы переименованы в основные, redesign-ветка слита и архивирована
 - [x] **Cleanup**: удалены backward-compat redirects `/v2/*`, удалён `PlanItem.jsx`
 - [x] КБЖУ переписан с «на блюдо» на «на 100 г», скрипт пересчёта
@@ -123,8 +125,7 @@
 
 В очереди (Phase B — оставшиеся страницы):
 - [ ] ChatPage — нужен артефакт (фича скрыта от пользователей)
-- [ ] DishFormPage — нужен артефакт (бриф готов в `context/design/brief-dish-form.md`)
-- [ ] DishCardV2 → DishCard (переименование когда старый DishCard перестанет использоваться в Chat/GroupDetail)
+- [ ] DishCardV2 → DishCard (переименование когда старый DishCard перестанет использоваться в Chat/GroupDetail — после редизайна Chat)
 
 ---
 

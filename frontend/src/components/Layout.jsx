@@ -34,7 +34,13 @@ const TAB_PATHS = TABS.map(t => t.to)
 // 'root'  — обычный (лого + Bell + Avatar)
 // 'back'  — back-header (← + title + Bell + Avatar)
 // 'none'  — Layout не рендерит header (например /dishes/:id full-bleed)
+// ВАЖНО: full-bleed страницы (DishDetailPage, DishFormPage) рисуют свой header.
+// Layout сюда не лезет, чтобы не было двойного хедера.
 function getHeaderMode(pathname) {
+  // Форма блюда (новое / редактирование) — full-bleed, свой sticky-header с «Сохранить»
+  if (pathname === '/dishes/new')              return { mode: 'none' }
+  if (matchPath('/dishes/:id/edit', pathname)) return { mode: 'none' }
+
   // Деталка блюда — full-bleed, без layout-header
   if (matchPath('/dishes/:id', pathname)) return { mode: 'none' }
 
@@ -48,8 +54,6 @@ function getHeaderMode(pathname) {
     { pattern: '/groups/new',     title: 'Новая группа'    },
     { pattern: '/groups/:id',     title: 'Группа'          },
     { pattern: '/groups/:id/edit',title: 'Редактирование группы' },
-    { pattern: '/dishes/new',     title: 'Новое блюдо'     },
-    { pattern: '/dishes/:id/edit',title: 'Редактирование'  },
   ]
   for (const { pattern, title } of backMap) {
     if (matchPath(pattern, pathname)) return { mode: 'back', title }

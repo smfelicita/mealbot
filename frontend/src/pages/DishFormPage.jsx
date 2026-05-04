@@ -1,25 +1,441 @@
+// DishFormPage — создание / редактирование блюда.
+// Портировано из context/design/dish-form-v2.jsx.
+// Свой sticky FormHeader (back + Сохранить) — Layout даёт mode='none' для /dishes/new и /dishes/:id/edit.
+// Логика как была: state, validation, upload, copyFrom, fromGroup, ingredient picker, visibility.
+
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
-import { api } from '../api'
-import { UNITS, DISH_CATEGORIES as CATEGORIES, MEAL_TIMES, DIFFICULTIES, CUISINES, VISIBILITY_OPTIONS } from '../constants'
 import {
-  Button, Loader, TextInput, Textarea, Chip, Toggle,
-  useToast,
-} from '../components/ui'
+  ChevronLeft, Check, X, Plus, Camera, Video, Upload, Star,
+  AlertCircle, Eye, Lock, Users, Globe, Sparkles,
+} from 'lucide-react'
+
+import { api } from '../api'
+import { UNITS, DISH_CATEGORIES as CATEGORIES, MEAL_TIMES, CUISINES, VISIBILITY_OPTIONS } from '../constants'
+import { Loader, useToast } from '../components/ui'
 import { DishIngredientPicker } from '../components/domain'
 
+// ─── Visibility options с иконками ────────────────────────────────
+const VIS_ICON = { PRIVATE: Lock, FAMILY: Users, ALL_GROUPS: Globe }
 
-
-// ─── Field label helper ─────────────────────────────────────────────────────
+// ─── Field primitives ─────────────────────────────────────────────
 function Label({ children, required }) {
   return (
-    <p className="text-xs font-bold text-text-2 uppercase tracking-wider mb-2">
-      {children}{required && <span className="text-red-400 ml-0.5">*</span>}
-    </p>
+    <div
+      className="text-[10.5px] font-bold uppercase mb-2 px-1 text-text-3"
+      style={{ letterSpacing: 0.6 }}
+    >
+      {children}
+      {required && <span className="ml-1 text-red-500">*</span>}
+    </div>
   )
 }
 
-// ─── Page ───────────────────────────────────────────────────────────────────
+function PillInput({ value, onChange, placeholder, type = 'text', tabular = false, autoFocus = false }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange?.(e.target.value)}
+      placeholder={placeholder}
+      autoFocus={autoFocus}
+      className={[
+        'w-full h-11 px-4 rounded-full bg-bg-2 border border-border outline-none',
+        'text-[14.5px] text-text placeholder:text-text-3',
+        'focus:border-accent',
+        tabular ? 'tabular-nums' : '',
+      ].join(' ')}
+    />
+  )
+}
+
+function PillTextarea({ value, onChange, placeholder, rows = 4 }) {
+  return (
+    <textarea
+      value={value}
+      onChange={e => onChange?.(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      className="w-full px-4 py-3 rounded-2xl bg-bg-2 border border-border outline-none
+        text-[14.5px] text-text placeholder:text-text-3 focus:border-accent resize-none"
+    />
+  )
+}
+
+function ErrorLine({ children }) {
+  if (!children) return null
+  return (
+    <div className="flex items-center gap-1 mt-1.5 px-1 text-[12px] text-red-500">
+      <AlertCircle size={12} strokeWidth={2.4} />
+      {children}
+    </div>
+  )
+}
+
+function Section({ label, required, hint, children }) {
+  return (
+    <div className="mt-7">
+      <div className="flex items-baseline justify-between">
+        <Label required={required}>{label}</Label>
+        {hint && <div className="text-[10.5px] mb-2 px-1 text-text-3">{hint}</div>}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+// ─── Sticky form header ───────────────────────────────────────────
+function FormHeader({ title, canSave, saving, onBack, onSave }) {
+  return (
+    <header
+      className="h-[52px] px-2 flex items-center justify-between sticky top-0 z-30 border-b border-border"
+      style={{
+        background: 'rgba(246,244,239,0.95)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+      }}
+    >
+      <button
+        type="button"
+        onClick={onBack}
+        className="w-10 h-10 rounded-full flex items-center justify-center text-text-2 hover:bg-bg-3 transition-colors"
+        aria-label="Назад"
+      >
+        <ChevronLeft size={20} strokeWidth={2} />
+      </button>
+      <div className="text-[15px] font-bold truncate max-w-[220px] text-text">{title}</div>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={!canSave || saving}
+        className={[
+          'h-9 px-4 rounded-full text-[13px] font-bold transition-opacity',
+          canSave && !saving ? 'bg-accent text-white' : 'bg-accent text-white opacity-50',
+        ].join(' ')}
+        style={canSave && !saving ? { boxShadow: '0 4px 12px rgba(196,112,74,0.30)' } : undefined}
+      >
+        {saving ? '...' : 'Сохранить'}
+      </button>
+    </header>
+  )
+}
+
+// ─── Banners ──────────────────────────────────────────────────────
+function GroupBanner({ name }) {
+  return (
+    <div className="rounded-xl bg-accent-muted border border-accent-border px-3 py-2.5
+      flex items-center gap-2 text-[13px] text-accent">
+      <Sparkles size={14} strokeWidth={2.2} />
+      <span style={{ textWrap: 'pretty' }}>Блюдо будет добавлено в группу «{name}»</span>
+    </div>
+  )
+}
+
+function CopyBanner({ from }) {
+  return (
+    <div className="rounded-xl bg-sage-muted border border-sage-border px-3 py-2.5
+      flex items-center gap-2 text-[13px] text-sage">
+      <Eye size={14} strokeWidth={2.2} />
+      <span style={{ textWrap: 'pretty' }}>Это копия рецепта «{from}». Адаптируйте под себя.</span>
+    </div>
+  )
+}
+
+// ─── Mode switcher ───────────────────────────────────────────────
+function ModeSwitcher({ mode, onChange }) {
+  return (
+    <div className="flex p-1 rounded-full bg-bg-3 border border-border">
+      {[{ id: 'quick', label: 'Быстро' }, { id: 'extended', label: 'Расширенно' }].map(o => {
+        const on = o.id === mode
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onChange(o.id)}
+            className={[
+              'flex-1 h-9 rounded-full text-[13px] font-bold transition-colors',
+              on ? 'bg-accent text-white' : 'bg-transparent text-text-2',
+            ].join(' ')}
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Chips (multi-select) ────────────────────────────────────────
+function Chip({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'h-9 px-3.5 rounded-full text-[13px] font-bold whitespace-nowrap border',
+        active
+          ? 'bg-accent-muted border-accent-border text-accent'
+          : 'bg-bg-2 border-border text-text-2',
+      ].join(' ')}
+    >
+      {children}
+    </button>
+  )
+}
+
+function ChipsField({ items, selected, onToggle }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map(it => (
+        <Chip key={it.value} active={selected.includes(it.value)} onClick={() => onToggle(it.value)}>
+          {it.label}
+        </Chip>
+      ))}
+    </div>
+  )
+}
+
+// ─── Photo grid ──────────────────────────────────────────────────
+function PhotoGrid({ images, onSetMain, onRemove, onAdd, uploading }) {
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-2">
+        {images.map((src, i) => {
+          const isMain = i === 0
+          return (
+            <div
+              key={src + i}
+              className="relative rounded-xl overflow-hidden bg-bg-2"
+              style={{
+                aspectRatio: '1',
+                boxShadow: isMain
+                  ? '0 0 0 2px var(--color-accent)'
+                  : '0 0 0 1px var(--color-border)',
+              }}
+            >
+              <img src={src} alt="" className="w-full h-full object-cover block" />
+              <button
+                type="button"
+                onClick={() => onSetMain(i)}
+                className="absolute top-[6px] left-[6px] w-[22px] h-[22px] rounded-full flex items-center justify-center"
+                style={{ background: isMain ? 'var(--color-accent)' : 'rgba(0,0,0,0.55)' }}
+                aria-label={isMain ? 'Главное фото' : 'Сделать главным'}
+              >
+                <Star size={12} strokeWidth={2.4} color="#fff" fill={isMain ? '#fff' : 'none'} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                className="absolute top-[6px] right-[6px] w-[22px] h-[22px] rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(0,0,0,0.55)' }}
+                aria-label="Удалить фото"
+              >
+                <X size={12} strokeWidth={2.6} color="#fff" />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+      {images.length < 10 && (
+        <label className="block w-full mt-2 cursor-pointer">
+          <div
+            className="w-full h-11 rounded-full bg-bg-2 border border-border
+              flex items-center justify-center gap-2 text-[13.5px] font-bold text-text-2"
+          >
+            {uploading ? (
+              <>
+                <span className="w-4 h-4 rounded-full border-2 border-text-3 border-t-transparent animate-spin" />
+                Загружаем…
+              </>
+            ) : (
+              <>
+                <Camera size={15} strokeWidth={2.2} />
+                {images.length === 0 ? 'Загрузить фото' : 'Добавить ещё'}
+              </>
+            )}
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={e => { if (e.target.files?.length) onAdd(e.target.files) }}
+          />
+        </label>
+      )}
+    </>
+  )
+}
+
+// ─── Video field ─────────────────────────────────────────────────
+function VideoField({ url, uploading, onUpload, onRemove }) {
+  if (url) {
+    return (
+      <div className="rounded-xl bg-sage-muted border border-sage-border px-4 py-3 flex items-center gap-2">
+        <Check size={15} strokeWidth={2.4} className="text-sage" />
+        <span className="text-[13.5px] font-bold flex-1 text-sage">Видео загружено</span>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-[12.5px] font-bold text-red-500"
+        >
+          Удалить
+        </button>
+      </div>
+    )
+  }
+  return (
+    <label className="block w-full cursor-pointer">
+      <div
+        className="w-full h-11 rounded-full bg-bg-2 border border-border
+          flex items-center justify-center gap-2 text-[13.5px] font-bold text-text-2"
+      >
+        {uploading ? (
+          <>
+            <span className="w-4 h-4 rounded-full border-2 border-text-3 border-t-transparent animate-spin" />
+            Загружаем…
+          </>
+        ) : (
+          <>
+            <Video size={15} strokeWidth={2.2} />
+            Загрузить видео
+          </>
+        )}
+      </div>
+      <input
+        type="file"
+        accept="video/*"
+        hidden
+        onChange={e => { if (e.target.files?.[0]) onUpload(e.target.files[0]) }}
+      />
+    </label>
+  )
+}
+
+// ─── Mini switch (toTaste) ───────────────────────────────────────
+function MiniSwitch({ on, onChange }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!on)}
+      className="rounded-full relative shrink-0"
+      style={{
+        width: 32, height: 18,
+        background: on ? 'var(--color-accent)' : 'var(--color-border)',
+        transition: 'background 0.15s',
+      }}
+      aria-label="По вкусу"
+    >
+      <span
+        className="absolute rounded-full bg-bg-2"
+        style={{
+          top: 2, left: on ? 16 : 2,
+          width: 14, height: 14,
+          transition: 'left 0.15s',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+        }}
+      />
+    </button>
+  )
+}
+
+// ─── Ingredient row ──────────────────────────────────────────────
+function IngredientRow({ ing, onRemove, onChange }) {
+  return (
+    <div className="rounded-xl bg-bg-2 border border-border px-3 py-2.5 flex items-center gap-2">
+      {ing.emoji && <span className="text-[16px] shrink-0">{ing.emoji}</span>}
+      <span className="text-[13px] font-semibold flex-1 truncate text-text">{ing.name}</span>
+
+      <div className="flex items-center gap-1 shrink-0">
+        <MiniSwitch on={ing.toTaste} onChange={v => onChange({ ...ing, toTaste: v })} />
+        <span className="text-[10px] text-text-2">вкус</span>
+      </div>
+
+      {ing.toTaste ? (
+        <span
+          className="text-[11px] font-bold uppercase text-text-3 shrink-0"
+          style={{ letterSpacing: 0.4, padding: '0 4px' }}
+        >
+          по вкусу
+        </span>
+      ) : (
+        <>
+          <input
+            type="number"
+            value={ing.amountValue}
+            onChange={e => onChange({ ...ing, amountValue: e.target.value })}
+            placeholder="0"
+            className="text-center w-14 h-[30px] rounded-full bg-bg-3 border border-border
+              text-[13px] text-text outline-none tabular-nums shrink-0
+              focus:border-accent"
+          />
+          <select
+            value={ing.unit}
+            onChange={e => onChange({ ...ing, unit: e.target.value })}
+            className="w-[70px] h-[30px] rounded-full bg-bg-3 border border-border
+              text-[12px] text-text-2 outline-none px-2 shrink-0 focus:border-accent"
+            style={{ appearance: 'none', WebkitAppearance: 'none' }}
+          >
+            {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+          </select>
+        </>
+      )}
+
+      <button
+        type="button"
+        onClick={onRemove}
+        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-text-3"
+        aria-label="Удалить"
+      >
+        <X size={14} strokeWidth={2.2} />
+      </button>
+    </div>
+  )
+}
+
+// ─── Visibility radio cards ──────────────────────────────────────
+function VisibilityCards({ value, onChange, options }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {options.map(o => {
+        const on = value === o.value
+        const Ic = VIS_ICON[o.value] || Lock
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onChange(o.value)}
+            className={[
+              'rounded-2xl border p-4 flex items-center gap-3 text-left transition-colors',
+              on ? 'bg-accent-muted border-accent-border' : 'bg-bg-2 border-border',
+            ].join(' ')}
+          >
+            <span
+              className={[
+                'rounded-full flex items-center justify-center shrink-0',
+                on ? 'bg-accent border-accent' : 'border-border',
+              ].join(' ')}
+              style={{ width: 20, height: 20, borderWidth: 2, borderStyle: 'solid', borderColor: on ? 'var(--color-accent)' : 'var(--color-border)' }}
+            >
+              {on && <span className="rounded-full bg-bg-2" style={{ width: 6, height: 6 }} />}
+            </span>
+            <Ic size={18} strokeWidth={2} className={on ? 'text-accent' : 'text-text-2'} />
+            <div className="flex-1 min-w-0">
+              <div className={['text-[13.5px] font-bold', on ? 'text-accent' : 'text-text'].join(' ')}>
+                {o.label}
+              </div>
+              <div className="text-[11.5px] text-text-2" style={{ textWrap: 'pretty' }}>
+                {o.desc}
+              </div>
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ═══ Main page ═════════════════════════════════════════════════════
 export default function DishFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -42,10 +458,8 @@ export default function DishFormPage() {
   const [ingredients, setIngredients]         = useState([])
   const [errors, setErrors]                   = useState({})
   const [cuisineInput, setCuisineInput]       = useState('')
-  const [showCuisineSuggest, setShowCuisineSuggest] = useState(false)
   const [sourceDishName, setSourceDishName]   = useState('')
-
-  const [hasFamilyGroup, setHasFamilyGroup] = useState(false)
+  const [hasFamilyGroup, setHasFamilyGroup]   = useState(false)
 
   const defaultVisibility = fromGroup?.groupType === 'FAMILY' ? 'FAMILY'
     : fromGroup?.groupType === 'REGULAR' ? 'ALL_GROUPS'
@@ -53,27 +467,24 @@ export default function DishFormPage() {
 
   const [form, setForm] = useState({
     name: '', description: '', categories: [],
-    mealTime: [], difficulty: '', cookTime: '',
+    mealTime: [], cookTime: '',
     calories: '', recipe: '', imageUrl: '', videoUrl: '',
     tags: '', visibility: defaultVisibility,
   })
 
-  // ── Load data ────────────────────────────────────────────────────────────
+  // ── Load data ───────────────────────────────────────────────────
   useEffect(() => {
     api.getIngredients().then(setAllIngredients).catch(() => {})
     api.getGroups().then(groups => {
-      const hasFamily = groups.some(g => g.type === 'FAMILY')
-      setHasFamilyGroup(hasFamily)
-      // Если блюдо новое и семьи нет — default PRIVATE (уже выставлен в useState)
+      setHasFamilyGroup(groups.some(g => g.type === 'FAMILY'))
     }).catch(() => {})
 
     function applyDish(dish, resetImages = true) {
       setForm({
-        name:      dish.name,
+        name:       dish.name,
         description: dish.description || '',
         categories:  dish.categories || [],
         mealTime:    dish.mealTime || [],
-        difficulty:  dish.difficulty || '',
         cookTime:    dish.cookTime || '',
         calories:    dish.calories || '',
         recipe:      dish.recipe || '',
@@ -112,56 +523,45 @@ export default function DishFormPage() {
     }
   }, [id, copyFromId])
 
-  // ── Field helpers ────────────────────────────────────────────────────────
+  // ── Helpers ─────────────────────────────────────────────────────
   function setField(key, value) {
     setForm(f => ({ ...f, [key]: value }))
     if (errors[key]) setErrors(e => ({ ...e, [key]: null }))
   }
 
-  function toggleCategory(cat) {
+  function toggleArray(key, val) {
     setForm(f => ({
       ...f,
-      categories: f.categories.includes(cat)
-        ? f.categories.filter(c => c !== cat)
-        : [...f.categories, cat],
+      [key]: f[key].includes(val) ? f[key].filter(x => x !== val) : [...f[key], val],
     }))
-    if (errors.categories) setErrors(e => ({ ...e, categories: null }))
+    if (errors[key]) setErrors(e => ({ ...e, [key]: null }))
   }
 
-  function toggleMealTime(mt) {
-    setForm(f => ({
-      ...f,
-      mealTime: f.mealTime.includes(mt) ? f.mealTime.filter(x => x !== mt) : [...f.mealTime, mt],
-    }))
-  }
-
-  // ── Ingredient helpers ───────────────────────────────────────────────────
+  // ── Ingredient helpers ──────────────────────────────────────────
   function addIngredient(ing) {
     if (ingredients.find(i => i.id === ing.id)) return
     setIngredients(prev => [...prev, {
-      id: ing.id, name: ing.name, emoji: ing.emoji,
+      id: ing.id,
+      name: ing.nameRu || ing.name,
+      emoji: ing.emoji,
       amountValue: '', unit: 'г', toTaste: false, optional: false, amount: '',
     }])
   }
-
   function removeIngredient(ingId) {
     setIngredients(prev => prev.filter(i => i.id !== ingId))
   }
-
-  function updateIngredient(ingId, key, value) {
+  function updateIngredient(updated) {
     setIngredients(prev => prev.map(i => {
-      if (i.id !== ingId) return i
-      const updated = { ...i, [key]: value }
-      if (key === 'amountValue' || key === 'unit' || key === 'toTaste') {
-        updated.amount = updated.toTaste
-          ? 'по вкусу'
-          : updated.amountValue ? `${updated.amountValue} ${updated.unit}`.trim() : ''
-      }
-      return updated
+      if (i.id !== updated.id) return i
+      const next = { ...i, ...updated }
+      next.amount = next.toTaste
+        ? 'по вкусу'
+        : next.amountValue ? `${next.amountValue} ${next.unit}`.trim() : ''
+      return next
     }))
   }
 
-  // ── Image / video upload ─────────────────────────────────────────────────
+  // ── Image upload ─────────────────────────────────────────────────
   async function uploadImages(files) {
     const fileArr = Array.from(files).slice(0, 10 - images.length)
     if (!fileArr.length) return
@@ -179,6 +579,7 @@ export default function DishFormPage() {
   }
 
   function setMainImage(idx) {
+    if (idx === 0) return
     setImages(prev => {
       const next = [...prev]
       const [img] = next.splice(idx, 1)
@@ -206,7 +607,7 @@ export default function DishFormPage() {
     finally { setUploadingVideo(false) }
   }
 
-  // ── Submit ───────────────────────────────────────────────────────────────
+  // ── Submit ──────────────────────────────────────────────────────
   async function handleSubmit() {
     const errs = {}
     if (!form.name.trim()) errs.name = 'Укажите название'
@@ -214,13 +615,10 @@ export default function DishFormPage() {
     if (mode === 'extended' && !form.categories.length) errs.categories = 'Выберите хотя бы одну категорию'
     if (Object.keys(errs).length) { setErrors(errs); return }
 
-    const resolvedCategories = form.categories
-
     setSaving(true)
     try {
       const data = {
         ...form,
-        categories: resolvedCategories,
         imageUrl: images[0] || null,
         images,
         cuisine: cuisineInput.trim() || null,
@@ -241,7 +639,7 @@ export default function DishFormPage() {
       if (isEdit) {
         await api.updateDish(id, data)
         show('Рецепт сохранён', 'success')
-        setTimeout(() => navigate('/dishes'), 800)
+        setTimeout(() => navigate(`/dishes/${id}`), 600)
       } else {
         const created = await api.createDish(data)
         navigate(`/dishes/${created.id}`, { replace: true })
@@ -250,328 +648,200 @@ export default function DishFormPage() {
     finally { setSaving(false) }
   }
 
-  // ── Derived ──────────────────────────────────────────────────────────────
-  const cuisineSuggestions = CUISINES.filter(c =>
-    c.toLowerCase().includes(cuisineInput.toLowerCase()) && c !== cuisineInput
-  )
+  // ── Derived ─────────────────────────────────────────────────────
+  const canSave = !saving && form.name.trim() && form.mealTime.length > 0 &&
+    (mode === 'quick' || form.categories.length > 0)
+
+  const isExt = mode === 'extended' || isEdit
+  const visibilityOptions = VISIBILITY_OPTIONS.filter(o => o.value !== 'FAMILY' || hasFamilyGroup)
 
   if (loading) return <Loader fullPage />
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────
   return (
     <div>
-      {/* Top bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-bg/95 backdrop-blur-md border-b border-border flex items-center px-3 gap-2 max-w-app mx-auto">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>←</Button>
-        <span className="font-serif text-[17px] font-bold flex-1 text-center">
-          {isEdit ? 'Редактировать рецепт' : 'Новый рецепт'}
-        </span>
-        <Button size="sm" loading={saving} onClick={handleSubmit}>Сохранить</Button>
-      </div>
+      <FormHeader
+        title={isEdit ? 'Редактировать рецепт' : 'Новый рецепт'}
+        canSave={!!canSave}
+        saving={saving}
+        onBack={() => navigate(-1)}
+        onSave={handleSubmit}
+      />
 
-      <div className="pt-[68px] pb-10 px-4 flex flex-col gap-5">
-
-        {/* Group context notice */}
-        {fromGroup && (
-          <div className="bg-accent/8 border border-accent/30 rounded-sm px-3.5 py-2.5 text-sm text-accent">
-            Блюдо будет добавлено в группу «{fromGroup.groupName}»
-          </div>
-        )}
-
-        {/* Copy notice */}
+      <div className="px-5 pt-5 pb-24 fade-in">
+        {/* Banners */}
+        {fromGroup && <GroupBanner name={fromGroup.groupName} />}
         {copyFromId && sourceDishName && (
-          <div className="bg-teal/8 border border-teal/30 rounded-sm px-3.5 py-2.5 text-sm text-teal">
-            Это копия рецепта «{sourceDishName}». Адаптируйте под себя.
+          <div className={fromGroup ? 'mt-2' : ''}>
+            <CopyBanner from={sourceDishName} />
           </div>
         )}
 
         {/* Mode switcher */}
         {!isEdit && (
-          <div className="flex bg-bg-3 rounded-sm p-1 gap-1">
-            {[
-              { val: 'quick',    label: 'Быстро'     },
-              { val: 'extended', label: 'Расширенно' },
-            ].map(m => (
-              <button
-                key={m.val}
-                type="button"
-                onClick={() => setMode(m.val)}
-                className={[
-                  'flex-1 rounded-[6px] py-1.5 text-[13px] font-bold border-none cursor-pointer transition-all',
-                  mode === m.val
-                    ? 'bg-accent text-white'
-                    : 'bg-transparent text-text-2 hover:text-text',
-                ].join(' ')}
-              >
-                {m.label}
-              </button>
-            ))}
+          <div className={fromGroup || copyFromId ? 'mt-7' : ''}>
+            <ModeSwitcher mode={mode} onChange={setMode} />
           </div>
         )}
 
         {/* Название */}
-        <TextInput
-          label="Название"
-          required
-          placeholder="Введите название блюда"
-          value={form.name}
-          error={errors.name}
-          onChange={e => setField('name', e.target.value)}
-        />
-
-        {/* Описание — extended only */}
-        {mode === 'extended' && (
-          <Textarea
-            label="Описание"
-            rows={2}
-            placeholder="Краткое описание..."
-            value={form.description}
-            onChange={e => setField('description', e.target.value)}
+        <Section label="Название" required>
+          <PillInput
+            value={form.name}
+            onChange={v => setField('name', v)}
+            placeholder="Например, Курица с грибами"
+            autoFocus={!isEdit}
           />
+          <ErrorLine>{errors.name}</ErrorLine>
+        </Section>
+
+        {/* Описание */}
+        {isExt && (
+          <Section label="Краткое описание">
+            <PillTextarea
+              value={form.description}
+              onChange={v => setField('description', v)}
+              rows={2}
+              placeholder="В двух словах, чем особенное это блюдо…"
+            />
+          </Section>
         )}
 
         {/* Категории */}
-        <div>
-          <Label required={mode === 'extended'}>Категории</Label>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map(c => (
-              <Chip
-                key={c.value}
-                active={form.categories.includes(c.value)}
-                onClick={() => toggleCategory(c.value)}
-              >
-                {c.label}
-              </Chip>
-            ))}
-          </div>
-          {errors.categories && (
-            <p className="text-red-400 text-xs mt-1.5">{errors.categories}</p>
-          )}
-        </div>
-
-        {/* Кухня — временно отключена */}
-
-        {/* Время приёма пищи */}
-        <div>
-          <Label>Время приёма пищи</Label>
-          <div className="flex flex-wrap gap-2">
-            {MEAL_TIMES.map(mt => (
-              <Chip
-                key={mt.value}
-                active={form.mealTime.includes(mt.value)}
-                onClick={() => toggleMealTime(mt.value)}
-              >
-                {mt.label}
-              </Chip>
-            ))}
-          </div>
-          {errors.mealTime && <p className="text-red-400 text-xs mt-1.5">{errors.mealTime}</p>}
-        </div>
-
-        {/* Сложность — временно отключена. Время — extended only */}
-        {mode === 'extended' && (
-          <TextInput
-            label="Время (мин)"
-            type="number"
-            placeholder="30"
-            min="1"
-            value={form.cookTime}
-            onChange={e => setField('cookTime', e.target.value)}
+        <Section label="Категории" required={isExt}>
+          <ChipsField
+            items={CATEGORIES}
+            selected={form.categories}
+            onToggle={v => toggleArray('categories', v)}
           />
-        )}
+          <ErrorLine>{errors.categories}</ErrorLine>
+        </Section>
 
-        {/* Теги — extended only */}
-        {mode === 'extended' && (
-          <TextInput
-            label="Теги (через запятую)"
-            placeholder="вегетарианское, быстро, постное..."
-            value={form.tags}
-            onChange={e => setField('tags', e.target.value)}
+        {/* Время приёма */}
+        <Section label="Когда есть" required>
+          <ChipsField
+            items={MEAL_TIMES}
+            selected={form.mealTime}
+            onToggle={v => toggleArray('mealTime', v)}
           />
+          <ErrorLine>{errors.mealTime}</ErrorLine>
+        </Section>
+
+        {/* Время готовки */}
+        {isExt && (
+          <Section label="Время готовки (минут)">
+            <PillInput
+              value={form.cookTime}
+              onChange={v => setField('cookTime', v)}
+              placeholder="30"
+              type="number"
+              tabular
+            />
+          </Section>
         )}
 
-        {/* Фото — extended only */}
-        {mode === 'extended' && (
-          <div>
-            <Label>Фото блюда <span className="normal-case text-2xs text-text-3 font-normal">до 10 штук</span></Label>
-            {images.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {images.map((url, idx) => (
-                  <div key={url} className="relative w-[90px] h-[90px] shrink-0">
-                    <img
-                      src={url} alt=""
-                      className={[
-                        'w-full h-full object-cover rounded-sm',
-                        idx === 0 ? 'ring-2 ring-accent' : 'ring-1 ring-border',
-                      ].join(' ')}
-                    />
-                    {idx === 0 ? (
-                      <span className="absolute top-1 left-1 bg-accent text-white text-2xs font-bold px-1 py-0.5 rounded">★</span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setMainImage(idx)}
-                        className="absolute top-1 left-1 bg-black/55 text-white text-2xs font-bold px-1 py-0.5 rounded border-none cursor-pointer"
-                      >★</button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(idx)}
-                      className="absolute top-1 right-1 w-5 h-5 bg-black/65 text-white rounded-full flex items-center justify-center text-2xs border-none cursor-pointer"
-                    >✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {images.length < 10 && (
-              <label className="cursor-pointer block">
-                <Button variant="secondary" className="w-full pointer-events-none" loading={uploadingImage}>
-                  {!uploadingImage && (images.length === 0 ? 'Загрузить фото' : 'Добавить ещё')}
-                </Button>
-                <input type="file" accept="image/*" multiple hidden
-                  onChange={e => e.target.files?.length && uploadImages(e.target.files)} />
-              </label>
-            )}
-          </div>
+        {/* Теги */}
+        {isExt && (
+          <Section label="Теги (через запятую)">
+            <PillInput
+              value={form.tags}
+              onChange={v => setField('tags', v)}
+              placeholder="быстро, сытно, мясо"
+            />
+          </Section>
         )}
 
-        {/* Видео — extended only */}
-        {mode === 'extended' && (
-          <div>
-            <Label>Видео (необязательно)</Label>
-            {form.videoUrl ? (
-              <div className="flex items-center gap-3 bg-bg-3 border border-border rounded-sm px-3.5 py-2.5">
-                <span className="flex-1 text-[13px] text-teal">✅ Видео загружено</span>
-                <Button variant="ghost" size="sm" onClick={() => setField('videoUrl', '')}>Удалить</Button>
-              </div>
-            ) : (
-              <label className="cursor-pointer block">
-                <Button variant="secondary" className="w-full pointer-events-none" loading={uploadingVideo}>
-                  {!uploadingVideo && 'Загрузить видео'}
-                </Button>
-                <input type="file" accept="video/*" hidden
-                  onChange={e => e.target.files[0] && uploadVideo(e.target.files[0])} />
-              </label>
-            )}
-          </div>
+        {/* Фото */}
+        {isExt && (
+          <Section label="Фото блюда" hint="до 10 штук">
+            <PhotoGrid
+              images={images}
+              onSetMain={setMainImage}
+              onRemove={removeImage}
+              onAdd={uploadImages}
+              uploading={uploadingImage}
+            />
+          </Section>
+        )}
+
+        {/* Видео */}
+        {isExt && (
+          <Section label="Видео (необязательно)">
+            <VideoField
+              url={form.videoUrl}
+              uploading={uploadingVideo}
+              onUpload={uploadVideo}
+              onRemove={() => setField('videoUrl', '')}
+            />
+          </Section>
         )}
 
         {/* Ингредиенты */}
-        <div>
-          <Label>Ингредиенты</Label>
-          {ingredients.length > 0 && (
-            <div className="flex flex-col gap-2 mb-3">
-              {ingredients.map(ing => (
-                <div
-                  key={ing.id}
-                  className="flex items-center gap-2 bg-bg-3 border border-border rounded-sm px-2.5 py-2"
-                >
-                  {ing.emoji && <span className="text-base shrink-0">{ing.emoji}</span>}
-                  <span className="flex-1 text-[13px] font-semibold truncate">{ing.name}</span>
-
-                  {/* По вкусу toggle */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={ing.toTaste}
-                      onClick={() => updateIngredient(ing.id, 'toTaste', !ing.toTaste)}
-                      className={[
-                        'relative w-8 h-[18px] rounded-full border transition-all shrink-0 focus:outline-none',
-                        ing.toTaste ? 'bg-accent border-accent' : 'bg-bg-2 border-border',
-                      ].join(' ')}
-                    >
-                      <span className={[
-                        'absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform shadow-sm',
-                        ing.toTaste ? 'translate-x-[14px]' : 'translate-x-0',
-                      ].join(' ')} />
-                    </button>
-                    <span className="text-2xs text-text-2 whitespace-nowrap">вкус</span>
-                  </div>
-
-                  {/* Amount + unit */}
-                  {!ing.toTaste && (
-                    <>
-                      <input
-                        type="number"
-                        placeholder="0"
-                        value={ing.amountValue}
-                        onChange={e => updateIngredient(ing.id, 'amountValue', e.target.value)}
-                        className="w-14 text-xs bg-bg-2 border border-border rounded-sm px-1.5 py-1 outline-none focus:border-accent text-center"
-                      />
-                      <select
-                        value={ing.unit}
-                        onChange={e => updateIngredient(ing.id, 'unit', e.target.value)}
-                        className="w-16 text-xs bg-bg-2 border border-border rounded-sm px-1.5 py-1 outline-none focus:border-accent"
-                      >
-                        {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                      </select>
-                    </>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => removeIngredient(ing.id)}
-                    className="text-text-3 hover:text-red-400 text-[13px] px-1 shrink-0"
-                  >✕</button>
-                </div>
+        <Section label="Ингредиенты" required={isExt}>
+          {ingredients.length === 0 ? (
+            <div className="text-[13px] mb-2 px-1 text-text-3">Пока не выбрано</div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {ingredients.map(it => (
+                <IngredientRow
+                  key={it.id}
+                  ing={it}
+                  onRemove={() => removeIngredient(it.id)}
+                  onChange={updateIngredient}
+                />
               ))}
             </div>
           )}
-          <Button variant="secondary" size="sm" onClick={() => setShowIngPicker(true)}>
-            + Добавить ингредиент
-          </Button>
-        </div>
+          <button
+            type="button"
+            onClick={() => setShowIngPicker(true)}
+            className="w-full mt-2 h-10 rounded-full bg-bg-2 border border-border
+              flex items-center justify-center gap-2 text-[13px] font-bold text-accent"
+          >
+            <Plus size={14} strokeWidth={2.4} />
+            Добавить ингредиент
+          </button>
+        </Section>
 
-        {/* Рецепт — extended only */}
-        {mode === 'extended' && (
-          <Textarea
-            label="Рецепт (шаги приготовления)"
-            rows={8}
-            placeholder="Опишите шаги приготовления..."
-            value={form.recipe}
-            onChange={e => setField('recipe', e.target.value)}
-          />
+        {/* Рецепт */}
+        {isExt && (
+          <Section label="Рецепт (шаги приготовления)">
+            <PillTextarea
+              value={form.recipe}
+              onChange={v => setField('recipe', v)}
+              rows={8}
+              placeholder="Опишите шаги приготовления…"
+            />
+          </Section>
         )}
 
         {/* Доступ */}
-        <div>
-          <Label>Доступ</Label>
-          <div className="flex flex-col gap-2">
-            {VISIBILITY_OPTIONS.filter(opt => opt.value !== 'FAMILY' || hasFamilyGroup).map(opt => (
-              <label
-                key={opt.value}
-                className={[
-                  'flex items-center gap-3 px-3 py-2.5 rounded-sm border-[1.5px] cursor-pointer transition-all',
-                  form.visibility === opt.value
-                    ? 'border-accent bg-accent/6'
-                    : 'border-border bg-bg-2 hover:border-accent/50',
-                ].join(' ')}
-              >
-                <input
-                  type="radio"
-                  name="visibility"
-                  value={opt.value}
-                  checked={form.visibility === opt.value}
-                  onChange={() => setField('visibility', opt.value)}
-                  className="accent-accent"
-                />
-                <div>
-                  <div className="text-[13px] font-semibold">{opt.label}</div>
-                  <div className="text-2xs text-text-2">{opt.desc}</div>
-                </div>
-              </label>
-            ))}
-          </div>
-        </div>
+        <Section label="Доступ">
+          <VisibilityCards
+            value={form.visibility}
+            onChange={v => setField('visibility', v)}
+            options={visibilityOptions}
+          />
+        </Section>
 
-        {/* Submit */}
-        <Button className="w-full" loading={saving} onClick={handleSubmit}>
-          {isEdit ? 'Сохранить изменения' : 'Создать блюдо'}
-        </Button>
+        {/* Submit (дублирующая внизу — чтобы не скроллить вверх к header'у) */}
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!canSave}
+          className={[
+            'w-full h-12 rounded-full mt-7 text-[15px] font-bold text-white transition-opacity',
+            canSave ? 'bg-accent' : 'bg-accent opacity-50',
+          ].join(' ')}
+          style={canSave ? { boxShadow: '0 8px 22px rgba(196,112,74,0.35)' } : undefined}
+        >
+          {saving
+            ? '...'
+            : (isEdit ? 'Сохранить изменения' : 'Создать блюдо')}
+        </button>
       </div>
 
-      {/* ─── Ingredient picker modal ─── */}
+      {/* Ingredient picker (modal) */}
       {showIngPicker && (
         <DishIngredientPicker
           allIngredients={allIngredients}
