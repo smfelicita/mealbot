@@ -142,6 +142,81 @@ router.delete('/groups/:id/invites/:token', authMiddleware, async (req, res, nex
   } catch (err) { next(err) }
 })
 
+// ─── GET /api/invites/incoming ────────────────────────────────────────────────
+// Мои pending приглашения по email. Требует авторизации.
+// ВАЖНО: должен идти ДО /invites/:token, иначе 'incoming' попадёт в :token.
+router.get('/invites/incoming', authMiddleware, async (req, res, next) => {
+  try {
+    const me = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { email: true },
+    })
+    if (!me?.email) return res.json([])
+
+    const invites = await prisma.groupInvite.findMany({
+      where: {
+        email: { equals: me.email, mode: 'insensitive' },
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      include: {
+        group: {
+          select: {
+            id: true, name: true, type: true,
+            _count: { select: { members: true } },
+          },
+        },
+        invitedBy: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    res.json(invites.map(inv => ({
+      token: inv.token,
+      groupId: inv.groupId,
+      groupName: inv.group.name,
+      groupType: inv.group.type,
+      membersCount: inv.group._count.members,
+      invitedById: inv.invitedBy.id,
+      invitedByName: inv.invitedBy.name || inv.invitedBy.email,
+      invitedAt: inv.createdAt,
+      expiresAt: inv.expiresAt,
+    })))
+  } catch (err) { next(err) }
+})
+
+// ─── GET /api/groups/:id/invites ──────────────────────────────────────────────
+// Список pending приглашений группы. Доступен любому участнику.
+router.get('/groups/:id/invites', authMiddleware, async (req, res, next) => {
+  try {
+    const membership = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: req.params.id, userId: req.userId } },
+    })
+    if (!membership) return res.status(403).json({ error: 'Вы не участник этой группы' })
+
+    const invites = await prisma.groupInvite.findMany({
+      where: {
+        groupId: req.params.id,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      include: {
+        invitedBy: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    res.json(invites.map(inv => ({
+      token: inv.token,
+      email: inv.email,
+      invitedById: inv.invitedBy.id,
+      invitedByName: inv.invitedBy.name || inv.invitedBy.email,
+      invitedAt: inv.createdAt,
+      expiresAt: inv.expiresAt,
+    })))
+  } catch (err) { next(err) }
+})
+
 // ─── GET /api/invites/:token ──────────────────────────────────────────────────
 // Публичный. Возвращает инфо о приглашении.
 router.get('/invites/:token', async (req, res, next) => {

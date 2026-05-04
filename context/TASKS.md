@@ -40,9 +40,10 @@
 - [x] Комментарии к рецептам: модель Comment, API /api/comments (CRUD + pin), доступ по принципу "видишь блюдо в группе — можешь комментировать" (кроме PUBLIC)
 - [x] Приглашения в группу по email: one-time token (TTL 7 дней), route /api/invites
 - [x] Безопасность инвайтов: FAMILY — только owner, проверка email при accept, rate limit (3/день/email, 10/день/sender)
+- [x] Списки приглашений: GET /api/invites/incoming (мои pending по email), GET /api/groups/:id/invites (pending группы для участников)
 - [x] Полный аудит авторизации: token versioning, loginLimiter, Google auto-link, транзакции
 - [x] Полный аудит групп: видимость, лимиты, транзакционность, kick/leave
-- [x] REGULAR группы — временно отключены (UI скрыт, backend 503/400)
+- [x] REGULAR группы — поддерживаются (UI: создание/join по коду/инвайт по email, backend полностью функционален)
 - [x] Единый error middleware (Prisma errors, JSON parse, 5xx без утечки деталей)
 - [x] Zod-валидация на всех write-эндпоинтах (groups, dishes, invites, comments, fridge, meal-plans)
 - [x] Структурированное логирование: pino, requestId, maskEmail, redact чувствительных полей
@@ -111,6 +112,9 @@
 - [x] ProfilePage — без Pro-плашки/stats (нет на бэке)
 - [x] AuthPage — pill-инпуты, lucide-иконки
 - [x] Layout — header (root/back/none) + TabBar (4 таба, чат скрыт флагом)
+- [x] GroupsPage — список групп + входящие приглашения (incoming invites)
+- [x] GroupDetailPage — Hero + Участники с pending-инвайтами + Invite-блок (joinCode + email) + Danger zone, без табов
+- [x] GroupFormPage — radio-cards FAMILY/REGULAR, pill-инпуты, аватар группы
 - [x] **Slim-main**: убран `/v2`-префикс, V2-файлы переименованы в основные, redesign-ветка слита и архивирована
 - [x] **Cleanup**: удалены backward-compat redirects `/v2/*`, удалён `PlanItem.jsx`
 - [x] КБЖУ переписан с «на блюдо» на «на 100 г», скрипт пересчёта
@@ -119,8 +123,7 @@
 
 В очереди (Phase B — оставшиеся страницы):
 - [ ] ChatPage — нужен артефакт (фича скрыта от пользователей)
-- [ ] DishFormPage — нужен артефакт (или бриф)
-- [ ] GroupsPage / GroupDetailPage / GroupFormPage — нужен артефакт
+- [ ] DishFormPage — нужен артефакт (бриф готов в `context/design/brief-dish-form.md`)
 - [ ] DishCardV2 → DishCard (переименование когда старый DishCard перестанет использоваться в Chat/GroupDetail)
 
 ---

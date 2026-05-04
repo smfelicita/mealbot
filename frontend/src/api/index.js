@@ -116,6 +116,8 @@ export const api = {
   revokeInvite: (groupId, token) => request(`/groups/${groupId}/invites/${token}`, { method: 'DELETE' }),
   getInvite: (token) => request(`/invites/${token}`),
   acceptInvite: (token) => request(`/invites/${token}/accept`, { method: 'POST' }),
+  getIncomingInvites: () => request('/invites/incoming'),
+  getGroupInvites: (groupId) => request(`/groups/${groupId}/invites`),
 
   // Chat
   sendMessage: (message, history = [], role = 'USER', fridge = []) =>
