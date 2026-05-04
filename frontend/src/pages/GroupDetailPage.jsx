@@ -72,7 +72,7 @@ function TypeBadge({ type }) {
     ].join(' ')}
     style={{ letterSpacing: 0.6 }}
     >
-      {isFamily ? 'FAMILY · Семья' : 'REGULAR · Группа'}
+      {isFamily ? 'Семья' : 'Группа'}
     </span>
   )
 }

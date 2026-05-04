@@ -51,47 +51,8 @@ function TypeBadge({ type }) {
     ].join(' ')}
     style={{ letterSpacing: 0.6 }}
     >
-      {isFamily ? 'FAMILY · Семья' : 'REGULAR · Группа'}
+      {isFamily ? 'Семья' : 'Группа'}
     </span>
-  )
-}
-
-// ═══ AvatarStack (для карточки группы) ════════════════════════════
-function AvatarStack({ members }) {
-  const visible = members.slice(0, 3)
-  const extra = members.length - visible.length
-  return (
-    <div className="flex">
-      {visible.map((m, i) => {
-        const initial = (m.name || '?').trim().charAt(0).toUpperCase()
-        return (
-          <div
-            key={m.userId || m.id || i}
-            className="rounded-full flex items-center justify-center font-bold tabular-nums bg-bg-3 text-accent"
-            style={{
-              marginLeft: i === 0 ? 0 : -8,
-              width: 28, height: 28, fontSize: 11,
-              border: '1.5px solid #fff',
-              boxShadow: '0 0 0 1px var(--color-border)',
-            }}
-          >
-            {initial}
-          </div>
-        )
-      })}
-      {extra > 0 && (
-        <div
-          className="rounded-full flex items-center justify-center font-bold tabular-nums bg-bg-3 text-text-2"
-          style={{
-            marginLeft: -8, width: 28, height: 28, fontSize: 11,
-            border: '1.5px solid #fff',
-            boxShadow: '0 0 0 1px var(--color-border)',
-          }}
-        >
-          +{extra}
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -148,10 +109,10 @@ function IncomingInviteCard({ invite, onAccept, onDecline }) {
 function GroupCard({ group, currentUserId, onClick }) {
   const isFamily = group.type === 'FAMILY'
   const TypeIcon = isFamily ? Home : Heart
-  const me = group.members?.find(m => m.userId === currentUserId)
-  const meIsOwner = me?.role === 'OWNER' || group.ownerId === currentUserId
-  const memberCount = group.members?.length ?? group._count?.members ?? 0
-  const dishesCount = group.dishes?.length ?? group._count?.dishes ?? 0
+  const meIsOwner = group.ownerId === currentUserId
+  // GET /api/groups возвращает membersCount/dishesCount (не вложенные members[]/dishes[])
+  const memberCount = group.membersCount ?? 0
+  const dishesCount = group.dishesCount ?? 0
 
   return (
     <button
@@ -187,13 +148,10 @@ function GroupCard({ group, currentUserId, onClick }) {
       </div>
 
       <div
-        className="flex items-center justify-between mt-3 pt-3"
+        className="mt-3 pt-3 text-[12px] tabular-nums text-text-3"
         style={{ borderTop: '1px dashed var(--color-border)' }}
       >
-        <div className="text-[12px] tabular-nums text-text-3">
-          {memberCount} {pluralMember(memberCount)} · {dishesCount} блюд
-        </div>
-        {group.members?.length > 0 && <AvatarStack members={group.members} />}
+        {memberCount} {pluralMember(memberCount)} · {dishesCount} блюд
       </div>
     </button>
   )
